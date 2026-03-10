@@ -575,10 +575,12 @@ function Whiteboard({
   isOpen,
   onClose,
   isDarkMode,
+  onSubmit,
 }: {
   isOpen: boolean
   onClose: () => void
   isDarkMode: boolean
+  onSubmit?: (drawingData: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [tool, setTool] = useState<DrawingTool>("pen")
@@ -791,6 +793,14 @@ function Whiteboard({
     setCurrentElement(null)
   }
 
+  const handleSubmitDrawing = () => {
+    const canvas = canvasRef.current
+    if (!canvas || !onSubmit) return
+    const drawingData = canvas.toDataURL("image/png")
+    onSubmit(drawingData)
+    onClose()
+  }
+
   const tools: { id: DrawingTool; icon: typeof Pencil; label: string }[] = [
     { id: "pen", icon: Pencil, label: "Free Draw" },
     { id: "line", icon: Minus, label: "Line" },
@@ -985,12 +995,21 @@ function Whiteboard({
         </div>
 
         {/* Footer */}
-        <div className={`px-6 py-3 border-t text-center ${
+        <div className={`px-6 py-4 border-t flex items-center justify-between gap-3 ${
           isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
         }`}>
           <p className="text-xs text-slate-500 font-medium">
             Use the tools above to draw diagrams, label components, or show your working
           </p>
+          {onSubmit && (
+            <button
+              onClick={handleSubmitDrawing}
+              className="px-6 py-2.5 bg-[#800000] hover:bg-[#600000] text-white font-bold rounded-xl transition-colors flex items-center gap-2 shrink-0"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Submit Drawing
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -1031,9 +1050,17 @@ function Quiz({
   isDarkMode: boolean
 }) {
   const [openWhiteboards, setOpenWhiteboards] = useState<Record<string, boolean>>({})
+  const [submittedDrawings, setSubmittedDrawings] = useState<Record<string, string>>({})
   
   const toggleWhiteboard = (id: string) => {
     setOpenWhiteboards((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const handleDrawingSubmit = (id: string, drawingData: string) => {
+    setSubmittedDrawings((prev) => ({ ...prev, [id]: drawingData }))
+    const currentAnswer = paperAnswers[id] || ""
+    const newAnswer = currentAnswer.trim() ? currentAnswer + "\n[Drawing submitted]" : "[Drawing submitted]"
+    setPaperAnswers(id, newAnswer)
   }
 
   const q = currentQuestions[currentQuestionIdx]
@@ -1137,6 +1164,17 @@ function Quiz({
                       value={paperAnswers[`${currentQuestionIdx}-${pIdx}`] || ""}
                       onChange={(e) => setPaperAnswers(`${currentQuestionIdx}-${pIdx}`, e.target.value)}
                     />
+
+                    {submittedDrawings[`${currentQuestionIdx}-${pIdx}`] && (
+                      <div className="mb-4 p-4 rounded-2xl border-2 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Submitted Drawing:</p>
+                        <img 
+                          src={submittedDrawings[`${currentQuestionIdx}-${pIdx}`]} 
+                          alt="Submitted drawing" 
+                          className="w-full rounded-xl shadow-sm max-h-64 object-contain"
+                        />
+                      </div>
+                    )}
                     
                     {/* Draw Button */}
                     <button
@@ -1158,6 +1196,9 @@ function Quiz({
                       isOpen={openWhiteboards[`${currentQuestionIdx}-${pIdx}`] || false}
                       onClose={() => toggleWhiteboard(`${currentQuestionIdx}-${pIdx}`)}
                       isDarkMode={isDarkMode}
+                      onSubmit={(drawingData) => {
+                        handleDrawingSubmit(`${currentQuestionIdx}-${pIdx}`, drawingData)
+                      }}
                     />
                     
                     <div className="space-y-4 mt-4">

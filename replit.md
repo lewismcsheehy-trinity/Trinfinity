@@ -1,6 +1,16 @@
 # Project Overview
 
-A Next.js 16 web application migrated from Vercel to Replit. Uses the App Router with React 19, Tailwind CSS v4, shadcn/ui components, and the AI SDK.
+A Next.js 16 web application for Trinity High School Physics - an official study portal for custom physics assessments and mark schemes. Migrated from Vercel to Replit.
+
+## Features
+
+- **Multiple learning modes**: Multiple choice, paper-based questions, retrieval practice, targets, definitions, and calculations
+- **Drawing canvas**: Interactive whiteboard in the quiz interface with support for freehand drawing, lines, circles, squares, and labels
+- **Submit drawings**: Users can submit drawings directly into their response area with a "Submit Drawing" button in the popup
+- **Answer marking**: View SQA marking instructions and submit marks for each question part
+- **Grid toggle**: Visual grid overlay option on the drawing canvas
+- **Color palette**: Multiple color options for drawing tools
+- **Adjustable brush size**: Line width slider for drawing
 
 ## Stack
 
@@ -8,6 +18,7 @@ A Next.js 16 web application migrated from Vercel to Replit. Uses the App Router
 - **Runtime**: Node.js 20
 - **Package manager**: pnpm
 - **Styling**: Tailwind CSS v4 with shadcn/ui (Radix UI primitives)
+- **Drawing**: HTML5 Canvas API
 - **AI**: Vercel AI SDK (`ai` package) with `@ai-sdk/gateway`
 - **Forms**: react-hook-form + zod
 - **Charts**: recharts
@@ -15,15 +26,19 @@ A Next.js 16 web application migrated from Vercel to Replit. Uses the App Router
 
 ## Project Structure
 
-- `app/` — Next.js App Router pages and API routes
-  - `api/generate-questions/` — AI question generation endpoint
-  - `layout.tsx` — Root layout
-  - `page.tsx` — Home page
-- `components/` — Shared UI components (shadcn/ui)
-- `hooks/` — Custom React hooks
+- `app/page.tsx` — Main application with Quiz, Whiteboard, and all modes
+- `app/api/generate-questions/` — AI question generation endpoint
+- `components/ui/` — shadcn/ui components (drawer, button, etc.)
 - `lib/` — Utility functions
-- `styles/` — Global styles
 - `public/` — Static assets
+
+## Drawing Feature Details
+
+The Whiteboard component provides:
+- **Tools**: Free draw, line, circle, square, label, eraser
+- **Submit Button**: Converts canvas to PNG and inserts into response area
+- **Submitted Drawing Display**: Shows submitted drawings as images in the response area
+- **Canvas Grid**: Toggle grid overlay for measurement reference
 
 ## Running the App
 
