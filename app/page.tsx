@@ -28,6 +28,7 @@ import {
   Type,
   Eraser,
   Trash2,
+  Grid3X3,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -588,18 +589,62 @@ function Whiteboard({
   const [lineWidth, setLineWidth] = useState(3)
   const [labelText, setLabelText] = useState("")
   const [labelPosition, setLabelPosition] = useState<{ x: number; y: number } | null>(null)
+  const [showGrid, setShowGrid] = useState(false)
+
+  const canvasWidth = 1000
+  const canvasHeight = 600
 
   const getCanvasCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
     const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     }
   }, [])
+
+  const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
+    const gridSize = 25
+    ctx.strokeStyle = isDarkMode ? "#334155" : "#e2e8f0"
+    ctx.lineWidth = 1
+
+    // Draw vertical lines
+    for (let x = 0; x <= canvasWidth; x += gridSize) {
+      ctx.beginPath()
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, canvasHeight)
+      ctx.stroke()
+    }
+
+    // Draw horizontal lines
+    for (let y = 0; y <= canvasHeight; y += gridSize) {
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(canvasWidth, y)
+      ctx.stroke()
+    }
+
+    // Draw thicker lines for major gridlines (every 5 squares)
+    ctx.strokeStyle = isDarkMode ? "#475569" : "#cbd5e1"
+    ctx.lineWidth = 1.5
+    for (let x = 0; x <= canvasWidth; x += gridSize * 5) {
+      ctx.beginPath()
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, canvasHeight)
+      ctx.stroke()
+    }
+    for (let y = 0; y <= canvasHeight; y += gridSize * 5) {
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(canvasWidth, y)
+      ctx.stroke()
+    }
+  }, [isDarkMode])
 
   const drawElement = useCallback((ctx: CanvasRenderingContext2D, el: DrawingElement) => {
     ctx.strokeStyle = el.color
@@ -654,11 +699,15 @@ function Whiteboard({
     ctx.fillStyle = isDarkMode ? "#1e293b" : "#ffffff"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+    if (showGrid) {
+      drawGrid(ctx)
+    }
+
     elements.forEach((el) => drawElement(ctx, el))
     if (currentElement) {
       drawElement(ctx, currentElement)
     }
-  }, [elements, currentElement, drawElement, isDarkMode])
+  }, [elements, currentElement, drawElement, isDarkMode, showGrid, drawGrid])
 
   useEffect(() => {
     redrawCanvas()
@@ -756,30 +805,52 @@ function Whiteboard({
   if (!isOpen) return null
 
   return (
-    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+    <div 
+      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
-        className={`rounded-2xl border-2 overflow-hidden ${
-          isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+        className={`w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden border-4 ${
+          isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-[#800000]"
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
+        <div className={`px-6 py-4 border-b flex items-center justify-between ${
+          isDarkMode ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-gradient-to-r from-[#800000] to-[#a00000]"
+        }`}>
+          <h3 className={`text-xl font-black uppercase tracking-tight ${isDarkMode ? "text-white" : "text-white"}`}>
+            Drawing Canvas
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-xl transition-colors ${
+              isDarkMode ? "hover:bg-slate-700 text-slate-300" : "hover:bg-white/20 text-white"
+            }`}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
         {/* Toolbar */}
         <div
-          className={`p-3 border-b flex flex-wrap items-center gap-2 ${
-            isDarkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-slate-50"
+          className={`px-6 py-4 border-b flex flex-wrap items-center gap-3 ${
+            isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
           }`}
         >
-          <div className="flex gap-1">
+          {/* Drawing Tools */}
+          <div className={`flex gap-1 p-1 rounded-xl ${isDarkMode ? "bg-slate-800" : "bg-white shadow-sm"}`}>
             {tools.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTool(t.id)}
                 title={t.label}
-                className={`p-2 rounded-lg transition-all ${
+                className={`p-2.5 rounded-lg transition-all ${
                   tool === t.id
                     ? "bg-[#800000] text-white shadow-lg"
                     : isDarkMode
                       ? "hover:bg-slate-700 text-slate-300"
-                      : "hover:bg-slate-200 text-slate-600"
+                      : "hover:bg-slate-100 text-slate-600"
                 }`}
               >
                 <t.icon className="w-5 h-5" />
@@ -787,60 +858,80 @@ function Whiteboard({
             ))}
           </div>
 
-          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1" />
+          <div className="w-px h-8 bg-slate-300 dark:bg-slate-600" />
 
-          <div className="flex gap-1">
+          {/* Colors */}
+          <div className={`flex gap-1.5 p-2 rounded-xl ${isDarkMode ? "bg-slate-800" : "bg-white shadow-sm"}`}>
             {colors.map((c) => (
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                className={`w-6 h-6 rounded-full transition-all ${
-                  color === c ? "ring-2 ring-offset-2 ring-[#800000] scale-110" : "hover:scale-110"
+                className={`w-7 h-7 rounded-full transition-all border-2 ${
+                  color === c 
+                    ? "ring-2 ring-offset-2 ring-[#800000] scale-110 border-white" 
+                    : "hover:scale-110 border-transparent"
                 }`}
                 style={{ backgroundColor: c }}
               />
             ))}
           </div>
 
-          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-1" />
+          <div className="w-px h-8 bg-slate-300 dark:bg-slate-600" />
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500">Size:</span>
+          {/* Line Width */}
+          <div className={`flex items-center gap-3 px-4 py-2 rounded-xl ${isDarkMode ? "bg-slate-800" : "bg-white shadow-sm"}`}>
+            <span className="text-xs font-bold text-slate-500 uppercase">Size</span>
             <input
               type="range"
               min="1"
               max="10"
               value={lineWidth}
               onChange={(e) => setLineWidth(Number(e.target.value))}
-              className="w-20 accent-[#800000]"
+              className="w-24 accent-[#800000]"
             />
+            <span className="text-sm font-bold text-[#800000] w-4">{lineWidth}</span>
           </div>
+
+          <div className="w-px h-8 bg-slate-300 dark:bg-slate-600" />
+
+          {/* Grid Toggle */}
+          <button
+            onClick={() => setShowGrid(!showGrid)}
+            title="Toggle Grid"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              showGrid
+                ? "bg-[#800000] text-white shadow-lg"
+                : isDarkMode
+                  ? "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  : "bg-white shadow-sm hover:bg-slate-100 text-slate-600"
+            }`}
+          >
+            <Grid3X3 className="w-4 h-4" />
+            Grid
+          </button>
 
           <div className="flex-1" />
 
+          {/* Clear */}
           <button
             onClick={clearCanvas}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
-            Clear
-          </button>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
+            Clear All
           </button>
         </div>
 
         {/* Canvas */}
-        <div className="relative">
+        <div className="relative p-4">
           <canvas
             ref={canvasRef}
-            width={800}
-            height={400}
-            className="w-full cursor-crosshair touch-none"
+            width={canvasWidth}
+            height={canvasHeight}
+            className={`w-full rounded-2xl cursor-crosshair touch-none shadow-inner ${
+              isDarkMode ? "bg-slate-800" : "bg-white"
+            }`}
+            style={{ aspectRatio: `${canvasWidth}/${canvasHeight}` }}
             onMouseDown={handleStart}
             onMouseMove={handleMove}
             onMouseUp={handleEnd}
@@ -853,10 +944,13 @@ function Whiteboard({
           {/* Label Input Popup */}
           {labelPosition && (
             <div
-              className={`absolute p-3 rounded-xl shadow-xl border-2 ${
-                isDarkMode ? "bg-slate-800 border-slate-600" : "bg-white border-slate-200"
+              className={`absolute p-4 rounded-2xl shadow-2xl border-2 z-10 ${
+                isDarkMode ? "bg-slate-800 border-slate-600" : "bg-white border-[#800000]"
               }`}
-              style={{ left: labelPosition.x, top: labelPosition.y }}
+              style={{ 
+                left: `calc(${(labelPosition.x / canvasWidth) * 100}% + 1rem)`, 
+                top: `calc(${(labelPosition.y / canvasHeight) * 100}% + 1rem)` 
+              }}
             >
               <input
                 type="text"
@@ -865,29 +959,38 @@ function Whiteboard({
                 onChange={(e) => setLabelText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLabelSubmit()}
                 autoFocus
-                className={`px-3 py-2 rounded-lg border text-sm font-medium outline-none focus:ring-2 ring-[#800000] ${
+                className={`px-4 py-2.5 rounded-xl border-2 text-sm font-medium outline-none focus:ring-2 ring-[#800000] w-48 ${
                   isDarkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200"
                 }`}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleLabelSubmit}
-                  className="flex-1 px-3 py-1.5 bg-[#800000] text-white text-xs font-bold rounded-lg"
+                  className="flex-1 px-4 py-2 bg-[#800000] text-white text-sm font-bold rounded-xl hover:bg-[#600000] transition-colors"
                 >
-                  Add
+                  Add Label
                 </button>
                 <button
                   onClick={() => {
                     setLabelPosition(null)
                     setLabelText("")
                   }}
-                  className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                  className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
               </div>
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className={`px-6 py-3 border-t text-center ${
+          isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
+        }`}>
+          <p className="text-xs text-slate-500 font-medium">
+            Use the tools above to draw diagrams, label components, or show your working
+          </p>
         </div>
       </div>
     </div>
