@@ -910,12 +910,15 @@ function FloatingMenu({
   isDarkMode,
   toggleDarkMode,
   openModal,
+  view,
 }: {
   isDarkMode: boolean
   toggleDarkMode: () => void
   openModal: (modal: string) => void
+  view: ViewType
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const showSyllabus = view === "mode" || view === "setup"
 
   return (
     <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
@@ -923,16 +926,30 @@ function FloatingMenu({
         <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
           <button
             onClick={() => {
-              openModal("coverage")
+              openModal("progress")
               setIsOpen(false)
             }}
-            className="bg-white dark:bg-slate-800 shadow-xl border-2 border-[#800000] p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+            className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
           >
-            <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-              <Table2 className="w-5 h-5 text-amber-600" />
+            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+              <Award className="w-5 h-5 text-amber-600" />
             </div>
-            <span className="text-sm font-black uppercase tracking-widest">Syllabus</span>
+            <span className="text-sm font-black uppercase tracking-widest">Progress</span>
           </button>
+          {showSyllabus && (
+            <button
+              onClick={() => {
+                openModal("coverage")
+                setIsOpen(false)
+              }}
+              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-[#800000] p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+            >
+              <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                <Table2 className="w-5 h-5 text-amber-600" />
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">Syllabus</span>
+            </button>
+          )}
           <button
             onClick={toggleDarkMode}
             className="bg-white dark:bg-slate-800 shadow-xl border-2 border-slate-200 dark:border-slate-700 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
@@ -961,6 +978,7 @@ function GenericModal({
   onToggleTopic,
   selectedLevel,
   isDarkMode,
+  topicPerformance,
 }: {
   activeModal: string | null
   onClose: () => void
@@ -968,8 +986,17 @@ function GenericModal({
   onToggleTopic: (topic: string) => void
   selectedLevel: string
   isDarkMode: boolean
+  topicPerformance: Record<string, { correct: number; total: number }>
 }) {
   if (!activeModal) return null
+
+  const subtopics = QA_SUBTOPICS[selectedLevel] || []
+  
+  // Calculate overall stats
+  const totalQuestions = Object.values(topicPerformance).reduce((sum, p) => sum + p.total, 0)
+  const totalCorrect = Object.values(topicPerformance).reduce((sum, p) => sum + p.correct, 0)
+  const overallPercentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0
+  const topicsAttempted = Object.keys(topicPerformance).filter(t => topicPerformance[t].total > 0).length
 
   return (
     <div
@@ -983,14 +1010,81 @@ function GenericModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-8">
-          <h3 className="text-3xl font-black italic tracking-tighter uppercase">{activeModal}</h3>
+          <h3 className="text-3xl font-black italic tracking-tighter uppercase">
+            {activeModal === "progress" ? "My Progress" : activeModal}
+          </h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
             <X />
           </button>
         </div>
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-          {activeModal === "coverage" &&
-            QA_SUBTOPICS[selectedLevel]?.map((t) => (
+        
+        {activeModal === "progress" && (
+          <div className="space-y-6">
+            {/* Overall Stats */}
+            <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-3xl font-black text-[#800000]">{overallPercentage}%</p>
+                  <p className="text-xs text-slate-500 font-bold uppercase">Overall</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-black text-amber-600">{totalQuestions}</p>
+                  <p className="text-xs text-slate-500 font-bold uppercase">Questions</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-black text-emerald-600">{topicsAttempted}</p>
+                  <p className="text-xs text-slate-500 font-bold uppercase">Topics</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Topic Breakdown */}
+            <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Topic Breakdown</p>
+              {subtopics.map((topic) => {
+                const perf = topicPerformance[topic]
+                const score = perf && perf.total > 0 ? Math.round((perf.correct / perf.total) * 100) : null
+                const hasData = perf && perf.total > 0
+                
+                return (
+                  <div
+                    key={topic}
+                    className={`p-4 rounded-2xl border ${
+                      isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold">{topic}</span>
+                      {hasData ? (
+                        <span className={`text-sm font-black ${
+                          score! >= 70 ? "text-emerald-600" : score! >= 50 ? "text-amber-600" : "text-red-600"
+                        }`}>
+                          {score}%
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Not attempted</span>
+                      )}
+                    </div>
+                    {hasData && (
+                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            score! >= 70 ? "bg-emerald-500" : score! >= 50 ? "bg-amber-500" : "bg-red-500"
+                          }`}
+                          style={{ width: `${score}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        
+        {activeModal === "coverage" && (
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            {subtopics.map((t) => (
               <div
                 key={t}
                 className={`flex justify-between items-center p-4 rounded-2xl border ${
@@ -1012,7 +1106,8 @@ function GenericModal({
                 </button>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1260,7 +1355,7 @@ includeALevel={includeALevel}
           />
         )}
       </main>
-      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} />
+      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} />
       <GenericModal
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
@@ -1268,6 +1363,7 @@ includeALevel={includeALevel}
         onToggleTopic={(t) => setUserCoverage((p) => ({ ...p, [t]: !p[t] }))}
         selectedLevel={selectedLevel}
         isDarkMode={isDarkMode}
+        topicPerformance={topicPerformance}
       />
     </div>
   )
