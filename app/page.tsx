@@ -917,26 +917,29 @@ function FloatingMenu({
   openModal: (modal: string) => void
   view: ViewType
 }) {
-  const [isOpen, setIsOpen] = useState(false)
+const [isOpen, setIsOpen] = useState(false)
   const showSyllabus = view === "mode" || view === "setup"
-
+  const showProgress = view !== "landing"
+  
   return (
-    <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
-      {isOpen && (
-        <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
-          <button
-            onClick={() => {
-              openModal("progress")
-              setIsOpen(false)
-            }}
-            className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-          >
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-              <Award className="w-5 h-5 text-amber-600" />
-            </div>
-            <span className="text-sm font-black uppercase tracking-widest">Progress</span>
-          </button>
-          {showSyllabus && (
+  <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
+  {isOpen && (
+  <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
+  {showProgress && (
+  <button
+  onClick={() => {
+  openModal("progress")
+  setIsOpen(false)
+  }}
+  className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+  >
+  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+  <Award className="w-5 h-5 text-amber-600" />
+  </div>
+  <span className="text-sm font-black uppercase tracking-widest">Progress</span>
+  </button>
+  )}
+  {showSyllabus && (
             <button
               onClick={() => {
                 openModal("coverage")
