@@ -14,7 +14,6 @@ import {
   Sparkles,
   Zap,
   Loader2,
-  Search,
   Menu,
   X,
   Moon,
@@ -305,6 +304,8 @@ function SetupView({
   onBack,
   includeALevel,
   setIncludeALevel,
+  includeOpenEnded,
+  setIncludeOpenEnded,
   includeMultiTopic,
   setIncludeMultiTopic,
   isDarkMode,
@@ -316,14 +317,14 @@ function SetupView({
   onBack: () => void
   includeALevel: boolean
   setIncludeALevel: (val: boolean) => void
+  includeOpenEnded: boolean
+  setIncludeOpenEnded: (val: boolean) => void
   includeMultiTopic: boolean
   setIncludeMultiTopic: (val: boolean) => void
   isDarkMode: boolean
 }) {
-  const [search, setSearch] = useState("")
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const subtopics = QA_SUBTOPICS[selectedLevel] || []
-  const filteredSubtopics = subtopics.filter((t) => t.toLowerCase().includes(search.toLowerCase()))
 
   const toggleTopic = (topic: string) => {
     setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
@@ -362,20 +363,8 @@ function SetupView({
               )}
             </h3>
 
-            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                placeholder="Find a specific subtopic..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:ring-2 ring-amber-500 focus:border-amber-500 outline-none transition-all ${
-                  isDarkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-100"
-                }`}
-              />
-            </div>
-
             <div className="flex flex-wrap gap-2">
-              {filteredSubtopics.map((topic) => {
+              {subtopics.map((topic) => {
                 const isSelected = selectedTopics.includes(topic)
                 return (
                   <button
@@ -414,7 +403,7 @@ function SetupView({
                 }`}
               >
                 <div>
-                  <p className="font-black text-slate-800 dark:text-white">Extension Material</p>
+                  <p className="font-black text-slate-800 dark:text-white">A-Level Challenge</p>
                   <p className="text-xs text-slate-500">Include challenge questions beyond core syllabus</p>
                 </div>
                 <input
@@ -432,7 +421,25 @@ function SetupView({
                 }`}
               >
                 <div>
-                  <p className="font-black text-slate-800 dark:text-white">Synoptic Tasks</p>
+                  <p className="font-black text-slate-800 dark:text-white">Open Ended</p>
+                  <p className="text-xs text-slate-500">Include open-ended problem solving questions</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={includeOpenEnded}
+                  onChange={(e) => setIncludeOpenEnded(e.target.checked)}
+                  className="w-6 h-6 rounded-lg accent-[#800000]"
+                />
+              </label>
+              <label
+                className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                  isDarkMode
+                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
+                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
+                }`}
+              >
+                <div>
+                  <p className="font-black text-slate-800 dark:text-white">Multi-topic</p>
                   <p className="text-xs text-slate-500">Cross-topic application and problem solving</p>
                 </div>
                 <input
@@ -999,6 +1006,7 @@ export default function App() {
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [userCoverage, setUserCoverage] = useState<Record<string, boolean>>({})
   const [includeALevel, setIncludeALevel] = useState(false)
+  const [includeOpenEnded, setIncludeOpenEnded] = useState(false)
   const [includeMultiTopic, setIncludeMultiTopic] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
@@ -1141,10 +1149,12 @@ export default function App() {
             onGenerate={generateQuestions}
             isGenerating={isGenerating}
             onBack={() => setView("mode")}
-            includeALevel={includeALevel}
-            setIncludeALevel={setIncludeALevel}
-            includeMultiTopic={includeMultiTopic}
-            setIncludeMultiTopic={setIncludeMultiTopic}
+includeALevel={includeALevel}
+  setIncludeALevel={setIncludeALevel}
+  includeOpenEnded={includeOpenEnded}
+  setIncludeOpenEnded={setIncludeOpenEnded}
+  includeMultiTopic={includeMultiTopic}
+  setIncludeMultiTopic={setIncludeMultiTopic}
             isDarkMode={isDarkMode}
           />
         )}
