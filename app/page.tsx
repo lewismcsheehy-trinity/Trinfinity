@@ -101,7 +101,7 @@ const QA_SUBTOPICS: Record<string, string[]> = {
 
 type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "landing" | "mode" | "setup" | "quiz" | "results"
+type ViewType = "landing" | "mode" | "setup" | "quiz" | "results" | "definitions"
 
 interface MCQuestion {
   type: "mc"
@@ -130,6 +130,757 @@ interface PaperQuestion {
 }
 
 type Question = MCQuestion | PaperQuestion
+
+// --- Definitions Mode Types & Data ---
+
+interface DefinitionEntry {
+  term: string
+  definition: string
+  topic: string
+  level: string
+  keywords: string[]
+}
+
+interface DefMCQuestion {
+  type: "def-mc"
+  entry: DefinitionEntry
+  options: string[]
+  answer: number
+}
+
+interface DefClozeQuestion {
+  type: "def-cloze"
+  entry: DefinitionEntry
+  keyword: string
+  blankedDefinition: string
+}
+
+interface DefMatchQuestion {
+  type: "def-match"
+  pairs: { term: string; definition: string }[]
+}
+
+type DefQuestion = DefMCQuestion | DefClozeQuestion | DefMatchQuestion
+
+const DEFINITIONS_BANK: DefinitionEntry[] = [
+  // National 5 — Vectors and Scalars
+  { term: "Vector", definition: "A quantity that has both magnitude and direction", topic: "Vectors and Scalars", level: "National 5", keywords: ["magnitude", "direction"] },
+  { term: "Scalar", definition: "A quantity that has magnitude only", topic: "Vectors and Scalars", level: "National 5", keywords: ["magnitude"] },
+  { term: "Resultant", definition: "The single equivalent vector that produces the same effect as two or more vectors combined", topic: "Vectors and Scalars", level: "National 5", keywords: ["equivalent", "vector"] },
+
+  // National 5 — Velocity-time graphs
+  { term: "Velocity", definition: "The rate of change of displacement; a vector quantity with both magnitude and direction", topic: "Velocity-time graphs", level: "National 5", keywords: ["displacement", "direction"] },
+  { term: "Displacement", definition: "The distance travelled in a specified direction from a starting point", topic: "Velocity-time graphs", level: "National 5", keywords: ["distance", "direction"] },
+  { term: "Uniform velocity", definition: "Motion in which equal distances are covered in equal time intervals in the same direction", topic: "Velocity-time graphs", level: "National 5", keywords: ["distances", "time"] },
+
+  // National 5 — Acceleration
+  { term: "Acceleration", definition: "The rate of change of velocity", topic: "Acceleration", level: "National 5", keywords: ["velocity"] },
+  { term: "Deceleration", definition: "A negative acceleration where an object is slowing down", topic: "Acceleration", level: "National 5", keywords: ["negative", "slowing"] },
+
+  // National 5 — Newton's Laws
+  { term: "Newton's First Law", definition: "An object remains at rest or in uniform motion unless acted upon by an unbalanced force", topic: "Newton's Laws", level: "National 5", keywords: ["unbalanced", "force"] },
+  { term: "Newton's Second Law", definition: "The unbalanced force on an object equals the product of its mass and acceleration", topic: "Newton's Laws", level: "National 5", keywords: ["mass", "acceleration"] },
+  { term: "Newton's Third Law", definition: "Every action has an equal and opposite reaction force acting on a different object", topic: "Newton's Laws", level: "National 5", keywords: ["equal", "opposite"] },
+  { term: "Friction", definition: "A contact force that opposes the relative motion of two surfaces", topic: "Newton's Laws", level: "National 5", keywords: ["opposes", "motion"] },
+
+  // National 5 — Projectile Motion
+  { term: "Projectile", definition: "An object given an initial velocity that then moves under gravity alone", topic: "Projectile Motion", level: "National 5", keywords: ["gravity", "velocity"] },
+
+  // National 5 — Space Exploration
+  { term: "Gravitational field strength", definition: "The gravitational force acting per unit mass at a point in a gravitational field", topic: "Space Exploration", level: "National 5", keywords: ["force", "mass"] },
+  { term: "Weight", definition: "The gravitational force acting on an object due to its mass", topic: "Space Exploration", level: "National 5", keywords: ["gravitational", "force"] },
+
+  // National 5 — Cosmology
+  { term: "Light year", definition: "The distance light travels in one year through a vacuum", topic: "Cosmology", level: "National 5", keywords: ["distance", "light"] },
+  { term: "Big Bang", definition: "The theory that the universe began as an extremely hot, dense point and has been expanding ever since", topic: "Cosmology", level: "National 5", keywords: ["universe", "expanding"] },
+
+  // National 5 — Specific Heat Capacity
+  { term: "Specific heat capacity", definition: "The energy required to raise the temperature of 1 kg of a substance by 1°C", topic: "Specific Heat Capacity", level: "National 5", keywords: ["energy", "temperature"] },
+  { term: "Thermal energy", definition: "The energy stored internally in a substance due to the motion of its particles", topic: "Specific Heat Capacity", level: "National 5", keywords: ["energy", "particles"] },
+
+  // National 5 — Pressure, Kinetic Theory and Gas Laws
+  { term: "Pressure", definition: "The force acting per unit area on a surface", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["force", "area"] },
+  { term: "Kinetic theory", definition: "The model that describes gas behaviour by considering the random motion of particles", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["random", "motion"] },
+
+  // National 5 — Current, voltage and resistance
+  { term: "Electric current", definition: "The rate of flow of electric charge", topic: "Current, voltage and resistance", level: "National 5", keywords: ["charge"] },
+  { term: "Potential difference", definition: "The energy transferred per unit charge between two points in a circuit", topic: "Current, voltage and resistance", level: "National 5", keywords: ["energy", "charge"] },
+  { term: "Resistance", definition: "The opposition to the flow of electric current in a conductor", topic: "Current, voltage and resistance", level: "National 5", keywords: ["opposition", "current"] },
+
+  // National 5 — Electrical Power
+  { term: "Power", definition: "The rate at which energy is transferred or work is done", topic: "Electrical Power", level: "National 5", keywords: ["energy", "rate"] },
+
+  // National 5 — Specific Latent Heat
+  { term: "Specific latent heat", definition: "The energy required to change the state of 1 kg of a substance without a change in temperature", topic: "Specific Latent Heat", level: "National 5", keywords: ["energy", "state", "temperature"] },
+
+  // National 5 — Nuclear Radiation
+  { term: "Alpha particle", definition: "A helium nucleus consisting of 2 protons and 2 neutrons emitted from a radioactive nucleus", topic: "Nuclear Radiation", level: "National 5", keywords: ["protons", "neutrons"] },
+  { term: "Beta particle", definition: "A fast-moving electron emitted from a nucleus during radioactive decay", topic: "Nuclear Radiation", level: "National 5", keywords: ["electron", "nucleus"] },
+  { term: "Gamma ray", definition: "A high-frequency electromagnetic wave emitted from an excited nucleus", topic: "Nuclear Radiation", level: "National 5", keywords: ["electromagnetic", "nucleus"] },
+  { term: "Half-life", definition: "The time taken for half the radioactive nuclei in a sample to decay", topic: "Nuclear Radiation", level: "National 5", keywords: ["decay", "time"] },
+
+  // National 5 — Wave properties
+  { term: "Amplitude", definition: "The maximum displacement of a wave from its undisturbed rest position", topic: "Wave properties", level: "National 5", keywords: ["displacement"] },
+  { term: "Frequency", definition: "The number of complete waves passing a fixed point per second", topic: "Wave properties", level: "National 5", keywords: ["waves", "second"] },
+  { term: "Wavelength", definition: "The distance between two successive identical points on a wave, such as crest to crest", topic: "Wave properties", level: "National 5", keywords: ["distance", "crest"] },
+  { term: "Transverse wave", definition: "A wave in which the oscillations are perpendicular to the direction of propagation", topic: "Wave properties", level: "National 5", keywords: ["perpendicular", "propagation"] },
+  { term: "Longitudinal wave", definition: "A wave in which the oscillations are parallel to the direction of propagation", topic: "Wave properties", level: "National 5", keywords: ["parallel", "propagation"] },
+
+  // National 5 — Refraction of light
+  { term: "Refraction", definition: "The change in direction of a wave as it passes from one medium to another due to a change in speed", topic: "Refraction of light", level: "National 5", keywords: ["direction", "speed"] },
+  { term: "Critical angle", definition: "The angle of incidence beyond which total internal reflection occurs", topic: "Refraction of light", level: "National 5", keywords: ["total", "internal", "reflection"] },
+  { term: "Total internal reflection", definition: "When a wave is completely reflected back into the original medium when the angle of incidence exceeds the critical angle", topic: "Refraction of light", level: "National 5", keywords: ["reflected", "critical"] },
+
+  // National 5 — EM Spectrum
+  { term: "Electromagnetic spectrum", definition: "The complete range of electromagnetic radiation ordered by frequency and wavelength", topic: "EM Spectrum", level: "National 5", keywords: ["frequency", "wavelength"] },
+  { term: "Electromagnetic wave", definition: "A transverse wave consisting of oscillating electric and magnetic fields that travels at the speed of light", topic: "EM Spectrum", level: "National 5", keywords: ["electric", "magnetic", "light"] },
+
+  // Higher — Equations of Motion
+  { term: "Uniform acceleration", definition: "Motion where the rate of change of velocity remains constant over time", topic: "Equations of Motion", level: "Higher", keywords: ["constant", "velocity"] },
+
+  // Higher — Forces, Energy and Power
+  { term: "Work", definition: "The energy transferred when a force causes displacement in the direction of the force", topic: "Forces, Energy and Power", level: "Higher", keywords: ["energy", "force", "displacement"] },
+  { term: "Kinetic energy", definition: "The energy an object possesses due to its motion", topic: "Forces, Energy and Power", level: "Higher", keywords: ["motion"] },
+  { term: "Gravitational potential energy", definition: "The energy stored in an object due to its height in a gravitational field", topic: "Forces, Energy and Power", level: "Higher", keywords: ["height", "gravitational"] },
+
+  // Higher — Collisions, Momentum and Impulse
+  { term: "Momentum", definition: "The product of an object's mass and velocity; a vector quantity", topic: "Collisions, Momentum and Impulse", level: "Higher", keywords: ["mass", "velocity"] },
+  { term: "Conservation of momentum", definition: "The total momentum of a closed system remains constant when no external forces act", topic: "Collisions, Momentum and Impulse", level: "Higher", keywords: ["constant", "external"] },
+  { term: "Impulse", definition: "The change in momentum of an object; equal to the product of force and the time it acts", topic: "Collisions, Momentum and Impulse", level: "Higher", keywords: ["momentum", "force", "time"] },
+  { term: "Elastic collision", definition: "A collision in which both momentum and kinetic energy are conserved", topic: "Collisions, Momentum and Impulse", level: "Higher", keywords: ["kinetic", "momentum", "conserved"] },
+  { term: "Inelastic collision", definition: "A collision in which momentum is conserved but kinetic energy is not conserved", topic: "Collisions, Momentum and Impulse", level: "Higher", keywords: ["momentum", "kinetic"] },
+
+  // Higher — Gravitation
+  { term: "Newton's Law of Universal Gravitation", definition: "Every object attracts every other object with a force proportional to the product of their masses and inversely proportional to the square of the distance between them", topic: "Gravitation", level: "Higher", keywords: ["masses", "distance"] },
+  { term: "Gravitational field", definition: "A region of space in which an object with mass experiences a force", topic: "Gravitation", level: "Higher", keywords: ["mass", "force"] },
+
+  // Higher — Special Relativity
+  { term: "Time dilation", definition: "The slowing of time experienced by an object moving at high speed relative to a stationary observer", topic: "Special Relativity", level: "Higher", keywords: ["time", "speed"] },
+  { term: "Length contraction", definition: "The shortening of an object in the direction of motion as observed from a stationary reference frame", topic: "Special Relativity", level: "Higher", keywords: ["shortening", "motion"] },
+  { term: "Proper time", definition: "The time interval measured by a clock that is at rest relative to the events being observed", topic: "Special Relativity", level: "Higher", keywords: ["rest", "clock"] },
+  { term: "Rest mass", definition: "The mass of an object measured when it is stationary relative to the observer", topic: "Special Relativity", level: "Higher", keywords: ["stationary", "observer"] },
+
+  // Higher — The Expanding Universe
+  { term: "Hubble's Law", definition: "The recession speed of a galaxy is proportional to its distance from us", topic: "The Expanding Universe", level: "Higher", keywords: ["recession", "distance"] },
+  { term: "Red shift", definition: "The shift of spectral lines toward longer wavelengths due to the recession of a light source", topic: "The Expanding Universe", level: "Higher", keywords: ["wavelengths", "recession"] },
+
+  // Higher — The Standard Model
+  { term: "Quark", definition: "A fundamental particle that combines with other quarks to form hadrons such as protons and neutrons", topic: "The Standard Model", level: "Higher", keywords: ["fundamental", "hadrons"] },
+  { term: "Lepton", definition: "A fundamental particle such as the electron or neutrino that does not experience the strong nuclear force", topic: "The Standard Model", level: "Higher", keywords: ["electron", "strong"] },
+  { term: "Hadron", definition: "A composite particle made of quarks bound together by the strong nuclear force", topic: "The Standard Model", level: "Higher", keywords: ["quarks", "strong"] },
+  { term: "Antimatter", definition: "Matter composed of antiparticles that have the same mass as their corresponding particles but opposite charge", topic: "The Standard Model", level: "Higher", keywords: ["antiparticles", "charge"] },
+
+  // Higher — Forces on Charged Particles
+  { term: "Electric field", definition: "A region of space in which a charged particle experiences an electric force", topic: "Forces on Charged Particles", level: "Higher", keywords: ["charged", "force"] },
+  { term: "Magnetic force", definition: "The force experienced by a moving charged particle in a magnetic field", topic: "Forces on Charged Particles", level: "Higher", keywords: ["moving", "charged"] },
+
+  // Higher — Nuclear Reactions
+  { term: "Nuclear fission", definition: "The splitting of a large nucleus into smaller nuclei accompanied by the release of energy", topic: "Nuclear Reactions", level: "Higher", keywords: ["splitting", "energy"] },
+  { term: "Nuclear fusion", definition: "The joining of two light nuclei to form a heavier nucleus accompanied by the release of energy", topic: "Nuclear Reactions", level: "Higher", keywords: ["joining", "energy"] },
+  { term: "Binding energy", definition: "The energy required to completely separate all the nucleons in a nucleus", topic: "Nuclear Reactions", level: "Higher", keywords: ["nucleons", "separate"] },
+  { term: "Mass defect", definition: "The difference between the mass of a nucleus and the sum of the masses of its individual nucleons", topic: "Nuclear Reactions", level: "Higher", keywords: ["mass", "nucleons"] },
+
+  // Higher — Inverse Square Law
+  { term: "Inverse square law", definition: "The intensity of radiation decreases in proportion to the square of the distance from the source", topic: "Inverse Square Law", level: "Higher", keywords: ["intensity", "distance"] },
+  { term: "Irradiance", definition: "The power of electromagnetic radiation incident per unit area of a surface", topic: "Inverse Square Law", level: "Higher", keywords: ["power", "area"] },
+
+  // Higher — Wave-Particle Duality
+  { term: "Photoelectric effect", definition: "The emission of electrons from a metal surface when light of sufficient frequency shines on it", topic: "Wave-Particle Duality", level: "Higher", keywords: ["electrons", "frequency"] },
+  { term: "Work function", definition: "The minimum energy required to remove an electron from the surface of a metal", topic: "Wave-Particle Duality", level: "Higher", keywords: ["minimum", "energy", "electron"] },
+  { term: "de Broglie wavelength", definition: "The wavelength associated with a moving particle, inversely proportional to its momentum", topic: "Wave-Particle Duality", level: "Higher", keywords: ["wavelength", "momentum"] },
+  { term: "Photon", definition: "A discrete packet (quantum) of electromagnetic energy", topic: "Wave-Particle Duality", level: "Higher", keywords: ["quantum", "energy"] },
+
+  // Higher — Interference
+  { term: "Constructive interference", definition: "When two waves meet in phase so their amplitudes add together to give a larger resultant amplitude", topic: "Interference", level: "Higher", keywords: ["phase", "amplitudes"] },
+  { term: "Destructive interference", definition: "When two waves meet exactly out of phase so their amplitudes cancel to give a smaller resultant amplitude", topic: "Interference", level: "Higher", keywords: ["out of phase", "cancel"] },
+  { term: "Coherent sources", definition: "Sources that emit waves of the same frequency with a constant phase relationship", topic: "Interference", level: "Higher", keywords: ["frequency", "phase"] },
+
+  // Higher — Refraction
+  { term: "Snell's Law", definition: "The ratio of the sine of the angle of incidence to the sine of the angle of refraction equals the refractive index", topic: "Refraction", level: "Higher", keywords: ["sine", "incidence", "refraction"] },
+  { term: "Refractive index", definition: "The ratio of the speed of light in a vacuum to the speed of light in a given medium", topic: "Refraction", level: "Higher", keywords: ["speed", "vacuum", "medium"] },
+
+  // Higher — Spectra
+  { term: "Line emission spectrum", definition: "A series of discrete bright lines produced when excited atoms emit photons at specific wavelengths", topic: "Spectra", level: "Higher", keywords: ["discrete", "photons"] },
+  { term: "Line absorption spectrum", definition: "Dark lines on an otherwise continuous spectrum where specific wavelengths have been absorbed by atoms", topic: "Spectra", level: "Higher", keywords: ["absorbed", "wavelengths"] },
+  { term: "Continuous spectrum", definition: "A spectrum that contains all wavelengths of light within a given range", topic: "Spectra", level: "Higher", keywords: ["wavelengths", "range"] },
+
+  // Higher — Rayleigh Criterion
+  { term: "Rayleigh criterion", definition: "Two point sources are just resolved when the central maximum of one diffraction pattern coincides with the first minimum of the other", topic: "Rayleigh Criterion", level: "Higher", keywords: ["maximum", "minimum", "diffraction"] },
+  { term: "Angular resolution", definition: "The minimum angular separation at which two objects can be distinguished as separate", topic: "Rayleigh Criterion", level: "Higher", keywords: ["angular", "separation"] },
+
+  // Higher — Monitoring and Measuring AC
+  { term: "Peak voltage", definition: "The maximum voltage reached during one AC cycle", topic: "Monitoring and Measuring AC", level: "Higher", keywords: ["maximum", "voltage"] },
+  { term: "RMS voltage", definition: "The equivalent DC voltage that delivers the same average power as the AC voltage", topic: "Monitoring and Measuring AC", level: "Higher", keywords: ["equivalent", "power"] },
+  { term: "Frequency (AC)", definition: "The number of complete AC cycles per second, measured in hertz", topic: "Monitoring and Measuring AC", level: "Higher", keywords: ["cycles", "hertz"] },
+
+  // Higher — Current, Potential Difference, Power and Resistance
+  { term: "Ohm's Law", definition: "The current through a conductor is directly proportional to the potential difference across it, provided temperature remains constant", topic: "Current, Potential Difference, Power and Resistance", level: "Higher", keywords: ["proportional", "temperature"] },
+  { term: "Series circuit", definition: "A circuit in which components are connected end to end so the same current flows through each", topic: "Current, Potential Difference, Power and Resistance", level: "Higher", keywords: ["current", "components"] },
+  { term: "Parallel circuit", definition: "A circuit in which components are connected across the same potential difference", topic: "Current, Potential Difference, Power and Resistance", level: "Higher", keywords: ["potential", "components"] },
+
+  // Higher — Electrical Sources and Internal Resistance
+  { term: "EMF (electromotive force)", definition: "The energy given to each coulomb of charge by the source of electrical energy", topic: "Electrical Sources and Internal Resistance", level: "Higher", keywords: ["energy", "charge"] },
+  { term: "Internal resistance", definition: "The resistance to current flow within the electrical source itself", topic: "Electrical Sources and Internal Resistance", level: "Higher", keywords: ["resistance", "source"] },
+  { term: "Terminal potential difference", definition: "The potential difference across the terminals of a source when it is delivering current to an external circuit", topic: "Electrical Sources and Internal Resistance", level: "Higher", keywords: ["terminals", "current"] },
+
+  // Higher — Capacitors
+  { term: "Capacitance", definition: "The ratio of the charge stored on a capacitor to the potential difference across its plates", topic: "Capacitors", level: "Higher", keywords: ["charge", "potential"] },
+  { term: "Time constant", definition: "The time for the charge on a discharging capacitor to fall to approximately 37% of its initial value", topic: "Capacitors", level: "Higher", keywords: ["charge", "discharging"] },
+
+  // Higher — Semiconductors
+  { term: "n-type semiconductor", definition: "A semiconductor doped with donor atoms that provide extra free electrons as charge carriers", topic: "Semiconductors", level: "Higher", keywords: ["electrons", "donor"] },
+  { term: "p-type semiconductor", definition: "A semiconductor doped with acceptor atoms that create positive holes as charge carriers", topic: "Semiconductors", level: "Higher", keywords: ["holes", "acceptor"] },
+  { term: "p-n junction", definition: "The boundary between p-type and n-type semiconductor material where a depletion layer forms", topic: "Semiconductors", level: "Higher", keywords: ["depletion", "boundary"] },
+
+  // Advanced Higher — Kinematic Relationships
+  { term: "Jerk", definition: "The rate of change of acceleration with respect to time", topic: "Kinematic Relationships", level: "Advanced Higher", keywords: ["acceleration", "time"] },
+
+  // Advanced Higher — Angular Motion
+  { term: "Angular velocity", definition: "The rate of change of angular displacement; measured in radians per second", topic: "Angular Motion", level: "Advanced Higher", keywords: ["angular", "displacement"] },
+  { term: "Angular acceleration", definition: "The rate of change of angular velocity; measured in radians per second squared", topic: "Angular Motion", level: "Advanced Higher", keywords: ["angular", "velocity"] },
+  { term: "Radian", definition: "The angle subtended at the centre of a circle by an arc whose length equals the radius", topic: "Angular Motion", level: "Advanced Higher", keywords: ["arc", "radius"] },
+
+  // Advanced Higher — Rotational Dynamics
+  { term: "Torque", definition: "The turning effect of a force about an axis; equal to the force multiplied by the perpendicular distance from the axis", topic: "Rotational Dynamics", level: "Advanced Higher", keywords: ["force", "perpendicular", "distance"] },
+  { term: "Moment of inertia", definition: "The rotational analogue of mass; a measure of an object's resistance to angular acceleration", topic: "Rotational Dynamics", level: "Advanced Higher", keywords: ["mass", "angular", "resistance"] },
+
+  // Advanced Higher — Angular Momentum
+  { term: "Angular momentum", definition: "The product of an object's moment of inertia and its angular velocity", topic: "Angular Momentum", level: "Advanced Higher", keywords: ["moment of inertia", "angular velocity"] },
+  { term: "Conservation of angular momentum", definition: "The total angular momentum of an isolated system remains constant when no external torques act on it", topic: "Angular Momentum", level: "Advanced Higher", keywords: ["constant", "torques"] },
+
+  // Advanced Higher — Gravitation
+  { term: "Gravitational potential", definition: "The work done per unit mass to bring a test mass from infinity to a given point in a gravitational field", topic: "Gravitation", level: "Advanced Higher", keywords: ["work", "mass", "infinity"] },
+  { term: "Escape velocity", definition: "The minimum speed an object needs to escape a gravitational field without further propulsion", topic: "Gravitation", level: "Advanced Higher", keywords: ["minimum", "speed", "escape"] },
+
+  // Advanced Higher — General Relativity
+  { term: "Equivalence principle", definition: "A gravitational field is locally indistinguishable from an accelerating reference frame", topic: "General Relativity", level: "Advanced Higher", keywords: ["gravitational", "accelerating"] },
+  { term: "Spacetime", definition: "The four-dimensional continuum that combines three spatial dimensions with time", topic: "General Relativity", level: "Advanced Higher", keywords: ["four-dimensional", "time"] },
+  { term: "Gravitational time dilation", definition: "Clocks run slower in regions of stronger gravitational fields compared to regions of weaker gravitational fields", topic: "General Relativity", level: "Advanced Higher", keywords: ["slower", "gravitational"] },
+
+  // Advanced Higher — Stellar Physics
+  { term: "Luminosity", definition: "The total power output of a star, measured in watts", topic: "Stellar Physics", level: "Advanced Higher", keywords: ["power", "star"] },
+  { term: "Stefan-Boltzmann Law", definition: "The total energy radiated per unit surface area of a black body is proportional to the fourth power of its absolute temperature", topic: "Stellar Physics", level: "Advanced Higher", keywords: ["temperature", "power"] },
+  { term: "Hertzsprung-Russell diagram", definition: "A scatter graph plotting stellar luminosity against surface temperature used to classify stars into groups", topic: "Stellar Physics", level: "Advanced Higher", keywords: ["luminosity", "temperature"] },
+
+  // Advanced Higher — Introduction to Quantum Theory
+  { term: "Wave function", definition: "A mathematical function whose squared modulus gives the probability density of finding a particle at a given location", topic: "Introduction to Quantum Theory", level: "Advanced Higher", keywords: ["probability", "particle"] },
+  { term: "Heisenberg Uncertainty Principle", definition: "It is impossible to simultaneously know both the exact position and exact momentum of a particle with unlimited precision", topic: "Introduction to Quantum Theory", level: "Advanced Higher", keywords: ["position", "momentum", "precision"] },
+  { term: "Quantisation", definition: "The restriction of a physical quantity such as energy to discrete allowed values", topic: "Introduction to Quantum Theory", level: "Advanced Higher", keywords: ["discrete", "energy"] },
+
+  // Advanced Higher — Particles from Space
+  { term: "Cosmic rays", definition: "High-energy particles, mainly protons and alpha particles, arriving at Earth from space", topic: "Particles from Space", level: "Advanced Higher", keywords: ["high-energy", "protons", "space"] },
+  { term: "Pair production", definition: "The creation of a particle and its antiparticle from a high-energy photon in the vicinity of a nucleus", topic: "Particles from Space", level: "Advanced Higher", keywords: ["antiparticle", "photon"] },
+  { term: "Annihilation", definition: "The process in which a particle meets its antiparticle and both are converted into two photons of equal energy", topic: "Particles from Space", level: "Advanced Higher", keywords: ["antiparticle", "photons"] },
+
+  // Advanced Higher — Simple Harmonic Motion
+  { term: "Simple harmonic motion", definition: "Oscillatory motion in which the acceleration is directly proportional to displacement from equilibrium and directed towards it", topic: "Simple Harmonic Motion", level: "Advanced Higher", keywords: ["acceleration", "displacement", "equilibrium"] },
+  { term: "Period (SHM)", definition: "The time taken for one complete oscillation of a simple harmonic oscillator", topic: "Simple Harmonic Motion", level: "Advanced Higher", keywords: ["time", "oscillation"] },
+  { term: "Restoring force", definition: "The force that acts to return an oscillating object towards its equilibrium position", topic: "Simple Harmonic Motion", level: "Advanced Higher", keywords: ["equilibrium", "return"] },
+
+  // Advanced Higher — Waves
+  { term: "Standing wave", definition: "A wave pattern formed by the superposition of two identical waves travelling in opposite directions", topic: "Waves", level: "Advanced Higher", keywords: ["superposition", "opposite"] },
+  { term: "Node", definition: "A point of zero displacement on a standing wave where destructive interference occurs permanently", topic: "Waves", level: "Advanced Higher", keywords: ["zero", "displacement"] },
+  { term: "Antinode", definition: "A point of maximum displacement on a standing wave where constructive interference occurs permanently", topic: "Waves", level: "Advanced Higher", keywords: ["maximum", "displacement"] },
+
+  // Advanced Higher — Interference
+  { term: "Path difference", definition: "The difference in distance travelled by two waves from their respective sources to a given observation point", topic: "Interference", level: "Advanced Higher", keywords: ["distance", "sources"] },
+  { term: "Fringe spacing", definition: "The distance between adjacent bright (or dark) fringes in a two-source interference pattern", topic: "Interference", level: "Advanced Higher", keywords: ["bright", "dark", "distance"] },
+
+  // Advanced Higher — Polarisation
+  { term: "Polarisation", definition: "The restriction of transverse wave oscillations to a single plane", topic: "Polarisation", level: "Advanced Higher", keywords: ["transverse", "plane"] },
+  { term: "Malus's Law", definition: "The intensity of polarised light transmitted through a polariser is proportional to the square of the cosine of the angle between their transmission axes", topic: "Polarisation", level: "Advanced Higher", keywords: ["intensity", "cosine", "angle"] },
+
+  // Advanced Higher — Electrostatics
+  { term: "Electric potential", definition: "The work done per unit positive charge in bringing a test charge from infinity to a given point in an electric field", topic: "Electrostatics", level: "Advanced Higher", keywords: ["work", "charge", "infinity"] },
+  { term: "Coulomb's Law", definition: "The electrostatic force between two point charges is proportional to the product of the charges and inversely proportional to the square of the distance between them", topic: "Electrostatics", level: "Advanced Higher", keywords: ["charges", "distance"] },
+
+  // Advanced Higher — Electromagnetism
+  { term: "Magnetic flux", definition: "The product of the component of magnetic field perpendicular to an area and that area", topic: "Electromagnetism", level: "Advanced Higher", keywords: ["magnetic", "area"] },
+  { term: "Faraday's Law", definition: "The induced EMF in a circuit is equal to the negative rate of change of magnetic flux linkage", topic: "Electromagnetism", level: "Advanced Higher", keywords: ["EMF", "flux"] },
+  { term: "Lenz's Law", definition: "The direction of an induced current is always such that it opposes the change in magnetic flux that caused it", topic: "Electromagnetism", level: "Advanced Higher", keywords: ["opposes", "flux"] },
+
+  // Advanced Higher — Capacitance and Inductance
+  { term: "Self-inductance", definition: "The property of a coil by which a changing current through it induces an opposing EMF in the coil itself", topic: "Capacitance and Inductance", level: "Advanced Higher", keywords: ["EMF", "current"] },
+  { term: "Inductor", definition: "A component that stores energy in a magnetic field and opposes changes in current through it", topic: "Capacitance and Inductance", level: "Advanced Higher", keywords: ["magnetic", "energy", "current"] },
+
+  // Advanced Higher — Uncertainties
+  { term: "Absolute uncertainty", definition: "The uncertainty in a measurement expressed in the same units as the measurement itself", topic: "Uncertainties", level: "Advanced Higher", keywords: ["units", "measurement"] },
+  { term: "Percentage uncertainty", definition: "The absolute uncertainty expressed as a percentage of the measured value", topic: "Uncertainties", level: "Advanced Higher", keywords: ["absolute", "percentage"] },
+  { term: "Random error", definition: "An unpredictable variation in measurements that causes readings to scatter around the true value", topic: "Uncertainties", level: "Advanced Higher", keywords: ["unpredictable", "scatter"] },
+  { term: "Systematic error", definition: "A consistent error in the same direction that affects every measurement by the same amount", topic: "Uncertainties", level: "Advanced Higher", keywords: ["consistent", "direction"] },
+]
+
+function generateMCDefQuestions(entries: DefinitionEntry[], allEntries: DefinitionEntry[], count: number = 5): DefMCQuestion[] {
+  const shuffled = [...entries].sort(() => Math.random() - 0.5).slice(0, Math.min(count, entries.length))
+  return shuffled.map((entry) => {
+    const wrongPool = allEntries.filter((e) => e.term !== entry.term)
+    const wrong = [...wrongPool].sort(() => Math.random() - 0.5).slice(0, 3)
+    const options = [entry.definition, ...wrong.map((e) => e.definition)].sort(() => Math.random() - 0.5)
+    return { type: "def-mc" as const, entry, options, answer: options.indexOf(entry.definition) }
+  })
+}
+
+function generateClozeDefQuestions(entries: DefinitionEntry[], count: number = 5): DefClozeQuestion[] {
+  const eligible = entries.filter((e) => e.keywords.length > 0)
+  const shuffled = [...eligible].sort(() => Math.random() - 0.5).slice(0, Math.min(count, eligible.length))
+  return shuffled.map((entry) => {
+    const keyword = entry.keywords[Math.floor(Math.random() * entry.keywords.length)]
+    const blankedDefinition = entry.definition.replace(new RegExp(`\\b${keyword}\\b`, "gi"), "___")
+    return { type: "def-cloze" as const, entry, keyword, blankedDefinition }
+  })
+}
+
+function generateMatchDefQuestions(entries: DefinitionEntry[], count: number = 5): DefMatchQuestion[] {
+  const shuffled = [...entries].sort(() => Math.random() - 0.5).slice(0, Math.min(count, entries.length))
+  const pairs = shuffled.map((e) => ({ term: e.term, definition: e.definition }))
+  return [{ type: "def-match" as const, pairs }]
+}
+
+// --- Definitions Mode Component ---
+
+function DefinitionsMode({
+  selectedLevel,
+  onBack,
+  isDarkMode,
+}: {
+  selectedLevel: string
+  onBack: () => void
+  isDarkMode: boolean
+}) {
+  type DefPhase = "topic-select" | "quiz" | "results"
+  type QuizType = "mc" | "cloze" | "match"
+
+  const [phase, setPhase] = useState<DefPhase>("topic-select")
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+  const [quizType, setQuizType] = useState<QuizType>("mc")
+  const [questions, setQuestions] = useState<DefQuestion[]>([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [mcAnswers, setMcAnswers] = useState<Record<number, number>>({})
+  const [clozeAnswers, setClozeAnswers] = useState<Record<number, string>>({})
+  const [matchSelections, setMatchSelections] = useState<Record<string, string>>({})
+  const [selectedTerm, setSelectedTerm] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [shuffledMatchDefs, setShuffledMatchDefs] = useState<{ term: string; definition: string }[]>([])
+
+  const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
+  const topics = [...new Set(levelEntries.map((e) => e.topic))]
+
+  const toggleTopic = (topic: string) => {
+    setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
+  }
+
+  const selectAll = () => setSelectedTopics([...topics])
+  const clearAll = () => setSelectedTopics([])
+
+  const startQuiz = () => {
+    const filtered = levelEntries.filter((e) => selectedTopics.includes(e.topic))
+    if (filtered.length === 0) return
+    let qs: DefQuestion[]
+    if (quizType === "mc") qs = generateMCDefQuestions(filtered, DEFINITIONS_BANK, 8)
+    else if (quizType === "cloze") qs = generateClozeDefQuestions(filtered, 8)
+    else qs = generateMatchDefQuestions(filtered, 6)
+    setQuestions(qs)
+    setCurrentIdx(0)
+    setMcAnswers({})
+    setClozeAnswers({})
+    setMatchSelections({})
+    setSelectedTerm(null)
+    setSubmitted(false)
+    if (qs[0]?.type === "def-match") {
+      setShuffledMatchDefs([...(qs[0] as DefMatchQuestion).pairs].sort(() => Math.random() - 0.5))
+    }
+    setPhase("quiz")
+  }
+
+  const calcScore = (): number => {
+    let correct = 0
+    questions.forEach((q, i) => {
+      if (q.type === "def-mc") {
+        if (mcAnswers[i] === q.answer) correct++
+      } else if (q.type === "def-cloze") {
+        const userAns = (clozeAnswers[i] || "").trim().toLowerCase()
+        if (userAns === q.keyword.toLowerCase()) correct++
+      } else if (q.type === "def-match") {
+        q.pairs.forEach((pair) => {
+          if (matchSelections[pair.term] === pair.definition) correct++
+        })
+      }
+    })
+    return correct
+  }
+
+  const totalQuestions = questions.reduce((acc, q) => {
+    if (q.type === "def-match") return acc + q.pairs.length
+    return acc + 1
+  }, 0)
+
+  const finishQuiz = () => {
+    setSubmitted(true)
+    setPhase("results")
+  }
+
+  const cardBase = isDarkMode
+    ? "bg-slate-800 border-slate-700"
+    : "bg-white border-slate-200 shadow-xl"
+
+  // --- Phase: Topic Selection ---
+  if (phase === "topic-select") {
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Modes
+          </button>
+          <h2 className="text-4xl font-black mb-2">Definitions</h2>
+          <p className={`text-lg mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            Select topics and quiz format for <span className="text-amber-600 font-bold">{selectedLevel}</span>
+          </p>
+
+          {/* Quiz type selection */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+            <h3 className="text-lg font-black mb-4">Quiz Format</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Pick the correct definition" },
+                { id: "cloze" as const, icon: Type, title: "Cloze Test", desc: "Fill in the missing keyword" },
+                { id: "match" as const, icon: Grid3X3, title: "Match Up", desc: "Match terms to definitions" },
+              ].map((qt) => (
+                <button
+                  key={qt.id}
+                  onClick={() => setQuizType(qt.id)}
+                  className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
+                    quizType === qt.id
+                      ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
+                      : isDarkMode
+                        ? "border-slate-600 hover:border-slate-400"
+                        : "border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  <qt.icon className="w-6 h-6 mb-2" />
+                  <span className="font-black text-sm">{qt.title}</span>
+                  <span className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{qt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Topic selection */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black">Select Topics</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAll}
+                  className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors"
+                >
+                  All
+                </button>
+                <button
+                  onClick={clearAll}
+                  className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {topics.map((topic) => {
+                const count = levelEntries.filter((e) => e.topic === topic).length
+                const selected = selectedTopics.includes(topic)
+                return (
+                  <button
+                    key={topic}
+                    onClick={() => toggleTopic(topic)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                      selected
+                        ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                        : isDarkMode
+                          ? "border-slate-600 hover:border-slate-500"
+                          : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <span className="font-semibold text-sm">{topic}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${selected ? "bg-[#800000] text-white" : isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={startQuiz}
+            disabled={selectedTopics.length === 0}
+            className="w-full py-4 rounded-2xl font-black text-lg bg-[#800000] text-white hover:bg-[#600000] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Start Quiz ({selectedTopics.reduce((acc, t) => acc + levelEntries.filter((e) => e.topic === t).length, 0)} terms available)
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // --- Phase: Quiz ---
+  if (phase === "quiz") {
+    const q = questions[currentIdx]
+    const isLast = currentIdx === questions.length - 1
+
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => setPhase("topic-select")}
+              className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs tracking-widest"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Exit
+            </button>
+            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              {q.type === "def-match" ? "Match Up" : `${currentIdx + 1} / ${questions.length}`}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          {q.type !== "def-match" && (
+            <div className={`w-full h-2 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+              <div
+                className="h-2 rounded-full bg-[#800000] transition-all"
+                style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
+              />
+            </div>
+          )}
+
+          {/* MC Question */}
+          {q.type === "def-mc" && (
+            <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
+                {q.entry.topic}
+              </div>
+              <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>What is the definition of…</p>
+              <h3 className="text-2xl font-black mb-6">{q.entry.term}</h3>
+              <div className="space-y-3">
+                {q.options.map((opt, i) => {
+                  const chosen = mcAnswers[currentIdx] === i
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setMcAnswers((prev) => ({ ...prev, [currentIdx]: i }))}
+                      className={`w-full text-left px-5 py-4 rounded-xl border-2 font-medium transition-all ${
+                        chosen
+                          ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
+                          : isDarkMode
+                            ? "border-slate-600 hover:border-slate-400"
+                            : "border-slate-200 hover:border-slate-400"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Cloze Question */}
+          {q.type === "def-cloze" && (
+            <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
+                {q.entry.topic}
+              </div>
+              <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete the definition</p>
+              <h3 className="text-2xl font-black mb-2">{q.entry.term}</h3>
+              <p className={`text-lg mb-6 leading-relaxed ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{q.blankedDefinition}</p>
+              <input
+                type="text"
+                value={clozeAnswers[currentIdx] || ""}
+                onChange={(e) => setClozeAnswers((prev) => ({ ...prev, [currentIdx]: e.target.value }))}
+                placeholder="Type the missing word…"
+                className={`w-full px-4 py-3 rounded-xl border-2 font-medium text-lg outline-none transition-colors focus:border-[#800000] ${
+                  isDarkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-500" : "bg-white border-slate-200 placeholder:text-slate-400"
+                }`}
+              />
+            </div>
+          )}
+
+          {/* Match Question */}
+          {q.type === "def-match" && (
+            <div className={`rounded-2xl border-2 p-6 ${cardBase}`}>
+              <p className={`text-sm font-bold uppercase tracking-widest mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Click a term, then click its matching definition
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Terms</p>
+                  {q.pairs.map((pair) => {
+                    const isMatched = matchSelections[pair.term] !== undefined
+                    const isActive = selectedTerm === pair.term
+                    return (
+                      <button
+                        key={pair.term}
+                        onClick={() => {
+                          if (isMatched) {
+                            setMatchSelections((prev) => { const n = { ...prev }; delete n[pair.term]; return n })
+                            setSelectedTerm(null)
+                          } else {
+                            setSelectedTerm(isActive ? null : pair.term)
+                          }
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                          isMatched
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+                            : isActive
+                              ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
+                              : isDarkMode
+                                ? "border-slate-600 hover:border-slate-400"
+                                : "border-slate-200 hover:border-slate-400"
+                        }`}
+                      >
+                        {pair.term}
+                        {isMatched && <span className={`block text-xs font-normal mt-0.5 truncate ${isDarkMode ? "text-green-400" : "text-green-600"}`}>✓ matched</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="space-y-2">
+                  <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Definitions</p>
+                  {(shuffledMatchDefs.length > 0 ? shuffledMatchDefs : [...q.pairs]).map((pair) => {
+                    const matchedTerm = Object.entries(matchSelections).find(([, def]) => def === pair.definition)?.[0]
+                    const isMatched = matchedTerm !== undefined
+                    return (
+                      <button
+                        key={pair.definition}
+                        onClick={() => {
+                          if (selectedTerm && !isMatched) {
+                            setMatchSelections((prev) => ({ ...prev, [selectedTerm]: pair.definition }))
+                            setSelectedTerm(null)
+                          }
+                        }}
+                        disabled={isMatched || !selectedTerm}
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
+                          isMatched
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+                            : selectedTerm
+                              ? isDarkMode
+                                ? "border-slate-500 hover:border-amber-400 cursor-pointer"
+                                : "border-slate-300 hover:border-[#800000] cursor-pointer"
+                              : isDarkMode
+                                ? "border-slate-600 opacity-60"
+                                : "border-slate-200 opacity-60"
+                        }`}
+                      >
+                        {pair.definition}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex gap-3 mt-6">
+            {currentIdx > 0 && q.type !== "def-match" && (
+              <button
+                onClick={() => setCurrentIdx((i) => i - 1)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (isLast || q.type === "def-match") finishQuiz()
+                else setCurrentIdx((i) => i + 1)
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors"
+            >
+              {isLast || q.type === "def-match" ? "Finish" : "Next"}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // --- Phase: Results ---
+  const score = calcScore()
+  const pct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0
+  const grade = pct >= 80 ? "Excellent" : pct >= 60 ? "Good" : pct >= 40 ? "Developing" : "Needs Practice"
+  const gradeColor = pct >= 80 ? "text-green-600" : pct >= 60 ? "text-amber-600" : pct >= 40 ? "text-orange-500" : "text-red-600"
+
+  return (
+    <div className="pt-24 min-h-screen p-6 animate-in fade-in">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className={`rounded-3xl border-2 p-10 mb-6 ${cardBase}`}>
+          <div className="text-6xl mb-4">{pct >= 80 ? "🏆" : pct >= 60 ? "⭐" : pct >= 40 ? "📚" : "💪"}</div>
+          <h2 className="text-4xl font-black mb-2">{grade}</h2>
+          <p className={`text-lg mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            You scored <span className={`font-black text-2xl ${gradeColor}`}>{score}/{totalQuestions}</span> ({pct}%)
+          </p>
+
+          {/* Per-question review for MC and Cloze */}
+          {questions.some((q) => q.type !== "def-match") && (
+            <div className="text-left space-y-3 mt-6">
+              {questions.map((q, i) => {
+                if (q.type === "def-match") return null
+                const isCorrect =
+                  q.type === "def-mc"
+                    ? mcAnswers[i] === q.answer
+                    : (clozeAnswers[i] || "").trim().toLowerCase() === q.keyword.toLowerCase()
+                return (
+                  <div
+                    key={i}
+                    className={`px-4 py-3 rounded-xl border-2 text-sm ${
+                      isCorrect
+                        ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+                        : "border-red-400 bg-red-50 dark:bg-red-900/20"
+                    }`}
+                  >
+                    <p className="font-black">{q.entry.term}</p>
+                    <p className={isDarkMode ? "text-slate-300" : "text-slate-600"}>{q.entry.definition}</p>
+                    {!isCorrect && q.type === "def-mc" && (
+                      <p className="text-red-600 dark:text-red-400 text-xs mt-1">
+                        Your answer: {mcAnswers[i] !== undefined ? q.options[mcAnswers[i]] : "No answer"}
+                      </p>
+                    )}
+                    {!isCorrect && q.type === "def-cloze" && (
+                      <p className="text-red-600 dark:text-red-400 text-xs mt-1">
+                        Your answer: "{clozeAnswers[i] || "no answer"}" — Correct: "{q.keyword}"
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setPhase("topic-select") }}
+            className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}
+          >
+            New Quiz
+          </button>
+          <button
+            onClick={startQuiz}
+            className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // --- Components ---
 
@@ -174,10 +925,26 @@ function Navbar({
               <div className="flex items-center gap-2">
                 {appMode === "mc" ? (
                   <MousePointer2 className="w-4 h-4 text-[#800000]" />
+                ) : appMode === "definitions" ? (
+                  <BookOpen className="w-4 h-4 text-[#800000]" />
                 ) : (
                   <FileText className="w-4 h-4 text-[#800000]" />
                 )}
-                <span className="text-sm font-medium">{appMode === "mc" ? "Multiple Choice" : "Paper Questions"}</span>
+                <span className="text-sm font-medium">
+                  {appMode === "mc"
+                    ? "Multiple Choice"
+                    : appMode === "definitions"
+                      ? "Definitions"
+                      : appMode === "retrieval"
+                        ? "Retrieval"
+                        : appMode === "calculations"
+                          ? "Calculations"
+                          : appMode === "assignment"
+                            ? "Assignment"
+                            : appMode === "practice"
+                              ? "Practice"
+                              : "Paper Questions"}
+                </span>
               </div>
             </>
           )}
@@ -1956,7 +2723,11 @@ export default function App() {
       setIncludeOpenEnded(false)
       setIncludeMultiTopic(false)
     }
-    setView("setup")
+    if (mode === "definitions") {
+      setView("definitions")
+    } else {
+      setView("setup")
+    }
   }
 
   const updateTopicPerformance = () => {
@@ -2153,6 +2924,13 @@ export default function App() {
             currentQuestions={currentQuestions}
             appMode={appMode}
             onHome={() => setView("landing")}
+          />
+        )}
+        {view === "definitions" && (
+          <DefinitionsMode
+            selectedLevel={selectedLevel}
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
           />
         )}
       </main>
