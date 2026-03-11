@@ -29,6 +29,7 @@ import {
   Eraser,
   Trash2,
   Grid3X3,
+  ClipboardList,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -96,7 +97,7 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "targets" | "definitions" | "calculations" | null
+type AppMode = "mc" | "paper" | "retrieval" | "targets" | "definitions" | "calculations" | "assignment" | null
 type ViewType = "landing" | "mode" | "setup" | "quiz" | "results"
 
 interface MCQuestion {
@@ -257,6 +258,7 @@ function ModeSelection({
     { id: "targets" as const, icon: Award, title: "Targets", desc: "Goal-focused learning" },
     { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts" },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving" },
+    { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice" },
   ]
 
   return (
