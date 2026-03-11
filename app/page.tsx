@@ -35,6 +35,10 @@ import {
   AlertTriangle,
   ArrowLeftRight,
   Key,
+  TrendingUp,
+  TrendingDown,
+  BarChart2,
+  Lightbulb,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -446,6 +450,38 @@ const DEFINITIONS_BANK: DefinitionEntry[] = [
 
 const VALID_LEVELS = ["National 5", "Higher", "Advanced Higher"]
 
+// Unit → topic mapping per qualification level (used in Definitions mode)
+const DEF_UNIT_TOPICS: Record<string, Record<string, string[]>> = {
+  "National 5": {
+    Dynamics: ["Vectors and Scalars", "Velocity-time graphs", "Acceleration", "Newton's Laws", "Projectile Motion"],
+    Space: ["Space Exploration", "Cosmology"],
+    "Properties of Matter": ["Specific Heat Capacity", "Pressure, Kinetic Theory and Gas Laws", "Specific Latent Heat"],
+    Electricity: ["Current, voltage and resistance", "Electrical Power"],
+    Waves: ["Wave properties", "Refraction of light", "EM Spectrum"],
+    Radiation: ["Nuclear Radiation"],
+  },
+  Higher: {
+    Dynamics: ["Equations of Motion", "Forces, Energy and Power", "Collisions, Momentum and Impulse"],
+    Space: ["Gravitation", "Special Relativity", "The Expanding Universe", "The Standard Model"],
+    Electricity: [
+      "Monitoring and Measuring AC",
+      "Current, Potential Difference, Power and Resistance",
+      "Electrical Sources and Internal Resistance",
+      "Capacitors",
+      "Semiconductors",
+    ],
+    Waves: ["Wave-Particle Duality", "Interference", "Refraction", "Spectra", "Rayleigh Criterion"],
+    Radiation: ["Forces on Charged Particles", "Nuclear Reactions", "Inverse Square Law"],
+  },
+  "Advanced Higher": {
+    Dynamics: ["Kinematic Relationships", "Angular Motion", "Rotational Dynamics", "Angular Momentum"],
+    Space: ["Gravitation", "General Relativity", "Stellar Physics", "Introduction to Quantum Theory", "Particles from Space"],
+    Electricity: ["Electrostatics", "Electromagnetism", "Capacitance and Inductance"],
+    Waves: ["Simple Harmonic Motion", "Waves", "Interference", "Polarisation"],
+    Other: ["Uncertainties"],
+  },
+}
+
 function loadDefProgress(level: string): Record<string, DefProgress> {
   try {
     if (typeof window === "undefined") return {}
@@ -642,6 +678,42 @@ function generateKeywordBuilderQuestions(
   })
 }
 
+// Generates a mixed mc + match + keyword quiz focused on the user's weakest topic
+function generateQuickGainsQuiz(
+  levelEntries: DefinitionEntry[],
+  progress: Record<string, DefProgress>
+): { questions: DefQuestion[]; weakTopic: string } | null {
+  // Build per-topic attempt stats
+  const topicMap: Record<string, { incorrect: number; total: number }> = {}
+  levelEntries.forEach((e) => {
+    const p = progress[e.term]
+    if (!p || p.correct + p.incorrect === 0) return
+    if (!topicMap[e.topic]) topicMap[e.topic] = { incorrect: 0, total: 0 }
+    topicMap[e.topic].incorrect += p.incorrect
+    topicMap[e.topic].total += p.correct + p.incorrect
+  })
+
+  const sorted = Object.entries(topicMap)
+    .filter(([, v]) => v.total > 0)
+    .sort(([, a], [, b]) => b.incorrect / b.total - a.incorrect / a.total)
+
+  if (sorted.length === 0) return null
+  const weakTopic = sorted[0][0]
+  const topicEntries = levelEntries.filter((e) => e.topic === weakTopic)
+
+  // Prioritise terms they've got wrong, then unseen, then correct
+  const wrongEntries = topicEntries.filter((e) => (progress[e.term]?.incorrect ?? 0) > 0)
+  const unseenEntries = topicEntries.filter((e) => !progress[e.term])
+  const otherEntries = topicEntries.filter((e) => progress[e.term] && (progress[e.term].incorrect ?? 0) === 0)
+  const orderedEntries = [...shuffleArray(wrongEntries), ...shuffleArray(unseenEntries), ...shuffleArray(otherEntries)]
+
+  const mcQs = generateMCDefQuestions(orderedEntries.slice(0, 3), levelEntries, 3, "easy")
+  const matchQs = topicEntries.length >= 3 ? generateMatchDefQuestions(topicEntries, 3, "easy") : []
+  const kwQs = generateKeywordBuilderQuestions(orderedEntries.slice(0, 2), 2)
+
+  return { questions: [...mcQs, ...matchQs, ...kwQs], weakTopic }
+}
+
 // --- Definitions Mode Component ---
 
 function DefinitionsMode({
@@ -653,10 +725,11 @@ function DefinitionsMode({
   onBack: () => void
   isDarkMode: boolean
 }) {
-  type DefPhase = "topic-select" | "quiz" | "results"
+  type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
 
-  const [phase, setPhase] = useState<DefPhase>("topic-select")
+  const [phase, setPhase] = useState<DefPhase>("unit-select")
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [quizType, setQuizType] = useState<QuizType>("mc")
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium")
@@ -674,13 +747,18 @@ function DefinitionsMode({
   const [kwBuilderBank, setKwBuilderBank] = useState<Record<number, string[]>>({})
   const [progress, setProgress] = useState<Record<string, DefProgress>>(() => loadDefProgress(selectedLevel))
 
+  const unitTopicsForLevel = DEF_UNIT_TOPICS[selectedLevel] ?? {}
   const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
-  const topics = [...new Set(levelEntries.map((e) => e.topic))]
+  // When a unit is selected, only expose topics that belong to that unit AND have entries in the bank
+  const topicsInUnit = selectedUnit
+    ? (unitTopicsForLevel[selectedUnit] ?? []).filter((t) => levelEntries.some((e) => e.topic === t))
+    : []
+  const topics = topicsInUnit
 
   const toggleTopic = (topic: string) => {
     setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
   }
-  const selectAll = () => setSelectedTopics([...topics])
+  const selectAll = () => setSelectedTopics([...topicsInUnit])
   const clearAll = () => setSelectedTopics([])
 
   function prioritisedEntries(pool: DefinitionEntry[]): DefinitionEntry[] {
@@ -799,6 +877,14 @@ function DefinitionsMode({
 
   const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
 
+  // Performance colour thresholds used throughout the component
+  const STRONG_PCT = 70
+  const MODERATE_PCT = 50
+  const perfColour = (pct: number) =>
+    pct >= STRONG_PCT ? "text-green-600" : pct >= MODERATE_PCT ? "text-amber-600" : "text-red-600"
+  const perfBar = (pct: number) =>
+    pct >= STRONG_PCT ? "bg-green-500" : pct >= MODERATE_PCT ? "bg-amber-500" : "bg-red-500"
+
   const diffColour = (d: DifficultyLevel) =>
     d === "easy" ? "text-green-600 dark:text-green-400" : d === "medium" ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"
   const diffBg = (d: DifficultyLevel) =>
@@ -833,6 +919,120 @@ function DefinitionsMode({
     })
   }
 
+  // --- Phase: Unit Selection ---
+  if (phase === "unit-select") {
+    const unitEmoji: Record<string, string> = {
+      Dynamics: "⚡",
+      Space: "🌌",
+      "Properties of Matter": "🌡️",
+      Electricity: "🔋",
+      Waves: "〰️",
+      Radiation: "☢️",
+      Other: "📐",
+    }
+
+    const quickGains = generateQuickGainsQuiz(levelEntries, progress)
+
+    const startQuickGainsQuiz = () => {
+      if (!quickGains) return
+      setQuestions(quickGains.questions)
+      setCurrentIdx(0)
+      setMcAnswers({})
+      setClozeAnswers({})
+      setMatchSelections({})
+      setSelectedTerm(null)
+      setSubmitted(false)
+      setSpotMistakeAnswers({})
+      setSwappedSelections(new Set())
+      if (quickGains.questions[0]?.type === "def-match") {
+        setShuffledMatchDefs(shuffleArray((quickGains.questions[0] as DefMatchQuestion).pairs))
+      }
+      const initPlaced: Record<number, string[]> = {}
+      const initBank: Record<number, string[]> = {}
+      quickGains.questions.forEach((q, i) => {
+        if (q.type === "def-keyword-builder") {
+          initPlaced[i] = []
+          initBank[i] = [...(q as DefKeywordBuilderQuestion).scrambledWords]
+        }
+      })
+      setKwBuilderPlaced(initPlaced)
+      setKwBuilderBank(initBank)
+      setPhase("quiz")
+    }
+
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="max-w-4xl mx-auto">
+          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" />Back to Modes
+          </button>
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-4xl font-black mb-1">Definitions</h2>
+              <p className={`text-lg ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+                Select a unit for <span className="text-amber-600 font-bold">{selectedLevel}</span>
+              </p>
+            </div>
+            <button
+              onClick={() => setPhase("progress")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-bold text-sm transition-all ${isDarkMode ? "border-slate-600 hover:border-amber-400 hover:text-amber-400" : "border-slate-200 hover:border-amber-500 hover:text-amber-600"}`}>
+              <BarChart2 className="w-4 h-4" />
+              Progress Dashboard
+            </button>
+          </div>
+
+          {/* Try This Today! */}
+          {quickGains && (
+            <div className={`rounded-2xl border-2 p-5 mb-6 ${isDarkMode ? "border-amber-700 bg-amber-900/20" : "border-amber-300 bg-amber-50"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-6 h-6 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className={`font-black text-sm uppercase tracking-widest ${isDarkMode ? "text-amber-300" : "text-amber-700"}`}>Try This Today for Quick Gains!</p>
+                    <p className={`text-sm mt-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                      Suggested focus: <span className="font-bold">{quickGains.weakTopic}</span>
+                    </p>
+                    <p className={`text-xs mt-0.5 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      Mixed quiz — multiple choice, match &amp; keyword builder — targeting your weak terms
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={startQuickGainsQuiz}
+                  className="shrink-0 px-5 py-2.5 rounded-xl font-black text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors">
+                  Start Now →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Unit cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {Object.entries(unitTopicsForLevel)
+              .filter(([, topicsList]) => topicsList.some((t) => levelEntries.some((e) => e.topic === t)))
+              .map(([unit, topicsList]) => {
+                const unitEntries = levelEntries.filter((e) => topicsList.includes(e.topic))
+                const totalTerms = unitEntries.length
+                const topicCount = topicsList.filter((t) => levelEntries.some((e) => e.topic === t)).length
+                const weakTerms = unitEntries.filter((e) => (progress[e.term]?.incorrect ?? 0) > 0).length
+                return (
+                  <button
+                    key={unit}
+                    onClick={() => { setSelectedUnit(unit); setSelectedTopics([]); setPhase("topic-select") }}
+                    className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg ${isDarkMode ? "border-slate-700 bg-slate-800 hover:border-amber-500" : "border-slate-200 bg-white hover:border-[#800000]"}`}>
+                    <span className="text-3xl mb-3">{unitEmoji[unit] ?? "📚"}</span>
+                    <h3 className="font-black text-base">{unit}</h3>
+                    <p className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{topicCount} topic{topicCount !== 1 ? "s" : ""} · {totalTerms} terms</p>
+                    {weakTerms > 0 && <span className="text-xs text-amber-600 dark:text-amber-400 font-bold mt-1.5">⚠ {weakTerms} weak term{weakTerms !== 1 ? "s" : ""}</span>}
+                  </button>
+                )
+              })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // --- Phase: Topic Selection ---
   if (phase === "topic-select") {
     const quizTypes = [
@@ -851,10 +1051,10 @@ function DefinitionsMode({
     return (
       <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
         <div className="max-w-4xl mx-auto">
-          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
-            <ChevronLeft className="w-4 h-4" />Back to Modes
+          <button onClick={() => setPhase("unit-select")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" />Back to Units
           </button>
-          <h2 className="text-4xl font-black mb-2">Definitions</h2>
+          <h2 className="text-4xl font-black mb-2">Definitions — {selectedUnit}</h2>
           <p className={`text-lg mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
             Select topics and quiz format for <span className="text-amber-600 font-bold">{selectedLevel}</span>
           </p>
@@ -936,7 +1136,7 @@ function DefinitionsMode({
       <div className="pt-24 min-h-screen p-6 animate-in fade-in">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <button onClick={() => setPhase("topic-select")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs tracking-widest">
+            <button onClick={() => selectedTopics.length > 0 ? setPhase("topic-select") : setPhase("unit-select")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs tracking-widest">
               <ChevronLeft className="w-4 h-4" />Exit
             </button>
             <div className="flex items-center gap-3">
@@ -1167,6 +1367,159 @@ function DefinitionsMode({
     )
   }
 
+  // --- Phase: Progress Dashboard ---
+  if (phase === "progress") {
+    // Build per-topic stats from the definitions progress data
+    const progressByTopic = Object.entries(unitTopicsForLevel)
+      .flatMap(([unit, topicsList]) => topicsList.map((topic) => ({ unit, topic })))
+      .filter(({ topic }) => levelEntries.some((e) => e.topic === topic))
+      .map(({ unit, topic }) => {
+        const entries = levelEntries.filter((e) => e.topic === topic)
+        const seen = entries.filter((e) => progress[e.term] && (progress[e.term].correct + progress[e.term].incorrect) > 0)
+        const totalAttempts = seen.reduce((acc, e) => acc + progress[e.term].correct + progress[e.term].incorrect, 0)
+        const correctAttempts = seen.reduce((acc, e) => acc + progress[e.term].correct, 0)
+        const pctTopic = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : null
+        return { unit, topic, entries, seen, totalAttempts, pctTopic }
+      })
+
+    const attempted = progressByTopic.filter((t) => t.pctTopic !== null)
+    const notAttempted = progressByTopic.filter((t) => t.pctTopic === null)
+    const weakTopicsProgress = [...attempted].sort((a, b) => a.pctTopic! - b.pctTopic!).slice(0, 5)
+    const strongTopicsProgress = [...attempted].sort((a, b) => b.pctTopic! - a.pctTopic!).slice(0, 5)
+
+    const totalAttemptedTerms = Object.values(progress).filter((p) => p.correct + p.incorrect > 0).length
+    const totalCorrectAll = Object.values(progress).reduce((acc, p) => acc + p.correct, 0)
+    const totalAttemptsAll = Object.values(progress).reduce((acc, p) => acc + p.correct + p.incorrect, 0)
+    const overallPct = totalAttemptsAll > 0 ? Math.round((totalCorrectAll / totalAttemptsAll) * 100) : null
+
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="max-w-4xl mx-auto">
+          <button onClick={() => setPhase("unit-select")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" />Back to Units
+          </button>
+          <h2 className="text-4xl font-black mb-2">Progress Dashboard</h2>
+          <p className={`text-lg mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            Definitions progress for <span className="text-amber-600 font-bold">{selectedLevel}</span>
+          </p>
+
+          {/* Overall summary */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className={`text-3xl font-black ${overallPct !== null ? perfColour(overallPct) : "text-slate-400"}`}>
+                  {overallPct !== null ? `${overallPct}%` : "—"}
+                </p>
+                <p className={`text-xs font-bold uppercase mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Overall</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-amber-600">{totalAttemptedTerms}</p>
+                <p className={`text-xs font-bold uppercase mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Terms Seen</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-blue-600">{attempted.length}</p>
+                <p className={`text-xs font-bold uppercase mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Topics Started</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Needs Focus (weakest topics) */}
+          {weakTopicsProgress.length > 0 && (
+            <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingDown className="w-5 h-5 text-red-500" />
+                <h3 className="text-lg font-black">Needs Focus</h3>
+              </div>
+              <div className="space-y-4">
+                {weakTopicsProgress.map(({ unit, topic, entries, pctTopic }) => (
+                  <div key={topic}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div>
+                        <span className="font-semibold text-sm">{topic}</span>
+                        <span className={`ml-2 text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{unit}</span>
+                      </div>
+                      <span className={`text-sm font-black ${perfColour(pctTopic!)}`}>{pctTopic}%</span>
+                    </div>
+                    <div className={`w-full h-2 rounded-full mb-2 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                      <div className={`h-2 rounded-full ${perfBar(pctTopic!)}`} style={{ width: `${pctTopic}%` }} />
+                    </div>
+                    {/* Individual terms */}
+                    <div className="grid grid-cols-2 gap-1 mt-1">
+                      {entries
+                        .filter((e) => progress[e.term] && (progress[e.term].correct + progress[e.term].incorrect) > 0)
+                        .sort((a, b) => {
+                          const pa = progress[a.term]; const pb = progress[b.term]
+                          return (pb.incorrect / Math.max(1, pb.correct + pb.incorrect)) - (pa.incorrect / Math.max(1, pa.correct + pa.incorrect))
+                        })
+                        .map((e) => {
+                          const p = progress[e.term]
+                          const tot = p.correct + p.incorrect
+                          const termPct = Math.round((p.correct / tot) * 100)
+                          return (
+                            <div key={e.term} className={`flex items-center justify-between px-2 py-1 rounded-lg text-xs ${isDarkMode ? "bg-slate-700/50" : "bg-slate-100"}`}>
+                              <span className="font-medium truncate mr-2">{e.term}</span>
+                              <span className={`font-bold shrink-0 ${perfColour(termPct)}`}>{termPct}%</span>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Strongest topics */}
+          {strongTopicsProgress.length > 0 && (
+            <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                <h3 className="text-lg font-black">Strongest Topics</h3>
+              </div>
+              <div className="space-y-3">
+                {strongTopicsProgress.map(({ unit, topic, pctTopic }) => (
+                  <div key={topic} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex justify-between mb-0.5">
+                        <span className="text-sm font-semibold">{topic}</span>
+                        <span className={`text-sm font-black ${perfColour(pctTopic!)}`}>{pctTopic}%</span>
+                      </div>
+                      <p className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{unit}</p>
+                      <div className={`w-full h-1.5 rounded-full mt-1 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                        <div className={`h-1.5 rounded-full ${perfBar(pctTopic!)}`} style={{ width: `${pctTopic}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Not yet attempted */}
+          {notAttempted.length > 0 && (
+            <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+              <h3 className={`text-lg font-black mb-4 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>📚 Not Yet Attempted</h3>
+              <div className="flex flex-wrap gap-2">
+                {notAttempted.map(({ topic, unit }) => (
+                  <span key={topic} className={`text-xs px-3 py-1.5 rounded-full font-bold ${isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
+                    {topic} <span className={`${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>· {unit}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {attempted.length === 0 && (
+            <div className={`rounded-2xl border-2 p-10 text-center ${cardBase}`}>
+              <p className="text-4xl mb-4">📊</p>
+              <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No data yet — complete some quizzes to see your progress here.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // --- Phase: Results ---
   const { score, total: totalQuestions, wrongTerms } = calcScore()
   const pct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0
@@ -1259,9 +1612,9 @@ function DefinitionsMode({
                         <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{term}</span>
                         <div className="flex items-center gap-2">
                           <div className={`w-16 h-1.5 rounded-full ${isDarkMode ? "bg-slate-600" : "bg-slate-200"}`}>
-                            <div className={`h-1.5 rounded-full ${pctCorrect >= 80 ? "bg-green-500" : pctCorrect >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pctCorrect}%` }} />
+                            <div className={`h-1.5 rounded-full ${perfBar(pctCorrect)}`} style={{ width: `${pctCorrect}%` }} />
                           </div>
-                          <span className={`w-8 text-right font-bold ${pctCorrect >= 80 ? "text-green-600 dark:text-green-400" : pctCorrect >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>{pctCorrect}%</span>
+                          <span className={`w-8 text-right font-bold ${perfColour(pctCorrect)}`}>{pctCorrect}%</span>
                         </div>
                       </div>
                     )
@@ -1272,9 +1625,14 @@ function DefinitionsMode({
         </div>
 
         <div className="flex gap-3">
-          <button onClick={() => { setDifficulty(suggestedDifficulty); setPhase("topic-select") }}
+          <button onClick={() => { setDifficulty(suggestedDifficulty); setPhase("unit-select") }}
             className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
             New Quiz
+          </button>
+          <button onClick={() => setPhase("progress")}
+            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-amber-600 hover:border-amber-400 text-amber-400" : "border-amber-400 hover:border-amber-600 text-amber-600"}`}>
+            <BarChart2 className="w-4 h-4" />
+            Progress
           </button>
           <button onClick={() => { startQuiz() }}
             className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors">
