@@ -108,7 +108,7 @@ const QA_SUBTOPICS: Record<string, string[]> = {
 
 type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "landing" | "mode" | "setup" | "quiz" | "results" | "definitions"
+type ViewType = "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations"
 
 interface MCQuestion {
   type: "mc"
@@ -1642,6 +1642,780 @@ function DefinitionsMode({
       </div>
     </div>
   )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calculations Mode
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CalcQuestion {
+  id: string
+  /** The stem shown to the student */
+  stem: string
+  /** Equation / formula hint */
+  equation?: string
+  /** Multiple-choice options (undefined → typed answer) */
+  options?: string[]
+  /** Index into options for the correct answer (MC) */
+  correctOption?: number
+  /** Correct typed answer, may include unit */
+  correctAnswer?: string
+  /** Mark scheme / worked solution shown after answering */
+  markScheme: string
+  /** For "correct-me" questions: index of the wrong option */
+  mistakeOptionIndex?: number
+  /** For multi-step exam questions: sub-steps */
+  steps?: CalcStep[]
+}
+
+interface CalcStep {
+  id: string
+  stem: string
+  equation?: string
+  options?: string[]
+  correctOption?: number
+  correctAnswer?: string
+  markScheme: string
+}
+
+// Demonstration question banks ─────────────────────────────────────────────
+
+const CALC_SINGLE_EQ_LEVELS: {
+  level: number
+  label: string
+  desc: string
+  emoji: string
+}[] = [
+  { level: 1, label: "Basic MC",             emoji: "1️⃣", desc: "Basic numbers, multiple-choice, no rearranging" },
+  { level: 2, label: "Basic Typed",          emoji: "2️⃣", desc: "Basic numbers, typed answers, no rearranging" },
+  { level: 3, label: "Rearranging MC",       emoji: "3️⃣", desc: "Rearranging required, basic numbers, multiple-choice" },
+  { level: 4, label: "Rearranging Typed",    emoji: "4️⃣", desc: "Rearranging required, basic numbers, typed answers" },
+  { level: 5, label: "Complex Numbers",      emoji: "5️⃣", desc: "Complex numbers, rearranging, rounding required" },
+  { level: 6, label: "Prefixes",             emoji: "6️⃣", desc: "Complex numbers, rearranging, SI prefixes" },
+  { level: 7, label: "Non-SI Units",         emoji: "7️⃣", desc: "Complex numbers, rearranging, non-SI units" },
+  { level: 8, label: "Everything",           emoji: "8️⃣", desc: "All of the above combined" },
+]
+
+function getDemoSingleEqQuestions(level: number): CalcQuestion[] {
+  const mc = level === 1 || level === 3
+  if (level <= 2) {
+    return [
+      {
+        id: "l1-1",
+        stem: "A force of 12 N acts on a mass of 3 kg. Calculate the acceleration.",
+        equation: "F = ma",
+        options: mc ? ["2 ms⁻²", "4 ms⁻²", "9 ms⁻²", "36 ms⁻²"] : undefined,
+        correctOption: mc ? 1 : undefined,
+        correctAnswer: mc ? undefined : "4 ms⁻²",
+        markScheme: "a = F ÷ m = 12 ÷ 3 = 4 ms⁻²",
+      },
+      {
+        id: "l1-2",
+        stem: "A wave travels at 300 ms⁻¹ with a frequency of 50 Hz. Calculate the wavelength.",
+        equation: "v = f λ",
+        options: mc ? ["250 m", "6 m", "350 m", "15 000 m"] : undefined,
+        correctOption: mc ? 1 : undefined,
+        correctAnswer: mc ? undefined : "6 m",
+        markScheme: "λ = v ÷ f = 300 ÷ 50 = 6 m",
+      },
+      {
+        id: "l1-3",
+        stem: "An object of mass 5 kg is on Earth (g = 10 Nkg⁻¹). Calculate its weight.",
+        equation: "W = mg",
+        options: mc ? ["0.5 N", "2 N", "50 N", "500 N"] : undefined,
+        correctOption: mc ? 2 : undefined,
+        correctAnswer: mc ? undefined : "50 N",
+        markScheme: "W = m × g = 5 × 10 = 50 N",
+      },
+    ]
+  }
+  if (level <= 4) {
+    return [
+      {
+        id: "l3-1",
+        stem: "The acceleration of an object is 5 ms⁻² when a force of 20 N is applied. Calculate the mass.",
+        equation: "F = ma  →  m = F ÷ a",
+        options: mc ? ["0.25 kg", "4 kg", "15 kg", "100 kg"] : undefined,
+        correctOption: mc ? 1 : undefined,
+        correctAnswer: mc ? undefined : "4 kg",
+        markScheme: "m = F ÷ a = 20 ÷ 5 = 4 kg",
+      },
+      {
+        id: "l3-2",
+        stem: "A wave has a wavelength of 2 m and speed 340 ms⁻¹. Calculate the frequency.",
+        equation: "v = f λ  →  f = v ÷ λ",
+        options: mc ? ["170 Hz", "680 Hz", "342 Hz", "338 Hz"] : undefined,
+        correctOption: mc ? 0 : undefined,
+        correctAnswer: mc ? undefined : "170 Hz",
+        markScheme: "f = v ÷ λ = 340 ÷ 2 = 170 Hz",
+      },
+      {
+        id: "l3-3",
+        stem: "An object weighs 49 N on Earth (g = 9.8 Nkg⁻¹). Calculate its mass.",
+        equation: "W = mg  →  m = W ÷ g",
+        options: mc ? ["5 kg", "58.8 kg", "39.2 kg", "480.2 kg"] : undefined,
+        correctOption: mc ? 0 : undefined,
+        correctAnswer: mc ? undefined : "5 kg",
+        markScheme: "m = W ÷ g = 49 ÷ 9.8 = 5 kg",
+      },
+    ]
+  }
+  if (level === 5) {
+    return [
+      {
+        id: "l5-1",
+        stem: "A car of mass 1 250 kg accelerates at 3.6 ms⁻². Calculate the resultant force. Give your answer to 3 significant figures.",
+        equation: "F = ma",
+        correctAnswer: "4 500 N",
+        markScheme: "F = 1 250 × 3.6 = 4 500 N",
+      },
+      {
+        id: "l5-2",
+        stem: "A wave has speed 3.4 × 10² ms⁻¹ and wavelength 0.034 m. Calculate the frequency. Give your answer to 3 significant figures.",
+        equation: "v = f λ  →  f = v ÷ λ",
+        correctAnswer: "1.00 × 10⁴ Hz",
+        markScheme: "f = 340 ÷ 0.034 = 10 000 Hz = 1.00 × 10⁴ Hz",
+      },
+    ]
+  }
+  if (level === 6) {
+    return [
+      {
+        id: "l6-1",
+        stem: "A resistor has a voltage of 12 V across it and a current of 40 mA through it. Calculate the resistance.",
+        equation: "V = IR  →  R = V ÷ I",
+        correctAnswer: "300 Ω",
+        markScheme: "I = 40 mA = 0.040 A;  R = 12 ÷ 0.040 = 300 Ω",
+      },
+      {
+        id: "l6-2",
+        stem: "A wave has frequency 2.5 kHz and speed 340 ms⁻¹. Calculate the wavelength.",
+        equation: "v = f λ  →  λ = v ÷ f",
+        correctAnswer: "0.136 m",
+        markScheme: "f = 2.5 kHz = 2 500 Hz;  λ = 340 ÷ 2 500 = 0.136 m",
+      },
+    ]
+  }
+  if (level === 7) {
+    return [
+      {
+        id: "l7-1",
+        stem: "A car travels at 72 km/h for 15 minutes. Calculate the distance covered in metres.",
+        equation: "d = v t",
+        correctAnswer: "18 000 m",
+        markScheme: "v = 72 km/h = 20 ms⁻¹;  t = 15 min = 900 s;  d = 20 × 900 = 18 000 m",
+      },
+      {
+        id: "l7-2",
+        stem: "A temperature of 25 °C is converted to kelvin. Calculate the value.",
+        equation: "T (K) = T (°C) + 273",
+        correctAnswer: "298 K",
+        markScheme: "T = 25 + 273 = 298 K",
+      },
+    ]
+  }
+  // level 8 – everything
+  return [
+    {
+      id: "l8-1",
+      stem: "An object of mass 850 g is accelerated from rest to 72 km/h in 8.0 s. Calculate the resultant force in newtons. Give your answer to 2 significant figures.",
+      equation: "a = Δv ÷ t;  F = ma",
+      correctAnswer: "2.1 N",
+      markScheme: "v = 72 km/h = 20 ms⁻¹;  a = 20 ÷ 8 = 2.5 ms⁻²;  m = 0.850 kg;  F = 0.850 × 2.5 = 2.125 N ≈ 2.1 N",
+    },
+    {
+      id: "l8-2",
+      stem: "A 2.2 kΩ resistor carries a current of 5.0 mA. Calculate the voltage across it.",
+      equation: "V = IR",
+      correctAnswer: "11 V",
+      markScheme: "R = 2 200 Ω;  I = 0.005 A;  V = 2 200 × 0.005 = 11 V",
+    },
+    {
+      id: "l8-3",
+      stem: "An X-ray photon has wavelength 0.10 nm. Calculate its frequency. (speed of light = 3.0 × 10⁸ ms⁻¹)",
+      equation: "v = f λ  →  f = v ÷ λ",
+      correctAnswer: "3.0 × 10¹⁸ Hz",
+      markScheme: "λ = 0.10 nm = 1.0 × 10⁻¹⁰ m;  f = 3.0×10⁸ ÷ 1.0×10⁻¹⁰ = 3.0×10¹⁸ Hz",
+    },
+  ]
+}
+
+const CALC_EXAM_QUESTIONS: CalcQuestion[] = [
+  {
+    id: "exam-1",
+    stem: "A ball is launched horizontally at 15 ms⁻¹ from a cliff. Use the following steps to find where it lands.",
+    markScheme: "See individual steps.",
+    steps: [
+      {
+        id: "exam-1-a",
+        stem: "(a) The ball takes 2.0 s to reach the ground. Calculate the horizontal distance travelled.",
+        equation: "d = v t",
+        correctAnswer: "30 m",
+        markScheme: "d = 15 × 2.0 = 30 m",
+      },
+      {
+        id: "exam-1-b",
+        stem: "(b) Calculate the vertical velocity of the ball just before impact. (g = 9.8 ms⁻²)",
+        equation: "v = u + at",
+        correctAnswer: "19.6 ms⁻¹",
+        markScheme: "v = 0 + 9.8 × 2.0 = 19.6 ms⁻¹",
+      },
+      {
+        id: "exam-1-c",
+        stem: "(c) Using your horizontal velocity (15 ms⁻¹) and the vertical velocity from (b), calculate the resultant speed.",
+        equation: "v = √(vₓ² + vᵧ²)",
+        correctAnswer: "24.7 ms⁻¹",
+        markScheme: "v = √(15² + 19.6²) = √(225 + 384.16) = √609.16 ≈ 24.7 ms⁻¹",
+      },
+    ],
+  },
+  {
+    id: "exam-2",
+    stem: "A circuit has a 9 V battery and two resistors in series: R₁ = 100 Ω, R₂ = 200 Ω.",
+    markScheme: "See individual steps.",
+    steps: [
+      {
+        id: "exam-2-a",
+        stem: "(a) Calculate the total resistance.",
+        equation: "R_total = R₁ + R₂",
+        correctAnswer: "300 Ω",
+        markScheme: "R_total = 100 + 200 = 300 Ω",
+      },
+      {
+        id: "exam-2-b",
+        stem: "(b) Calculate the current through the circuit.",
+        equation: "I = V ÷ R",
+        correctAnswer: "0.030 A",
+        markScheme: "I = 9 ÷ 300 = 0.030 A (30 mA)",
+      },
+      {
+        id: "exam-2-c",
+        stem: "(c) Using your answer from (b), calculate the voltage across R₂.",
+        equation: "V = IR",
+        correctAnswer: "6 V",
+        markScheme: "V = 0.030 × 200 = 6 V",
+      },
+    ],
+  },
+]
+
+const CALC_CORRECT_ME_QUESTIONS: CalcQuestion[] = [
+  {
+    id: "cm-1",
+    stem: "A student calculated the weight of a 5 kg mass on Earth (g = 9.8 Nkg⁻¹). Identify the mistake in their working.",
+    equation: "W = m × g",
+    options: [
+      "W = 5 ÷ 9.8 = 0.51 N   ✗ (divided instead of multiplied)",
+      "W = 5 × 9.8 = 49 N      ✓ (correct working)",
+      "W = 5 + 9.8 = 14.8 N   ✗ (added instead of multiplied)",
+      "W = 9.8 − 5 = 4.8 N    ✗ (subtracted instead of multiplied)",
+    ],
+    correctOption: 0,
+    mistakeOptionIndex: 0,
+    markScheme: "The student divided by g instead of multiplying. Correct: W = m × g = 5 × 9.8 = 49 N.",
+  },
+  {
+    id: "cm-2",
+    stem: "A student calculated the frequency of a wave (v = 340 ms⁻¹, λ = 0.68 m). Spot the error.",
+    equation: "f = v ÷ λ",
+    options: [
+      "f = 340 × 0.68 = 231.2 Hz   ✗ (multiplied instead of divided)",
+      "f = 340 ÷ 0.68 = 500 Hz     ✓ (correct working)",
+      "f = 0.68 ÷ 340 = 0.002 Hz  ✗ (inverted the fraction)",
+      "f = 340 + 0.68 = 340.68 Hz ✗ (added instead of divided)",
+    ],
+    correctOption: 0,
+    mistakeOptionIndex: 0,
+    markScheme: "The student multiplied v × λ instead of dividing. Correct: f = v ÷ λ = 340 ÷ 0.68 = 500 Hz.",
+  },
+  {
+    id: "cm-3",
+    stem: "A student used F = ma to find the force on a 2 kg object accelerating at 3 ms⁻². Find the mistake.",
+    equation: "F = m × a",
+    options: [
+      "F = 2 × 3 = 6 N            ✓ (correct working)",
+      "F = 2 + 3 = 5 N             ✗ (added instead of multiplied)",
+      "F = 3 ÷ 2 = 1.5 N          ✗ (divided a by m instead of multiplying)",
+      "F = 2 − 3 = −1 N           ✗ (subtracted instead of multiplied)",
+    ],
+    correctOption: 1,
+    mistakeOptionIndex: 1,
+    markScheme: "The student added m and a instead of multiplying. Correct: F = m × a = 2 × 3 = 6 N.",
+  },
+]
+
+function CalculationsMode({
+  selectedLevel,
+  onBack,
+  isDarkMode,
+}: {
+  selectedLevel: string
+  onBack: () => void
+  isDarkMode: boolean
+}) {
+  type CalcSubMode = "single-equation" | "exam-level" | "correct-me" | null
+  type CalcPhase = "hub" | "level-select" | "quiz" | "results"
+
+  const [phase, setPhase] = useState<CalcPhase>("hub")
+  const [subMode, setSubMode] = useState<CalcSubMode>(null)
+  const [eqLevel, setEqLevel] = useState<number>(1)
+  const [questions, setQuestions] = useState<CalcQuestion[]>([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [typedAnswers, setTypedAnswers] = useState<Record<number, string>>({})
+  const [mcAnswers, setMcAnswers] = useState<Record<number, number>>({})
+  /** For multi-step exam questions, track typed answers per step */
+  const [stepTypedAnswers, setStepTypedAnswers] = useState<Record<string, string>>({})
+  const [stepMcAnswers, setStepMcAnswers] = useState<Record<string, number>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const [answerMode, setAnswerMode] = useState<"mc" | "typed">("mc")
+  /** For correct-me hotspot: which option the user tapped */
+  const [hotspotChoice, setHotspotChoice] = useState<Record<number, number>>({})
+  const [currentStepIdx, setCurrentStepIdx] = useState(0)
+
+  const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
+  const btnBase = `rounded-2xl font-black border-2 transition-all px-5 py-3`
+
+  const startSingleEq = (level: number) => {
+    setEqLevel(level)
+    setQuestions(getDemoSingleEqQuestions(level))
+    setCurrentIdx(0)
+    setTypedAnswers({})
+    setMcAnswers({})
+    setSubmitted(false)
+    setHotspotChoice({})
+    setPhase("quiz")
+  }
+
+  const startExamLevel = () => {
+    setQuestions(CALC_EXAM_QUESTIONS)
+    setCurrentIdx(0)
+    setCurrentStepIdx(0)
+    setStepTypedAnswers({})
+    setStepMcAnswers({})
+    setSubmitted(false)
+    setPhase("quiz")
+  }
+
+  const startCorrectMe = () => {
+    setQuestions(CALC_CORRECT_ME_QUESTIONS)
+    setCurrentIdx(0)
+    setHotspotChoice({})
+    setSubmitted(false)
+    setPhase("quiz")
+  }
+
+  const currentQ = questions[currentIdx]
+
+  // ── Hub ──────────────────────────────────────────────────────────────────
+  if (phase === "hub") {
+    const modes = [
+      {
+        id: "single-equation" as const,
+        icon: "🎯",
+        title: "Single Equation Mastery",
+        desc: "Progressive difficulty to master individual equations — from basic substitution through to complex multi-step rearrangements with non-SI units.",
+        color: "from-blue-600 to-blue-800",
+        accent: "border-blue-500",
+      },
+      {
+        id: "exam-level" as const,
+        icon: "📋",
+        title: "Exam Level Calculations",
+        desc: "Multi-step problems that chain different equations together — just like SQA exam questions.",
+        color: "from-[#800000] to-[#600000]",
+        accent: "border-red-700",
+      },
+      {
+        id: "correct-me" as const,
+        icon: "🔍",
+        title: "Correct Me!",
+        desc: "Spot and fix mistakes in worked calculations. Tap the hotspot to identify the error, then explain the correct working.",
+        color: "from-amber-600 to-amber-800",
+        accent: "border-amber-500",
+      },
+    ]
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="max-w-4xl w-full">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Mode Selection
+          </button>
+          <div className="text-center mb-10">
+            <h2 className="text-4xl md:text-5xl font-black mb-3">
+              <span className="text-[#800000]">Calculations</span> Practice
+            </h2>
+            <p className={`text-lg ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+              Choose your practice type for{" "}
+              <span className="text-amber-600 font-bold">{selectedLevel}</span>
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {modes.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  setSubMode(m.id)
+                  if (m.id === "single-equation") setPhase("level-select")
+                  else if (m.id === "exam-level") startExamLevel()
+                  else startCorrectMe()
+                }}
+                className={`group text-left rounded-3xl border-2 p-7 transition-all hover:scale-[1.02] hover:shadow-2xl ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-700 hover:border-slate-500"
+                    : "bg-white border-slate-200 hover:border-slate-300 shadow-lg"
+                }`}
+              >
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${m.color} flex items-center justify-center text-2xl mb-5 shadow-lg`}>
+                  {m.icon}
+                </div>
+                <h3 className="text-xl font-black mb-2">{m.title}</h3>
+                <p className={`text-sm leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{m.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Level Select (Single Equation Mastery) ───────────────────────────────
+  if (phase === "level-select") {
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="max-w-3xl mx-auto">
+          <button
+            onClick={() => setPhase("hub")}
+            className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <h2 className="text-3xl font-black mb-2">Single Equation Mastery</h2>
+          <p className={`mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Select a difficulty level — they unlock in order. Start at Level 1 and progress when ready.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4 mb-8">
+            {CALC_SINGLE_EQ_LEVELS.map((l) => (
+              <button
+                key={l.level}
+                onClick={() => startSingleEq(l.level)}
+                className={`flex items-start gap-4 text-left p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-700 hover:border-amber-500"
+                    : "bg-white border-slate-200 hover:border-[#800000] shadow-md"
+                }`}
+              >
+                <span className="text-3xl">{l.emoji}</span>
+                <div>
+                  <p className="font-black text-lg">{l.label}</p>
+                  <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{l.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Quiz ─────────────────────────────────────────────────────────────────
+  if (phase === "quiz" && currentQ) {
+    const isExam = subMode === "exam-level"
+    const isCorrectMe = subMode === "correct-me"
+    const isSingle = subMode === "single-equation"
+
+    // Determine if typed or MC for single-equation
+    const useMC = isCorrectMe || (isSingle && (eqLevel === 1 || eqLevel === 3))
+    const useTyped = isSingle && !useMC
+
+    const steps = currentQ.steps ?? []
+    const currentStep = isExam && steps.length > 0 ? steps[currentStepIdx] : null
+
+    const hasAnswered = isCorrectMe
+      ? hotspotChoice[currentIdx] !== undefined
+      : isExam && currentStep
+        ? (stepTypedAnswers[currentStep.id] ?? "").trim().length > 0
+        : useMC
+          ? mcAnswers[currentIdx] !== undefined
+          : (typedAnswers[currentIdx] ?? "").trim().length > 0
+
+    const isLastStep = isExam ? currentStepIdx >= steps.length - 1 : true
+    const isLastQ = currentIdx >= questions.length - 1
+
+    const handleNext = () => {
+      if (isExam && !isLastStep) {
+        setCurrentStepIdx((s) => s + 1)
+      } else if (isLastQ) {
+        setPhase("results")
+      } else {
+        setCurrentIdx((i) => i + 1)
+        setCurrentStepIdx(0)
+        setSubmitted(false)
+      }
+    }
+
+    const activeQ = currentStep ?? currentQ
+
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in">
+        <div className="max-w-2xl mx-auto">
+          {/* Progress bar */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => {
+                setPhase(subMode === "single-equation" ? "level-select" : "hub")
+                setSubmitted(false)
+              }}
+              className="flex items-center gap-1 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {subMode === "single-equation" ? "Levels" : "Hub"}
+            </button>
+            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              Q{currentIdx + 1}/{questions.length}
+              {isExam && steps.length > 0 && ` • Step ${currentStepIdx + 1}/${steps.length}`}
+            </span>
+          </div>
+          <div className={`w-full h-1.5 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+            <div
+              className="h-1.5 rounded-full bg-[#800000] transition-all"
+              style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Question Card */}
+          <div className={`rounded-3xl border-2 p-7 mb-4 ${cardBase}`}>
+            {/* Sub-mode badge */}
+            <div className="flex items-center gap-2 mb-4">
+              {isSingle && (
+                <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                  {CALC_SINGLE_EQ_LEVELS[eqLevel - 1].label}
+                </span>
+              )}
+              {isExam && (
+                <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/40 text-[#800000] dark:text-red-300">
+                  Exam Level
+                </span>
+              )}
+              {isCorrectMe && (
+                <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                  Correct Me!
+                </span>
+              )}
+            </div>
+
+            {/* Stem */}
+            {isExam && currentStep ? (
+              <>
+                <p className={`text-base mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{currentQ.stem}</p>
+                <p className="text-lg font-bold mb-3">{currentStep.stem}</p>
+                {currentStep.equation && (
+                  <div className={`inline-block mb-4 px-4 py-2 rounded-xl text-sm font-mono font-bold ${isDarkMode ? "bg-slate-700 text-amber-300" : "bg-amber-50 text-amber-800 border border-amber-200"}`}>
+                    {currentStep.equation}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-bold mb-3">{currentQ.stem}</p>
+                {currentQ.equation && (
+                  <div className={`inline-block mb-4 px-4 py-2 rounded-xl text-sm font-mono font-bold ${isDarkMode ? "bg-slate-700 text-amber-300" : "bg-amber-50 text-amber-800 border border-amber-200"}`}>
+                    {currentQ.equation}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Answer input */}
+            {isCorrectMe && currentQ.options ? (
+              <div className="space-y-3 mt-4">
+                <p className={`text-sm font-black uppercase tracking-wide mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                  🔍 Which line contains the mistake?
+                </p>
+                {currentQ.options.map((opt, oi) => {
+                  const chosen = hotspotChoice[currentIdx] === oi
+                  const showResult = submitted
+                  const isCorrectChoice = oi === currentQ.correctOption
+                  let cls = `w-full text-left px-4 py-3 rounded-xl border-2 font-mono text-sm transition-all `
+                  if (showResult) {
+                    if (isCorrectChoice) cls += "border-green-500 bg-green-50 dark:bg-green-900/20 font-black"
+                    else if (chosen) cls += "border-red-500 bg-red-50 dark:bg-red-900/20"
+                    else cls += isDarkMode ? "border-slate-700 opacity-50" : "border-slate-200 opacity-50"
+                  } else {
+                    cls += chosen
+                      ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                      : isDarkMode
+                        ? "border-slate-700 hover:border-amber-500"
+                        : "border-slate-200 hover:border-[#800000]"
+                  }
+                  return (
+                    <button key={oi} disabled={submitted} onClick={() => setHotspotChoice((p) => ({ ...p, [currentIdx]: oi }))} className={cls}>
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : useMC && currentQ.options ? (
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                {currentQ.options.map((opt, oi) => {
+                  const chosen = mcAnswers[currentIdx] === oi
+                  const showResult = submitted
+                  const isCorrectChoice = oi === currentQ.correctOption
+                  let cls = `px-4 py-3 rounded-xl border-2 font-bold text-sm transition-all `
+                  if (showResult) {
+                    if (isCorrectChoice) cls += "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    else if (chosen) cls += "border-red-500 bg-red-50 dark:bg-red-900/20"
+                    else cls += isDarkMode ? "border-slate-700 opacity-50" : "border-slate-200 opacity-50"
+                  } else {
+                    cls += chosen
+                      ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                      : isDarkMode
+                        ? "border-slate-700 hover:border-amber-500"
+                        : "border-slate-200 hover:border-[#800000]"
+                  }
+                  return (
+                    <button key={oi} disabled={submitted} onClick={() => setMcAnswers((p) => ({ ...p, [currentIdx]: oi }))} className={cls}>
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : isExam && currentStep ? (
+              <div className="mt-4">
+                <label className={`block text-sm font-black mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Your Answer:</label>
+                <input
+                  type="text"
+                  disabled={submitted}
+                  value={stepTypedAnswers[currentStep.id] ?? ""}
+                  onChange={(e) => setStepTypedAnswers((p) => ({ ...p, [currentStep.id]: e.target.value }))}
+                  placeholder="e.g. 4 ms⁻²"
+                  className={`w-full px-4 py-3 rounded-xl border-2 font-mono text-base outline-none transition-all ${
+                    submitted
+                      ? isDarkMode ? "border-slate-600 bg-slate-700/50" : "border-slate-300 bg-slate-50"
+                      : isDarkMode
+                        ? "border-slate-600 bg-slate-700 hover:border-amber-500 focus:border-amber-400 text-white"
+                        : "border-slate-300 bg-white hover:border-[#800000] focus:border-[#800000]"
+                  }`}
+                />
+              </div>
+            ) : (
+              <div className="mt-4">
+                <label className={`block text-sm font-black mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Your Answer:</label>
+                <input
+                  type="text"
+                  disabled={submitted}
+                  value={typedAnswers[currentIdx] ?? ""}
+                  onChange={(e) => setTypedAnswers((p) => ({ ...p, [currentIdx]: e.target.value }))}
+                  placeholder="e.g. 4 ms⁻²"
+                  className={`w-full px-4 py-3 rounded-xl border-2 font-mono text-base outline-none transition-all ${
+                    submitted
+                      ? isDarkMode ? "border-slate-600 bg-slate-700/50" : "border-slate-300 bg-slate-50"
+                      : isDarkMode
+                        ? "border-slate-600 bg-slate-700 hover:border-amber-500 focus:border-amber-400 text-white"
+                        : "border-slate-300 bg-white hover:border-[#800000] focus:border-[#800000]"
+                  }`}
+                />
+              </div>
+            )}
+
+            {/* Mark scheme reveal */}
+            {submitted && (
+              <div className={`mt-5 p-4 rounded-xl border-2 ${isDarkMode ? "border-green-700 bg-green-900/20" : "border-green-400 bg-green-50"}`}>
+                <p className={`text-xs font-black uppercase mb-1 ${isDarkMode ? "text-green-400" : "text-green-700"}`}>✅ Mark Scheme</p>
+                <p className={`text-sm font-mono ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>
+                  {isExam && currentStep ? currentStep.markScheme : currentQ.markScheme}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            {!submitted ? (
+              <button
+                disabled={!hasAnswered}
+                onClick={() => setSubmitted(true)}
+                className={`flex-1 py-3 rounded-2xl font-black border-2 transition-all ${
+                  hasAnswered
+                    ? "bg-[#800000] text-white border-[#800000] hover:bg-[#600000]"
+                    : isDarkMode
+                      ? "border-slate-700 text-slate-600 cursor-not-allowed"
+                      : "border-slate-200 text-slate-400 cursor-not-allowed"
+                }`}
+              >
+                Check Answer
+              </button>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="flex-1 py-3 rounded-2xl font-black bg-[#800000] text-white border-2 border-[#800000] hover:bg-[#600000] transition-all flex items-center justify-center gap-2"
+              >
+                {isLastQ && isLastStep ? "See Results" : isExam && !isLastStep ? "Next Step" : "Next Question"}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Results ───────────────────────────────────────────────────────────────
+  if (phase === "results") {
+    const totalQ = questions.length
+    return (
+      <div className="pt-24 min-h-screen p-6 animate-in fade-in">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className={`rounded-3xl border-2 p-10 mb-6 ${cardBase}`}>
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-4xl font-black mb-3">Session Complete</h2>
+            <p className={`text-lg mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+              You worked through{" "}
+              <span className="font-black text-2xl text-[#800000]">{totalQ}</span>{" "}
+              question{totalQ !== 1 ? "s" : ""}.
+            </p>
+            {subMode === "single-equation" && (
+              <p className={`text-sm mt-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Completed: <strong>{CALC_SINGLE_EQ_LEVELS[eqLevel - 1].label}</strong> (Level {eqLevel})
+              </p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setPhase("hub"); setSubmitted(false) }}
+              className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}
+            >
+              Hub
+            </button>
+            <button
+              onClick={() => {
+                if (subMode === "single-equation") startSingleEq(eqLevel)
+                else if (subMode === "exam-level") startExamLevel()
+                else startCorrectMe()
+              }}
+              className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors"
+            >
+              Try Again
+            </button>
+            {subMode === "single-equation" && eqLevel < 8 && (
+              <button
+                onClick={() => startSingleEq(eqLevel + 1)}
+                className="flex-1 py-3 rounded-xl font-black bg-blue-700 text-white hover:bg-blue-800 transition-colors"
+              >
+                Next Level →
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }
 
 // --- Components ---
@@ -3487,6 +4261,8 @@ export default function App() {
     }
     if (mode === "definitions") {
       setView("definitions")
+    } else if (mode === "calculations") {
+      setView("calculations")
     } else {
       setView("setup")
     }
@@ -3690,6 +4466,13 @@ export default function App() {
         )}
         {view === "definitions" && (
           <DefinitionsMode
+            selectedLevel={selectedLevel}
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
+          />
+        )}
+        {view === "calculations" && (
+          <CalculationsMode
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
