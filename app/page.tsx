@@ -32,6 +32,9 @@ import {
   ClipboardList,
   BookOpen,
   Clock,
+  AlertTriangle,
+  ArrowLeftRight,
+  Key,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -151,7 +154,7 @@ interface DefMCQuestion {
 interface DefClozeQuestion {
   type: "def-cloze"
   entry: DefinitionEntry
-  keyword: string
+  keywords: string[]
   blankedDefinition: string
 }
 
@@ -160,7 +163,38 @@ interface DefMatchQuestion {
   pairs: { term: string; definition: string }[]
 }
 
-type DefQuestion = DefMCQuestion | DefClozeQuestion | DefMatchQuestion
+type DifficultyLevel = "easy" | "medium" | "hard"
+
+interface DefProgress {
+  correct: number
+  incorrect: number
+  lastSeen: number
+  missedKeywords: string[]
+}
+
+interface DefSpotMistakeQuestion {
+  type: "def-spot-mistake"
+  entry: DefinitionEntry
+  wrongStatement: string
+  wrongWord: string
+  correctWord: string
+  options: string[]
+  answer: number
+}
+
+interface DefSwappedQuestion {
+  type: "def-swapped"
+  pairs: { term: string; correctDef: string; displayedDef: string; isSwapped: boolean }[]
+}
+
+interface DefKeywordBuilderQuestion {
+  type: "def-keyword-builder"
+  entry: DefinitionEntry
+  scrambledWords: string[]
+  correctWords: string[]
+}
+
+type DefQuestion = DefMCQuestion | DefClozeQuestion | DefMatchQuestion | DefSpotMistakeQuestion | DefSwappedQuestion | DefKeywordBuilderQuestion
 
 const DEFINITIONS_BANK: DefinitionEntry[] = [
   // National 5 — Vectors and Scalars
@@ -410,6 +444,21 @@ const DEFINITIONS_BANK: DefinitionEntry[] = [
   { term: "Systematic error", definition: "A consistent error in the same direction that affects every measurement by the same amount", topic: "Uncertainties", level: "Advanced Higher", keywords: ["consistent", "direction"] },
 ]
 
+function loadDefProgress(level: string): Record<string, DefProgress> {
+  try {
+    if (typeof window === "undefined") return {}
+    const saved = localStorage.getItem(`trinfinity_def_progress_${level}`)
+    return saved ? JSON.parse(saved) : {}
+  } catch { return {} }
+}
+
+function saveDefProgress(level: string, progress: Record<string, DefProgress>) {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.setItem(`trinfinity_def_progress_${level}`, JSON.stringify(progress))
+  } catch {}
+}
+
 function shuffleArray<T>(arr: T[]): T[] {
   const result = [...arr]
   for (let i = result.length - 1; i > 0; i--) {
@@ -423,30 +472,168 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
-function generateMCDefQuestions(entries: DefinitionEntry[], allEntries: DefinitionEntry[], count: number = 5): DefMCQuestion[] {
+function generateMCDefQuestions(
+  entries: DefinitionEntry[],
+  allEntries: DefinitionEntry[],
+  count: number = 5,
+  difficulty: DifficultyLevel = "medium"
+): DefMCQuestion[] {
   const shuffled = shuffleArray(entries).slice(0, Math.min(count, entries.length))
   return shuffled.map((entry) => {
-    const wrongPool = allEntries.filter((e) => e.term !== entry.term)
+    let wrongPool: DefinitionEntry[]
+    if (difficulty === "easy") {
+      wrongPool = allEntries.filter((e) => e.term !== entry.term && e.topic !== entry.topic)
+    } else if (difficulty === "medium") {
+      wrongPool = allEntries.filter((e) => e.term !== entry.term && e.level === entry.level)
+    } else {
+      const entryKws = new Set(entry.keywords)
+      const withSharedKws = allEntries.filter(
+        (e) => e.term !== entry.term && e.keywords.some((k) => entryKws.has(k))
+      )
+      wrongPool = withSharedKws.length >= 3 ? withSharedKws : allEntries.filter((e) => e.term !== entry.term && e.level === entry.level)
+    }
+    if (wrongPool.length < 3) wrongPool = allEntries.filter((e) => e.term !== entry.term)
     const wrong = shuffleArray(wrongPool).slice(0, 3)
     const options = shuffleArray([entry.definition, ...wrong.map((e) => e.definition)])
     return { type: "def-mc" as const, entry, options, answer: options.indexOf(entry.definition) }
   })
 }
 
-function generateClozeDefQuestions(entries: DefinitionEntry[], count: number = 5): DefClozeQuestion[] {
+function generateClozeDefQuestions(
+  entries: DefinitionEntry[],
+  count: number = 5,
+  difficulty: DifficultyLevel = "easy"
+): DefClozeQuestion[] {
+  const eligible = entries.filter((e) => e.keywords.length > 0)
+  const shuffled = shuffleArray(eligible).slice(0, Math.min(count, eligible.length))
+  return shuffled.map((entry) => {
+    let keywordsToBlank: string[]
+    if (difficulty === "easy") {
+      keywordsToBlank = [entry.keywords[Math.floor(Math.random() * entry.keywords.length)]]
+    } else if (difficulty === "medium") {
+      keywordsToBlank = shuffleArray([...entry.keywords]).slice(0, Math.min(Math.max(2, Math.floor(entry.keywords.length * 0.6)), entry.keywords.length))
+    } else {
+      keywordsToBlank = [...entry.keywords]
+    }
+    let blankedDefinition = entry.definition
+    keywordsToBlank.forEach((kw) => {
+      blankedDefinition = blankedDefinition.replace(new RegExp(`\\b${escapeRegex(kw)}\\b`, "gi"), "___")
+    })
+    return { type: "def-cloze" as const, entry, keywords: keywordsToBlank, blankedDefinition }
+  })
+}
+
+function generateMatchDefQuestions(
+  entries: DefinitionEntry[],
+  count: number = 5,
+  difficulty: DifficultyLevel = "medium"
+): DefMatchQuestion[] {
+  let pairCount: number
+  if (difficulty === "easy") pairCount = 5
+  else if (difficulty === "medium") pairCount = 10
+  else pairCount = 5
+  const shuffled = shuffleArray(entries).slice(0, Math.min(pairCount, entries.length))
+  if (difficulty === "hard") {
+    const normalPairs = shuffled.map((e) => ({ term: e.term, definition: e.definition }))
+    const remaining = entries.filter((e) => !shuffled.includes(e))
+    const extraEntries = shuffleArray(remaining).slice(0, 5)
+    const blankPairs = extraEntries.map((e) => {
+      const kw = e.keywords[0]
+      const blanked = kw ? e.definition.replace(new RegExp(`\\b${escapeRegex(kw)}\\b`, "gi"), "___") : e.definition
+      return { term: e.term, definition: blanked }
+    })
+    return [{ type: "def-match" as const, pairs: [...normalPairs, ...blankPairs] }]
+  }
+  const pairs = shuffled.map((e) => ({ term: e.term, definition: e.definition }))
+  return [{ type: "def-match" as const, pairs }]
+}
+
+function generateSpotMistakeQuestions(
+  entries: DefinitionEntry[],
+  allEntries: DefinitionEntry[],
+  count: number = 5,
+  difficulty: DifficultyLevel = "easy"
+): DefSpotMistakeQuestion[] {
   const eligible = entries.filter((e) => e.keywords.length > 0)
   const shuffled = shuffleArray(eligible).slice(0, Math.min(count, eligible.length))
   return shuffled.map((entry) => {
     const keyword = entry.keywords[Math.floor(Math.random() * entry.keywords.length)]
-    const blankedDefinition = entry.definition.replace(new RegExp(`\\b${escapeRegex(keyword)}\\b`, "gi"), "___")
-    return { type: "def-cloze" as const, entry, keyword, blankedDefinition }
+    let wrongWord: string
+    if (difficulty === "easy") {
+      const pool = allEntries.filter((e) => e.topic !== entry.topic && e.keywords.length > 0)
+      wrongWord = shuffleArray(pool)[0]?.keywords[0] ?? "temperature"
+    } else if (difficulty === "medium") {
+      const pool = allEntries.filter((e) => e.term !== entry.term && e.level === entry.level && e.keywords.length > 0)
+      wrongWord = shuffleArray(pool)[0]?.keywords.find((k) => k !== keyword) ?? shuffleArray(pool)[0]?.keywords[0] ?? "displacement"
+    } else {
+      const pool = allEntries.filter((e) => e.topic === entry.topic && e.term !== entry.term && e.keywords.length > 0)
+      const fallback = allEntries.filter((e) => e.term !== entry.term && e.keywords.length > 0)
+      wrongWord = shuffleArray(pool.length > 0 ? pool : fallback)[0]?.keywords[0] ?? "mass"
+    }
+    const wrongStatement = entry.definition.replace(new RegExp(`\\b${escapeRegex(keyword)}\\b`, "gi"), wrongWord)
+    const correctOption = `"${wrongWord}" should be "${keyword}"`
+    const distractorPool = allEntries
+      .flatMap((e) => e.keywords)
+      .filter((k) => k !== keyword && k !== wrongWord)
+    const distKws = shuffleArray([...new Set(distractorPool)]).slice(0, 3)
+    const distractors = distKws.map((k) => `"${k}" should be "${keyword}"`)
+    const options = shuffleArray([correctOption, ...distractors.slice(0, 3)])
+    return {
+      type: "def-spot-mistake" as const,
+      entry,
+      wrongStatement,
+      wrongWord,
+      correctWord: keyword,
+      options,
+      answer: options.indexOf(correctOption),
+    }
   })
 }
 
-function generateMatchDefQuestions(entries: DefinitionEntry[], count: number = 5): DefMatchQuestion[] {
+function generateSwappedQuestions(
+  entries: DefinitionEntry[],
+  difficulty: DifficultyLevel = "easy"
+): DefSwappedQuestion[] {
+  let numPairs: number
+  let numSwapped: number
+  if (difficulty === "easy") { numPairs = 5; numSwapped = 2 }
+  else if (difficulty === "medium") { numPairs = 7; numSwapped = 3 }
+  else { numPairs = 10; numSwapped = 4 }
+  numPairs = Math.min(numPairs, entries.length)
+  numSwapped = Math.min(numSwapped, Math.floor(numPairs / 2))
+  const shuffled = shuffleArray(entries).slice(0, numPairs)
+  const pairs = shuffled.map((entry) => ({
+    term: entry.term,
+    correctDef: entry.definition,
+    displayedDef: entry.definition,
+    isSwapped: false,
+  }))
+  const swapIdxs = shuffleArray(pairs.map((_, i) => i)).slice(0, numSwapped * 2)
+  for (let i = 0; i + 1 < swapIdxs.length; i += 2) {
+    const a = swapIdxs[i]; const b = swapIdxs[i + 1]
+    const tmp = pairs[a].displayedDef
+    pairs[a].displayedDef = pairs[b].displayedDef
+    pairs[b].displayedDef = tmp
+    pairs[a].isSwapped = true
+    pairs[b].isSwapped = true
+  }
+  return [{ type: "def-swapped" as const, pairs }]
+}
+
+function generateKeywordBuilderQuestions(
+  entries: DefinitionEntry[],
+  count: number = 5
+): DefKeywordBuilderQuestion[] {
   const shuffled = shuffleArray(entries).slice(0, Math.min(count, entries.length))
-  const pairs = shuffled.map((e) => ({ term: e.term, definition: e.definition }))
-  return [{ type: "def-match" as const, pairs }]
+  return shuffled.map((entry) => {
+    const correctWords = entry.definition.split(/\s+/)
+    return {
+      type: "def-keyword-builder" as const,
+      entry,
+      scrambledWords: shuffleArray([...correctWords]),
+      correctWords,
+    }
+  })
 }
 
 // --- Definitions Mode Component ---
@@ -461,19 +648,25 @@ function DefinitionsMode({
   isDarkMode: boolean
 }) {
   type DefPhase = "topic-select" | "quiz" | "results"
-  type QuizType = "mc" | "cloze" | "match"
+  type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
 
   const [phase, setPhase] = useState<DefPhase>("topic-select")
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [quizType, setQuizType] = useState<QuizType>("mc")
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium")
   const [questions, setQuestions] = useState<DefQuestion[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [mcAnswers, setMcAnswers] = useState<Record<number, number>>({})
-  const [clozeAnswers, setClozeAnswers] = useState<Record<number, string>>({})
+  const [clozeAnswers, setClozeAnswers] = useState<Record<number, string[]>>({})
   const [matchSelections, setMatchSelections] = useState<Record<string, string>>({})
   const [selectedTerm, setSelectedTerm] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [shuffledMatchDefs, setShuffledMatchDefs] = useState<{ term: string; definition: string }[]>([])
+  const [spotMistakeAnswers, setSpotMistakeAnswers] = useState<Record<number, number>>({})
+  const [swappedSelections, setSwappedSelections] = useState<Set<number>>(new Set())
+  const [kwBuilderPlaced, setKwBuilderPlaced] = useState<Record<number, string[]>>({})
+  const [kwBuilderBank, setKwBuilderBank] = useState<Record<number, string[]>>({})
+  const [progress, setProgress] = useState<Record<string, DefProgress>>(() => loadDefProgress(selectedLevel))
 
   const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
   const topics = [...new Set(levelEntries.map((e) => e.topic))]
@@ -481,17 +674,30 @@ function DefinitionsMode({
   const toggleTopic = (topic: string) => {
     setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
   }
-
   const selectAll = () => setSelectedTopics([...topics])
   const clearAll = () => setSelectedTopics([])
+
+  function prioritisedEntries(pool: DefinitionEntry[]): DefinitionEntry[] {
+    return [...pool].sort((a, b) => {
+      const pa = progress[a.term]
+      const pb = progress[b.term]
+      const scoreA = pa ? pa.incorrect / Math.max(1, pa.correct + pa.incorrect) : 0.5
+      const scoreB = pb ? pb.incorrect / Math.max(1, pb.correct + pb.incorrect) : 0.5
+      return scoreB - scoreA
+    })
+  }
 
   const startQuiz = () => {
     const filtered = levelEntries.filter((e) => selectedTopics.includes(e.topic))
     if (filtered.length === 0) return
+    const ordered = prioritisedEntries(filtered)
     let qs: DefQuestion[]
-    if (quizType === "mc") qs = generateMCDefQuestions(filtered, DEFINITIONS_BANK, 8)
-    else if (quizType === "cloze") qs = generateClozeDefQuestions(filtered, 8)
-    else qs = generateMatchDefQuestions(filtered, 6)
+    if (quizType === "mc") qs = generateMCDefQuestions(ordered, DEFINITIONS_BANK, 8, difficulty)
+    else if (quizType === "cloze") qs = generateClozeDefQuestions(ordered, 8, difficulty)
+    else if (quizType === "match") qs = generateMatchDefQuestions(ordered, difficulty === "easy" ? 5 : difficulty === "medium" ? 10 : 10, difficulty)
+    else if (quizType === "spot-mistake") qs = generateSpotMistakeQuestions(ordered, DEFINITIONS_BANK, 6, difficulty)
+    else if (quizType === "swapped") qs = generateSwappedQuestions(ordered, difficulty)
+    else qs = generateKeywordBuilderQuestions(ordered, 6)
     setQuestions(qs)
     setCurrentIdx(0)
     setMcAnswers({})
@@ -499,54 +705,117 @@ function DefinitionsMode({
     setMatchSelections({})
     setSelectedTerm(null)
     setSubmitted(false)
+    setSpotMistakeAnswers({})
+    setSwappedSelections(new Set())
     if (qs[0]?.type === "def-match") {
       setShuffledMatchDefs(shuffleArray((qs[0] as DefMatchQuestion).pairs))
     }
+    const initPlaced: Record<number, string[]> = {}
+    const initBank: Record<number, string[]> = {}
+    qs.forEach((q, i) => {
+      if (q.type === "def-keyword-builder") {
+        initPlaced[i] = []
+        initBank[i] = [...(q as DefKeywordBuilderQuestion).scrambledWords]
+      }
+    })
+    setKwBuilderPlaced(initPlaced)
+    setKwBuilderBank(initBank)
     setPhase("quiz")
   }
 
-  const calcScore = (): number => {
-    let correct = 0
+  const calcScore = (): { score: number; total: number; wrongTerms: string[]; missedKws: string[] } => {
+    let score = 0; let total = 0
+    const wrongTerms: string[] = []
+    const missedKws: string[] = []
     questions.forEach((q, i) => {
       if (q.type === "def-mc") {
-        if (mcAnswers[i] === q.answer) correct++
+        total++
+        if (mcAnswers[i] === q.answer) score++
+        else wrongTerms.push(q.entry.term)
       } else if (q.type === "def-cloze") {
-        const userAns = (clozeAnswers[i] || "").trim().toLowerCase()
-        if (userAns === q.keyword.toLowerCase()) correct++
+        q.keywords.forEach((kw, ki) => {
+          total++
+          const ans = (clozeAnswers[i]?.[ki] || "").trim().toLowerCase()
+          if (ans === kw.toLowerCase()) score++
+          else { wrongTerms.push(q.entry.term); missedKws.push(kw) }
+        })
       } else if (q.type === "def-match") {
         q.pairs.forEach((pair) => {
-          if (matchSelections[pair.term] === pair.definition) correct++
+          total++
+          if (matchSelections[pair.term] === pair.definition) score++
+          else wrongTerms.push(pair.term)
         })
+      } else if (q.type === "def-spot-mistake") {
+        total++
+        if (spotMistakeAnswers[i] === q.answer) score++
+        else wrongTerms.push(q.entry.term)
+      } else if (q.type === "def-swapped") {
+        q.pairs.forEach((pair, pi) => {
+          total++
+          const userSaysSwapped = swappedSelections.has(pi)
+          if (userSaysSwapped === pair.isSwapped) score++
+          else wrongTerms.push(pair.term)
+        })
+      } else if (q.type === "def-keyword-builder") {
+        total++
+        const placed = kwBuilderPlaced[i] ?? []
+        if (placed.join(" ").toLowerCase() === q.correctWords.join(" ").toLowerCase()) score++
+        else wrongTerms.push(q.entry.term)
       }
     })
-    return correct
+    return { score, total, wrongTerms, missedKws }
   }
 
-  const totalQuestions = questions.reduce((acc, q) => {
-    if (q.type === "def-match") return acc + q.pairs.length
-    return acc + 1
-  }, 0)
-
   const finishQuiz = () => {
+    const { wrongTerms, missedKws } = calcScore()
+    const updated = { ...progress }
+    questions.forEach((q) => {
+      const terms: string[] = []
+      if ("entry" in q) terms.push((q as DefMCQuestion | DefClozeQuestion | DefSpotMistakeQuestion | DefKeywordBuilderQuestion).entry.term)
+      else if (q.type === "def-match") q.pairs.forEach((p) => terms.push(p.term))
+      else if (q.type === "def-swapped") q.pairs.forEach((p) => terms.push(p.term))
+      terms.forEach((t) => {
+        const prev = updated[t] || { correct: 0, incorrect: 0, lastSeen: 0, missedKeywords: [] }
+        if (wrongTerms.includes(t)) {
+          updated[t] = { ...prev, incorrect: prev.incorrect + 1, lastSeen: Date.now(), missedKeywords: [...new Set([...prev.missedKeywords, ...missedKws.filter((k) => DEFINITIONS_BANK.find((e) => e.term === t)?.keywords.includes(k) ?? false)])] }
+        } else {
+          updated[t] = { ...prev, correct: prev.correct + 1, lastSeen: Date.now() }
+        }
+      })
+    })
+    setProgress(updated)
+    saveDefProgress(selectedLevel, updated)
     setSubmitted(true)
     setPhase("results")
   }
 
-  const cardBase = isDarkMode
-    ? "bg-slate-800 border-slate-700"
-    : "bg-white border-slate-200 shadow-xl"
+  const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
+
+  const diffColour = (d: DifficultyLevel) =>
+    d === "easy" ? "text-green-600 dark:text-green-400" : d === "medium" ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"
+  const diffBg = (d: DifficultyLevel) =>
+    d === "easy" ? "border-green-500 bg-green-50 dark:bg-green-900/20" : d === "medium" ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20" : "border-red-500 bg-red-50 dark:bg-red-900/20"
 
   // --- Phase: Topic Selection ---
   if (phase === "topic-select") {
+    const quizTypes = [
+      { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Pick the correct definition" },
+      { id: "cloze" as const, icon: Type, title: "Cloze Test", desc: "Fill in missing keywords" },
+      { id: "match" as const, icon: Grid3X3, title: "Match Up", desc: "Match terms to definitions" },
+      { id: "spot-mistake" as const, icon: AlertTriangle, title: "Spot the Mistake", desc: "Find the error in the definition" },
+      { id: "swapped" as const, icon: ArrowLeftRight, title: "Swapped Definitions", desc: "Identify incorrectly matched pairs" },
+      { id: "keyword-builder" as const, icon: Key, title: "Keyword Builder", desc: "Arrange words into a definition" },
+    ]
+    const difficulties: { id: DifficultyLevel; label: string; desc: string }[] = [
+      { id: "easy", label: "Easy", desc: quizType === "mc" ? "Very different distractors" : quizType === "cloze" ? "Remove 1 keyword" : quizType === "match" ? "5 terms" : quizType === "spot-mistake" ? "Obvious mistake" : quizType === "swapped" ? "2 swaps from 5" : "Short definition" },
+      { id: "medium", label: "Medium", desc: quizType === "mc" ? "Similar-sounding distractors" : quizType === "cloze" ? "Remove 2–3 keywords" : quizType === "match" ? "10 terms" : quizType === "spot-mistake" ? "Subtle misconception" : quizType === "swapped" ? "3 swaps from 7" : "Full definition" },
+      { id: "hard", label: "Hard", desc: quizType === "mc" ? "Plausible distractors" : quizType === "cloze" ? "Remove all key terms" : quizType === "match" ? "5 + 5 with blanks" : quizType === "spot-mistake" ? "Plausible wrong term" : quizType === "swapped" ? "4 swaps from 10" : "Full definition" },
+    ]
     return (
       <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
         <div className="max-w-4xl mx-auto">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Modes
+          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" />Back to Modes
           </button>
           <h2 className="text-4xl font-black mb-2">Definitions</h2>
           <p className={`text-lg mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
@@ -556,26 +825,27 @@ function DefinitionsMode({
           {/* Quiz type selection */}
           <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
             <h3 className="text-lg font-black mb-4">Quiz Format</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[
-                { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Pick the correct definition" },
-                { id: "cloze" as const, icon: Type, title: "Cloze Test", desc: "Fill in the missing keyword" },
-                { id: "match" as const, icon: Grid3X3, title: "Match Up", desc: "Match terms to definitions" },
-              ].map((qt) => (
-                <button
-                  key={qt.id}
-                  onClick={() => setQuizType(qt.id)}
-                  className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${
-                    quizType === qt.id
-                      ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
-                      : isDarkMode
-                        ? "border-slate-600 hover:border-slate-400"
-                        : "border-slate-200 hover:border-slate-400"
-                  }`}
-                >
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {quizTypes.map((qt) => (
+                <button key={qt.id} onClick={() => setQuizType(qt.id)}
+                  className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${quizType === qt.id ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
                   <qt.icon className="w-6 h-6 mb-2" />
                   <span className="font-black text-sm">{qt.title}</span>
-                  <span className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{qt.desc}</span>
+                  <span className={`text-xs mt-1 text-center ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{qt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Difficulty selection */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
+            <h3 className="text-lg font-black mb-4">Difficulty</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {difficulties.map((d) => (
+                <button key={d.id} onClick={() => setDifficulty(d.id)}
+                  className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${difficulty === d.id ? diffBg(d.id) : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
+                  <span className={`font-black text-sm ${difficulty === d.id ? diffColour(d.id) : ""}`}>{d.label}</span>
+                  <span className={`text-xs mt-1 text-center ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{d.desc}</span>
                 </button>
               ))}
             </div>
@@ -586,51 +856,32 @@ function DefinitionsMode({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-black">Select Topics</h3>
               <div className="flex gap-2">
-                <button
-                  onClick={selectAll}
-                  className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors"
-                >
-                  All
-                </button>
-                <button
-                  onClick={clearAll}
-                  className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
-                >
-                  Clear
-                </button>
+                <button onClick={selectAll} className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 transition-colors">All</button>
+                <button onClick={clearAll} className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">Clear</button>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {topics.map((topic) => {
                 const count = levelEntries.filter((e) => e.topic === topic).length
-                const selected = selectedTopics.includes(topic)
+                const sel = selectedTopics.includes(topic)
+                const topicEntries = levelEntries.filter((e) => e.topic === topic)
+                const weakCount = topicEntries.filter((e) => (progress[e.term]?.incorrect ?? 0) > 0).length
                 return (
-                  <button
-                    key={topic}
-                    onClick={() => toggleTopic(topic)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                      selected
-                        ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
-                        : isDarkMode
-                          ? "border-slate-600 hover:border-slate-500"
-                          : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    <span className="font-semibold text-sm">{topic}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${selected ? "bg-[#800000] text-white" : isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
-                      {count}
-                    </span>
+                  <button key={topic} onClick={() => toggleTopic(topic)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${sel ? "border-[#800000] bg-red-50 dark:bg-red-900/20" : isDarkMode ? "border-slate-600 hover:border-slate-500" : "border-slate-200 hover:border-slate-300"}`}>
+                    <div>
+                      <span className="font-semibold text-sm">{topic}</span>
+                      {weakCount > 0 && <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-bold">⚠ {weakCount} weak</span>}
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sel ? "bg-[#800000] text-white" : isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>{count}</span>
                   </button>
                 )
               })}
             </div>
           </div>
 
-          <button
-            onClick={startQuiz}
-            disabled={selectedTopics.length === 0}
-            className="w-full py-4 rounded-2xl font-black text-lg bg-[#800000] text-white hover:bg-[#600000] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
+          <button onClick={startQuiz} disabled={selectedTopics.length === 0}
+            className="w-full py-4 rounded-2xl font-black text-lg bg-[#800000] text-white hover:bg-[#600000] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
             Start Quiz ({selectedTopics.reduce((acc, t) => acc + levelEntries.filter((e) => e.topic === t).length, 0)} terms available)
           </button>
         </div>
@@ -642,56 +893,42 @@ function DefinitionsMode({
   if (phase === "quiz") {
     const q = questions[currentIdx]
     const isLast = currentIdx === questions.length - 1
+    const isSinglePage = q.type === "def-match" || q.type === "def-swapped"
 
     return (
       <div className="pt-24 min-h-screen p-6 animate-in fade-in">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => setPhase("topic-select")}
-              className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs tracking-widest"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Exit
+            <button onClick={() => setPhase("topic-select")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs tracking-widest">
+              <ChevronLeft className="w-4 h-4" />Exit
             </button>
-            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              {q.type === "def-match" ? "Match Up" : `${currentIdx + 1} / ${questions.length}`}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold uppercase px-2 py-1 rounded-full ${diffBg(difficulty)} ${diffColour(difficulty)}`}>{difficulty}</span>
+              <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                {isSinglePage ? (q.type === "def-match" ? "Match Up" : "Swapped Definitions") : `${currentIdx + 1} / ${questions.length}`}
+              </span>
+            </div>
           </div>
 
           {/* Progress bar */}
-          {q.type !== "def-match" && (
+          {!isSinglePage && (
             <div className={`w-full h-2 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-              <div
-                className="h-2 rounded-full bg-[#800000] transition-all"
-                style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
-              />
+              <div className="h-2 rounded-full bg-[#800000] transition-all" style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }} />
             </div>
           )}
 
           {/* MC Question */}
           {q.type === "def-mc" && (
             <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
-              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
-                {q.entry.topic}
-              </div>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>{q.entry.topic}</div>
               <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>What is the definition of…</p>
               <h3 className="text-2xl font-black mb-6">{q.entry.term}</h3>
               <div className="space-y-3">
                 {q.options.map((opt, i) => {
                   const chosen = mcAnswers[currentIdx] === i
                   return (
-                    <button
-                      key={i}
-                      onClick={() => setMcAnswers((prev) => ({ ...prev, [currentIdx]: i }))}
-                      className={`w-full text-left px-5 py-4 rounded-xl border-2 font-medium transition-all ${
-                        chosen
-                          ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
-                          : isDarkMode
-                            ? "border-slate-600 hover:border-slate-400"
-                            : "border-slate-200 hover:border-slate-400"
-                      }`}
-                    >
+                    <button key={i} onClick={() => setMcAnswers((prev) => ({ ...prev, [currentIdx]: i }))}
+                      className={`w-full text-left px-5 py-4 rounded-xl border-2 font-medium transition-all ${chosen ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
                       {opt}
                     </button>
                   )
@@ -703,30 +940,33 @@ function DefinitionsMode({
           {/* Cloze Question */}
           {q.type === "def-cloze" && (
             <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
-              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>
-                {q.entry.topic}
-              </div>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>{q.entry.topic}</div>
               <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete the definition</p>
-              <h3 className="text-2xl font-black mb-2">{q.entry.term}</h3>
-              <p className={`text-lg mb-6 leading-relaxed ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{q.blankedDefinition}</p>
-              <input
-                type="text"
-                value={clozeAnswers[currentIdx] || ""}
-                onChange={(e) => setClozeAnswers((prev) => ({ ...prev, [currentIdx]: e.target.value }))}
-                placeholder="Type the missing word…"
-                className={`w-full px-4 py-3 rounded-xl border-2 font-medium text-lg outline-none transition-colors focus:border-[#800000] ${
-                  isDarkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-500" : "bg-white border-slate-200 placeholder:text-slate-400"
-                }`}
-              />
+              <h3 className="text-2xl font-black mb-4">{q.entry.term}</h3>
+              <div className={`text-lg leading-relaxed mb-2 flex flex-wrap items-center gap-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                {q.blankedDefinition.split("___").map((part, pi, arr) => (
+                  <React.Fragment key={pi}>
+                    <span>{part}</span>
+                    {pi < arr.length - 1 && (
+                      <input
+                        type="text"
+                        value={clozeAnswers[currentIdx]?.[pi] || ""}
+                        onChange={(e) => setClozeAnswers((prev) => ({ ...prev, [currentIdx]: Object.assign([], prev[currentIdx] || [], { [pi]: e.target.value }) }))}
+                        placeholder={`word ${pi + 1}`}
+                        className={`inline-block w-32 px-2 py-1 rounded-lg border-2 font-medium text-base outline-none transition-colors focus:border-[#800000] ${isDarkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-500" : "bg-white border-slate-200 placeholder:text-slate-400"}`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              {q.keywords.length > 1 && <p className={`text-xs mt-2 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{q.keywords.length} blanks to fill</p>}
             </div>
           )}
 
           {/* Match Question */}
           {q.type === "def-match" && (
             <div className={`rounded-2xl border-2 p-6 ${cardBase}`}>
-              <p className={`text-sm font-bold uppercase tracking-widest mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Click a term, then click its matching definition
-              </p>
+              <p className={`text-sm font-bold uppercase tracking-widest mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Click a term, then click its matching definition</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Terms</p>
@@ -734,26 +974,12 @@ function DefinitionsMode({
                     const isMatched = matchSelections[pair.term] !== undefined
                     const isActive = selectedTerm === pair.term
                     return (
-                      <button
-                        key={pair.term}
+                      <button key={pair.term}
                         onClick={() => {
-                          if (isMatched) {
-                            setMatchSelections((prev) => { const n = { ...prev }; delete n[pair.term]; return n })
-                            setSelectedTerm(null)
-                          } else {
-                            setSelectedTerm(isActive ? null : pair.term)
-                          }
+                          if (isMatched) { setMatchSelections((prev) => { const n = { ...prev }; delete n[pair.term]; return n }); setSelectedTerm(null) }
+                          else setSelectedTerm(isActive ? null : pair.term)
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
-                          isMatched
-                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-                            : isActive
-                              ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]"
-                              : isDarkMode
-                                ? "border-slate-600 hover:border-slate-400"
-                                : "border-slate-200 hover:border-slate-400"
-                        }`}
-                      >
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${isMatched ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300" : isActive ? "border-[#800000] bg-red-50 dark:bg-red-900/20 text-[#800000]" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
                         {pair.term}
                         {isMatched && <span className={`block text-xs font-normal mt-0.5 truncate ${isDarkMode ? "text-green-400" : "text-green-600"}`}>✓ matched</span>}
                       </button>
@@ -766,27 +992,10 @@ function DefinitionsMode({
                     const matchedTerm = Object.entries(matchSelections).find(([, def]) => def === pair.definition)?.[0]
                     const isMatched = matchedTerm !== undefined
                     return (
-                      <button
-                        key={pair.definition}
-                        onClick={() => {
-                          if (selectedTerm && !isMatched) {
-                            setMatchSelections((prev) => ({ ...prev, [selectedTerm]: pair.definition }))
-                            setSelectedTerm(null)
-                          }
-                        }}
+                      <button key={pair.definition}
+                        onClick={() => { if (selectedTerm && !isMatched) { setMatchSelections((prev) => ({ ...prev, [selectedTerm]: pair.definition })); setSelectedTerm(null) } }}
                         disabled={isMatched || !selectedTerm}
-                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
-                          isMatched
-                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-                            : selectedTerm
-                              ? isDarkMode
-                                ? "border-slate-500 hover:border-amber-400 cursor-pointer"
-                                : "border-slate-300 hover:border-[#800000] cursor-pointer"
-                              : isDarkMode
-                                ? "border-slate-600 opacity-60"
-                                : "border-slate-200 opacity-60"
-                        }`}
-                      >
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${isMatched ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300" : selectedTerm ? isDarkMode ? "border-slate-500 hover:border-amber-400 cursor-pointer" : "border-slate-300 hover:border-[#800000] cursor-pointer" : isDarkMode ? "border-slate-600 opacity-60" : "border-slate-200 opacity-60"}`}>
                         {pair.definition}
                       </button>
                     )
@@ -796,25 +1005,123 @@ function DefinitionsMode({
             </div>
           )}
 
+          {/* Spot the Mistake Question */}
+          {q.type === "def-spot-mistake" && (
+            <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isDarkMode ? "bg-slate-700 text-amber-400" : "bg-amber-100 text-amber-700"}`}>{q.entry.topic}</div>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <p className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Spot the Mistake</p>
+              </div>
+              <h3 className="text-2xl font-black mb-2">{q.entry.term}</h3>
+              <p className={`text-lg mb-2 leading-relaxed font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>"{q.wrongStatement}"</p>
+              <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>What is wrong with this definition?</p>
+              <div className="space-y-3">
+                {q.options.map((opt, i) => {
+                  const chosen = spotMistakeAnswers[currentIdx] === i
+                  return (
+                    <button key={i} onClick={() => setSpotMistakeAnswers((prev) => ({ ...prev, [currentIdx]: i }))}
+                      className={`w-full text-left px-5 py-4 rounded-xl border-2 font-medium transition-all ${chosen ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Swapped Definitions Question */}
+          {q.type === "def-swapped" && (
+            <div className={`rounded-2xl border-2 p-6 ${cardBase}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <ArrowLeftRight className="w-5 h-5 text-purple-500" />
+                <p className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Swapped Definitions</p>
+              </div>
+              <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Click on any pairs where the definition is <strong>wrong</strong> for that term</p>
+              <div className="space-y-2">
+                {q.pairs.map((pair, pi) => {
+                  const selected = swappedSelections.has(pi)
+                  return (
+                    <button key={pi} onClick={() => setSwappedSelections((prev) => { const next = new Set(prev); if (next.has(pi)) next.delete(pi); else next.add(pi); return next })}
+                      className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${selected ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
+                      <span className={`font-black text-sm ${isDarkMode ? "text-white" : "text-slate-900"}`}>{pair.term}</span>
+                      {selected && <span className="ml-2 text-xs text-purple-600 dark:text-purple-400 font-bold">⚠ marked as wrong</span>}
+                      <p className={`text-sm mt-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{pair.displayedDef}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Keyword Builder Question */}
+          {q.type === "def-keyword-builder" && (
+            <div className={`rounded-2xl border-2 p-8 ${cardBase}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Key className="w-5 h-5 text-blue-500" />
+                <p className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Keyword Builder</p>
+              </div>
+              <h3 className="text-2xl font-black mb-2">{q.entry.term}</h3>
+              <p className={`text-sm mb-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Arrange the words to build the correct definition:</p>
+              {/* Placed words area */}
+              <div className={`min-h-16 p-3 rounded-xl border-2 mb-4 flex flex-wrap gap-2 ${isDarkMode ? "border-slate-600 bg-slate-700/50" : "border-slate-300 bg-slate-50"}`}>
+                {(kwBuilderPlaced[currentIdx] ?? []).length === 0 && <span className={`text-sm italic ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Click words below to build the definition…</span>}
+                {(kwBuilderPlaced[currentIdx] ?? []).map((word, wi) => (
+                  <button key={`placed-${wi}-${word}`}
+                    onClick={() => {
+                      setKwBuilderPlaced((prev) => {
+                        const arr = [...(prev[currentIdx] ?? [])]
+                        arr.splice(wi, 1)
+                        return { ...prev, [currentIdx]: arr }
+                      })
+                      setKwBuilderBank((prev) => ({ ...prev, [currentIdx]: [...(prev[currentIdx] ?? []), word] }))
+                    }}
+                    className="px-3 py-1 rounded-lg bg-[#800000] text-white text-sm font-bold hover:bg-[#600000] transition-colors">
+                    {word}
+                  </button>
+                ))}
+              </div>
+              {/* Word bank */}
+              <div className="flex flex-wrap gap-2">
+                {(kwBuilderBank[currentIdx] ?? []).map((word, wi) => (
+                  <button key={`bank-${wi}-${word}`}
+                    onClick={() => {
+                      setKwBuilderBank((prev) => {
+                        const arr = [...(prev[currentIdx] ?? [])]
+                        arr.splice(wi, 1)
+                        return { ...prev, [currentIdx]: arr }
+                      })
+                      setKwBuilderPlaced((prev) => ({ ...prev, [currentIdx]: [...(prev[currentIdx] ?? []), word] }))
+                    }}
+                    className={`px-3 py-1 rounded-lg border-2 text-sm font-bold transition-all ${isDarkMode ? "border-slate-600 hover:border-amber-400 bg-slate-700" : "border-slate-300 hover:border-[#800000] bg-white"}`}>
+                    {word}
+                  </button>
+                ))}
+              </div>
+              {(kwBuilderBank[currentIdx] ?? []).length === 0 && (kwBuilderPlaced[currentIdx] ?? []).length > 0 && (
+                <p className={`text-xs mt-3 ${isDarkMode ? "text-green-400" : "text-green-600"}`}>All words placed — click Next to confirm.</p>
+              )}
+            </div>
+          )}
+
           {/* Navigation */}
           <div className="flex gap-3 mt-6">
-            {currentIdx > 0 && q.type !== "def-match" && (
-              <button
-                onClick={() => setCurrentIdx((i) => i - 1)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back
+            {currentIdx > 0 && !isSinglePage && (
+              <button onClick={() => setCurrentIdx((i) => i - 1)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
+                <ChevronLeft className="w-4 h-4" />Back
               </button>
             )}
             <button
               onClick={() => {
-                if (isLast || q.type === "def-match") finishQuiz()
-                else setCurrentIdx((i) => i + 1)
+                if (isLast || isSinglePage) {
+                  finishQuiz()
+                } else {
+                  setCurrentIdx((i) => i + 1)
+                }
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors"
-            >
-              {isLast || q.type === "def-match" ? "Finish" : "Next"}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors">
+              {isLast || isSinglePage ? "Finish" : "Next"}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -824,10 +1131,12 @@ function DefinitionsMode({
   }
 
   // --- Phase: Results ---
-  const score = calcScore()
+  const { score, total: totalQuestions, wrongTerms } = calcScore()
   const pct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0
   const grade = pct >= 80 ? "Excellent" : pct >= 60 ? "Good" : pct >= 40 ? "Developing" : "Needs Practice"
   const gradeColor = pct >= 80 ? "text-green-600" : pct >= 60 ? "text-amber-600" : pct >= 40 ? "text-orange-500" : "text-red-600"
+
+  const suggestedDifficulty: DifficultyLevel = pct >= 80 && difficulty !== "hard" ? (difficulty === "easy" ? "medium" : "hard") : difficulty
 
   return (
     <div className="pt-24 min-h-screen p-6 animate-in fade-in">
@@ -835,58 +1144,103 @@ function DefinitionsMode({
         <div className={`rounded-3xl border-2 p-10 mb-6 ${cardBase}`}>
           <div className="text-6xl mb-4">{pct >= 80 ? "🏆" : pct >= 60 ? "⭐" : pct >= 40 ? "📚" : "💪"}</div>
           <h2 className="text-4xl font-black mb-2">{grade}</h2>
-          <p className={`text-lg mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+          <p className={`text-lg mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
             You scored <span className={`font-black text-2xl ${gradeColor}`}>{score}/{totalQuestions}</span> ({pct}%)
           </p>
+          {pct >= 80 && difficulty !== "hard" && (
+            <p className="text-sm mb-4 font-bold text-green-600 dark:text-green-400">
+              🎯 Great work! Try <span className="capitalize">{suggestedDifficulty}</span> difficulty next time.
+            </p>
+          )}
+          {wrongTerms.length > 0 && (
+            <div className={`mt-4 p-4 rounded-xl border-2 text-left ${isDarkMode ? "border-amber-700 bg-amber-900/20" : "border-amber-200 bg-amber-50"}`}>
+              <p className={`text-sm font-black mb-2 ${isDarkMode ? "text-amber-300" : "text-amber-700"}`}>⚠ Definitions to review ({wrongTerms.length}):</p>
+              <div className="flex flex-wrap gap-2">
+                {[...new Set(wrongTerms)].map((t) => (
+                  <span key={t} className={`text-xs px-2 py-1 rounded-full font-bold ${isDarkMode ? "bg-amber-900/40 text-amber-300" : "bg-amber-100 text-amber-700"}`}>{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* Per-question review for MC and Cloze */}
-          {questions.some((q) => q.type !== "def-match") && (
+          {/* Per-question review for MC, Cloze, Spot the Mistake */}
+          {questions.some((q) => q.type === "def-mc" || q.type === "def-cloze" || q.type === "def-spot-mistake") && (
             <div className="text-left space-y-3 mt-6">
               {questions.map((q, i) => {
-                if (q.type === "def-match") return null
-                const isCorrect =
-                  q.type === "def-mc"
-                    ? mcAnswers[i] === q.answer
-                    : (clozeAnswers[i] || "").trim().toLowerCase() === q.keyword.toLowerCase()
+                if (q.type === "def-match" || q.type === "def-swapped" || q.type === "def-keyword-builder") return null
+                let isCorrect = false
+                if (q.type === "def-mc") isCorrect = mcAnswers[i] === q.answer
+                else if (q.type === "def-cloze") isCorrect = q.keywords.every((kw, ki) => (clozeAnswers[i]?.[ki] || "").trim().toLowerCase() === kw.toLowerCase())
+                else if (q.type === "def-spot-mistake") isCorrect = spotMistakeAnswers[i] === q.answer
                 return (
-                  <div
-                    key={i}
-                    className={`px-4 py-3 rounded-xl border-2 text-sm ${
-                      isCorrect
-                        ? "border-green-400 bg-green-50 dark:bg-green-900/20"
-                        : "border-red-400 bg-red-50 dark:bg-red-900/20"
-                    }`}
-                  >
+                  <div key={i} className={`px-4 py-3 rounded-xl border-2 text-sm ${isCorrect ? "border-green-400 bg-green-50 dark:bg-green-900/20" : "border-red-400 bg-red-50 dark:bg-red-900/20"}`}>
                     <p className="font-black">{q.entry.term}</p>
-                    <p className={isDarkMode ? "text-slate-300" : "text-slate-600"}>{q.entry.definition}</p>
-                    {!isCorrect && q.type === "def-mc" && (
-                      <p className="text-red-600 dark:text-red-400 text-xs mt-1">
-                        Your answer: {mcAnswers[i] !== undefined ? q.options[mcAnswers[i]] : "No answer"}
-                      </p>
-                    )}
-                    {!isCorrect && q.type === "def-cloze" && (
-                      <p className="text-red-600 dark:text-red-400 text-xs mt-1">
-                        Your answer: "{clozeAnswers[i] || "no answer"}" — Correct: "{q.keyword}"
-                      </p>
-                    )}
+                    <p className={isDarkMode ? "text-slate-300" : "text-slate-600"}>
+                      {q.type === "def-spot-mistake" ? <>Correct answer: <em>{q.options[q.answer]}</em></> : q.entry.definition}
+                    </p>
+                    {!isCorrect && q.type === "def-mc" && <p className="text-red-600 dark:text-red-400 text-xs mt-1">Your answer: {mcAnswers[i] !== undefined ? q.options[mcAnswers[i]] : "No answer"}</p>}
+                    {!isCorrect && q.type === "def-cloze" && <p className="text-red-600 dark:text-red-400 text-xs mt-1">Expected: {q.keywords.join(", ")}</p>}
                   </div>
                 )
               })}
             </div>
           )}
+
+          {/* Swapped review */}
+          {questions.some((q) => q.type === "def-swapped") && (
+            <div className="text-left space-y-2 mt-6">
+              <p className={`text-sm font-black mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Swapped Definitions — Correct Answers:</p>
+              {(questions.find((q) => q.type === "def-swapped") as DefSwappedQuestion | undefined)?.pairs.map((pair, pi) => {
+                const userSaid = swappedSelections.has(pi)
+                const wasSwapped = pair.isSwapped
+                const correct = userSaid === wasSwapped
+                return (
+                  <div key={pi} className={`px-4 py-3 rounded-xl border-2 text-sm ${correct ? "border-green-400 bg-green-50 dark:bg-green-900/20" : "border-red-400 bg-red-50 dark:bg-red-900/20"}`}>
+                    <span className="font-black">{pair.term}</span>
+                    {wasSwapped && <span className="ml-2 text-xs font-bold text-red-600">⚠ Was swapped</span>}
+                    {wasSwapped && <p className={`text-xs mt-1 ${isDarkMode ? "text-green-400" : "text-green-700"}`}>Correct: {pair.correctDef}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Progress snapshot */}
+          {Object.keys(progress).length > 0 && (
+            <div className={`mt-6 p-4 rounded-xl border-2 text-left ${isDarkMode ? "border-slate-600 bg-slate-700/30" : "border-slate-200 bg-slate-50"}`}>
+              <p className={`text-sm font-black mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>📊 Progress Tracker</p>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {Object.entries(progress)
+                  .filter(([, p]) => p.correct + p.incorrect > 0)
+                  .sort(([, a], [, b]) => (b.incorrect / Math.max(1, b.correct + b.incorrect)) - (a.incorrect / Math.max(1, a.correct + a.incorrect)))
+                  .slice(0, 10)
+                  .map(([term, p]) => {
+                    const total = p.correct + p.incorrect
+                    const pctCorrect = Math.round((p.correct / total) * 100)
+                    return (
+                      <div key={term} className="flex items-center justify-between text-xs">
+                        <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{term}</span>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-16 h-1.5 rounded-full ${isDarkMode ? "bg-slate-600" : "bg-slate-200"}`}>
+                            <div className={`h-1.5 rounded-full ${pctCorrect >= 80 ? "bg-green-500" : pctCorrect >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pctCorrect}%` }} />
+                          </div>
+                          <span className={`w-8 text-right font-bold ${pctCorrect >= 80 ? "text-green-600 dark:text-green-400" : pctCorrect >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>{pctCorrect}%</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={() => { setPhase("topic-select") }}
-            className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}
-          >
+          <button onClick={() => { setDifficulty(suggestedDifficulty); setPhase("topic-select") }}
+            className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
             New Quiz
           </button>
-          <button
-            onClick={startQuiz}
-            className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors"
-          >
+          <button onClick={() => { startQuiz() }}
+            className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors">
             Try Again
           </button>
         </div>
