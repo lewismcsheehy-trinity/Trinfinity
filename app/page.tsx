@@ -99,7 +99,7 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "targets" | "definitions" | "calculations" | "assignment" | "practice" | null
+type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | null
 type TimingMode = "relaxed" | "exam" | "none"
 type ViewType = "landing" | "mode" | "setup" | "quiz" | "results"
 
@@ -258,7 +258,6 @@ function ModeSelection({
     { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing" },
     { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems" },
     { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice" },
-    { id: "targets" as const, icon: Award, title: "Targets", desc: "Goal-focused learning" },
     { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts" },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving" },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice" },
