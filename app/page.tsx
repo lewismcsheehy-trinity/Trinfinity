@@ -447,7 +447,9 @@ function SetupView({
             </h3>
             <div className="space-y-4">
               <label
-                className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                className={`group flex items-center justify-between p-5 rounded-2xl ${
+                  appMode === "mc" ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                } transition-colors border border-transparent ${
                   isDarkMode
                     ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
                     : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
@@ -455,17 +457,24 @@ function SetupView({
               >
                 <div>
                   <p className="font-black text-slate-800 dark:text-white">A-Level Challenge</p>
-                  <p className="text-xs text-slate-500">Include challenge questions beyond core syllabus</p>
+                  <p className="text-xs text-slate-500">
+                    {appMode === "mc"
+                      ? "Not applicable for Multiple Choice"
+                      : "Include challenge questions beyond core syllabus"}
+                  </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={includeALevel}
-                  onChange={(e) => setIncludeALevel(e.target.checked)}
+                  checked={appMode === "mc" ? false : includeALevel}
+                  onChange={(e) => appMode !== "mc" && setIncludeALevel(e.target.checked)}
+                  disabled={appMode === "mc"}
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
               <label
-                className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                className={`group flex items-center justify-between p-5 rounded-2xl ${
+                  appMode === "mc" ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                } transition-colors border border-transparent ${
                   isDarkMode
                     ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
                     : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
@@ -473,18 +482,23 @@ function SetupView({
               >
                 <div>
                   <p className="font-black text-slate-800 dark:text-white">Open Ended</p>
-                  <p className="text-xs text-slate-500">Include open-ended problem solving questions</p>
+                  <p className="text-xs text-slate-500">
+                    {appMode === "mc"
+                      ? "Not applicable for Multiple Choice"
+                      : "Include open-ended problem solving questions"}
+                  </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={includeOpenEnded}
-                  onChange={(e) => setIncludeOpenEnded(e.target.checked)}
+                  checked={appMode === "mc" ? false : includeOpenEnded}
+                  onChange={(e) => appMode !== "mc" && setIncludeOpenEnded(e.target.checked)}
+                  disabled={appMode === "mc"}
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
               <label
                 className={`group flex items-center justify-between p-5 rounded-2xl ${
-                  appMode === "retrieval" ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                  appMode === "retrieval" || appMode === "mc" ? "cursor-not-allowed opacity-50" : "cursor-pointer"
                 } transition-colors border border-transparent ${
                   isDarkMode
                     ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
@@ -494,16 +508,18 @@ function SetupView({
                 <div>
                   <p className="font-black text-slate-800 dark:text-white">Multi-topic</p>
                   <p className="text-xs text-slate-500">
-                    {appMode === "retrieval" 
-                      ? "Automatically enabled for Retrieval practice" 
+                    {appMode === "retrieval"
+                      ? "Automatically enabled for Retrieval practice"
+                      : appMode === "mc"
+                      ? "Not applicable for Multiple Choice"
                       : "Cross-topic application and problem solving"}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={appMode === "retrieval" ? true : includeMultiTopic}
-                  onChange={(e) => appMode !== "retrieval" && setIncludeMultiTopic(e.target.checked)}
-                  disabled={appMode === "retrieval"}
+                  checked={appMode === "retrieval" ? true : appMode !== "mc" && includeMultiTopic}
+                  onChange={(e) => appMode !== "retrieval" && appMode !== "mc" && setIncludeMultiTopic(e.target.checked)}
+                  disabled={appMode === "retrieval" || appMode === "mc"}
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
@@ -1727,6 +1743,11 @@ export default function App() {
 
   const handleModeSelect = (mode: AppMode) => {
     setAppMode(mode)
+    if (mode === "mc") {
+      setIncludeALevel(false)
+      setIncludeOpenEnded(false)
+      setIncludeMultiTopic(false)
+    }
     setView("setup")
   }
 
