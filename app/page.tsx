@@ -615,7 +615,8 @@ function generateSwappedQuestions(
   }))
   const swapIdxs = shuffleArray(pairs.map((_, i) => i)).slice(0, numSwapped * 2)
   for (let i = 0; i + 1 < swapIdxs.length; i += 2) {
-    const a = swapIdxs[i]; const b = swapIdxs[i + 1]
+    const a = swapIdxs[i]
+    const b = swapIdxs[i + 1]
     const tmp = pairs[a].displayedDef
     pairs[a].displayedDef = pairs[b].displayedDef
     pairs[b].displayedDef = tmp
@@ -782,7 +783,9 @@ function DefinitionsMode({
       terms.forEach((t) => {
         const prev = updated[t] || { correct: 0, incorrect: 0, lastSeen: 0, missedKeywords: [] }
         if (wrongTerms.includes(t)) {
-          updated[t] = { ...prev, incorrect: prev.incorrect + 1, lastSeen: Date.now(), missedKeywords: [...new Set([...prev.missedKeywords, ...missedKws.filter((k) => DEFINITIONS_BANK.find((e) => e.term === t)?.keywords.includes(k) ?? false)])] }
+          const termKws = DEFINITIONS_BANK.find((e) => e.term === t)?.keywords ?? []
+          const newMissed = [...new Set([...prev.missedKeywords, ...missedKws.filter((k) => termKws.includes(k))])]
+          updated[t] = { ...prev, incorrect: prev.incorrect + 1, lastSeen: Date.now(), missedKeywords: newMissed }
         } else {
           updated[t] = { ...prev, correct: prev.correct + 1, lastSeen: Date.now() }
         }
@@ -801,6 +804,35 @@ function DefinitionsMode({
   const diffBg = (d: DifficultyLevel) =>
     d === "easy" ? "border-green-500 bg-green-50 dark:bg-green-900/20" : d === "medium" ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20" : "border-red-500 bg-red-50 dark:bg-red-900/20"
 
+  function diffDesc(qt: QuizType, d: DifficultyLevel): string {
+    const descs: Record<QuizType, Record<DifficultyLevel, string>> = {
+      mc: { easy: "Very different distractors", medium: "Similar-sounding distractors", hard: "Plausible distractors" },
+      cloze: { easy: "Remove 1 keyword", medium: "Remove 2–3 keywords", hard: "Remove all key terms" },
+      match: { easy: "5 terms", medium: "10 terms", hard: "5 + 5 with blanks" },
+      "spot-mistake": { easy: "Obvious mistake", medium: "Subtle misconception", hard: "Plausible wrong term" },
+      swapped: { easy: "2 swaps from 5", medium: "3 swaps from 7", hard: "4 swaps from 10" },
+      "keyword-builder": { easy: "Short definition", medium: "Full definition", hard: "Full definition" },
+    }
+    return descs[qt][d]
+  }
+
+  function toggleSwappedSelection(pi: number) {
+    setSwappedSelections((prev) => {
+      const next = new Set(prev)
+      if (next.has(pi)) next.delete(pi)
+      else next.add(pi)
+      return next
+    })
+  }
+
+  function updateClozeAnswer(qIdx: number, blankIdx: number, value: string) {
+    setClozeAnswers((prev) => {
+      const answers = [...(prev[qIdx] || [])]
+      answers[blankIdx] = value
+      return { ...prev, [qIdx]: answers }
+    })
+  }
+
   // --- Phase: Topic Selection ---
   if (phase === "topic-select") {
     const quizTypes = [
@@ -811,10 +843,10 @@ function DefinitionsMode({
       { id: "swapped" as const, icon: ArrowLeftRight, title: "Swapped Definitions", desc: "Identify incorrectly matched pairs" },
       { id: "keyword-builder" as const, icon: Key, title: "Keyword Builder", desc: "Arrange words into a definition" },
     ]
-    const difficulties: { id: DifficultyLevel; label: string; desc: string }[] = [
-      { id: "easy", label: "Easy", desc: quizType === "mc" ? "Very different distractors" : quizType === "cloze" ? "Remove 1 keyword" : quizType === "match" ? "5 terms" : quizType === "spot-mistake" ? "Obvious mistake" : quizType === "swapped" ? "2 swaps from 5" : "Short definition" },
-      { id: "medium", label: "Medium", desc: quizType === "mc" ? "Similar-sounding distractors" : quizType === "cloze" ? "Remove 2–3 keywords" : quizType === "match" ? "10 terms" : quizType === "spot-mistake" ? "Subtle misconception" : quizType === "swapped" ? "3 swaps from 7" : "Full definition" },
-      { id: "hard", label: "Hard", desc: quizType === "mc" ? "Plausible distractors" : quizType === "cloze" ? "Remove all key terms" : quizType === "match" ? "5 + 5 with blanks" : quizType === "spot-mistake" ? "Plausible wrong term" : quizType === "swapped" ? "4 swaps from 10" : "Full definition" },
+    const difficulties: { id: DifficultyLevel; label: string }[] = [
+      { id: "easy", label: "Easy" },
+      { id: "medium", label: "Medium" },
+      { id: "hard", label: "Hard" },
     ]
     return (
       <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
@@ -850,7 +882,7 @@ function DefinitionsMode({
                 <button key={d.id} onClick={() => setDifficulty(d.id)}
                   className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all ${difficulty === d.id ? diffBg(d.id) : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
                   <span className={`font-black text-sm ${difficulty === d.id ? diffColour(d.id) : ""}`}>{d.label}</span>
-                  <span className={`text-xs mt-1 text-center ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{d.desc}</span>
+                  <span className={`text-xs mt-1 text-center ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{diffDesc(quizType, d.id)}</span>
                 </button>
               ))}
             </div>
@@ -956,7 +988,7 @@ function DefinitionsMode({
                       <input
                         type="text"
                         value={clozeAnswers[currentIdx]?.[pi] || ""}
-                        onChange={(e) => setClozeAnswers((prev) => { const arr = [...(prev[currentIdx] || [])]; arr[pi] = e.target.value; return { ...prev, [currentIdx]: arr } })}
+                        onChange={(e) => updateClozeAnswer(currentIdx, pi, e.target.value)}
                         placeholder={`word ${pi + 1}`}
                         className={`inline-block w-32 px-2 py-1 rounded-lg border-2 font-medium text-base outline-none transition-colors focus:border-[#800000] ${isDarkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-500" : "bg-white border-slate-200 placeholder:text-slate-400"}`}
                       />
@@ -1047,7 +1079,7 @@ function DefinitionsMode({
                 {q.pairs.map((pair, pi) => {
                   const selected = swappedSelections.has(pi)
                   return (
-                    <button key={pi} onClick={() => setSwappedSelections((prev) => { const next = new Set(prev); if (next.has(pi)) next.delete(pi); else next.add(pi); return next })}
+                    <button key={pi} onClick={() => toggleSwappedSelection(pi)}
                       className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${selected ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20" : isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
                       <span className={`font-black text-sm ${isDarkMode ? "text-white" : "text-slate-900"}`}>{pair.term}</span>
                       {selected && <span className="ml-2 text-xs text-purple-600 dark:text-purple-400 font-bold">⚠ marked as wrong</span>}
