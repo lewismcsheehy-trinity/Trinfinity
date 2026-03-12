@@ -258,23 +258,23 @@ const DEFINITIONS_BANK: DefinitionEntry[] = [
   { term: "Half-life", definition: "The time taken for half the radioactive nuclei in a sample to decay", topic: "Nuclear Radiation", level: "National 5", keywords: ["decay", "time"] },
 
   // National 5 - Waves
-  { term: "Longitudinal Wave", definition: "A longitudinal wave is one where oscillations are parallel to the direction of energy transfer", topic: "Waves", level: "National 5", keywords: ['oscillations', ‘energy’, ‘parallel’] },
-  { term: "Transverse Wave", definition: "A Transverse wave is one where oscillations are perpendicular to the direction of energy transfer", topic: "Waves", level: "National 5", keywords: [‘oscillations’, 'perpendicular'] },
-  { term: "Frequency", definition: "The number of waves produced per second.", topic: "Waves", level: "National 5", keywords: [‘number’, ‘waves’, ‘second’] },
-  { term: "Period", definition: "The time taken to produce 1 wave.", topic: "Waves", level: "National 5", keywords: ['time', ‘1 wave’] },
-  { term: "Crest", definition: "The top point (peak) of a wave.", topic: "Waves", level: "National 5", keywords: ['peak', 'top point'] },
-  { term: "Trough", definition: "The bottom point of a wave.", topic: "Waves", level: "National 5", keywords: ['bottom point'] },
-  { term: "Amplitude", definition: "The vertical distance from the axis to the top of the wave (crest) or bottom of the wave (trough). It is also half the vertical height of the wave.", topic: "Waves", level: "National 5", keywords: ['vertical distance', 'height', ‘peak’, ‘trough’] },
-  { term: "Wavelength", definition: "The distance between any two repeated points on adjacent waves.", topic: "Waves", level: "National 5", keywords: ['distance', 'adjacent’, ‘repeated’] },
-  { term: "Wave Speed", definition: "The distance travelled per second.", topic: "Waves", level: "National 5", keywords: ['distance per second'] },
-  { term: "Diffraction", definition: "The bending of waves through gaps or around obstacles.", topic: "Waves", level: "National 5", keywords: ['bending', 'gaps', 'obstacles'] },
-                                                                                                                                                       
+  { term: "Longitudinal Wave", definition: "A longitudinal wave is one where oscillations are parallel to the direction of energy transfer", topic: "Waves", level: "National 5", keywords: ["oscillations", "energy", "parallel"] },
+  { term: "Transverse Wave", definition: "A Transverse wave is one where oscillations are perpendicular to the direction of energy transfer", topic: "Waves", level: "National 5", keywords: ["oscillations", "perpendicular"] },
+  { term: "Frequency", definition: "The number of waves produced per second.", topic: "Waves", level: "National 5", keywords: ["number", "waves", "second"] },
+  { term: "Period", definition: "The time taken to produce 1 wave.", topic: "Waves", level: "National 5", keywords: ["time", "1 wave"] },
+  { term: "Crest", definition: "The top point (peak) of a wave.", topic: "Waves", level: "National 5", keywords: ["peak", "top point"] },
+  { term: "Trough", definition: "The bottom point of a wave.", topic: "Waves", level: "National 5", keywords: ["bottom point"] },
+  { term: "Amplitude", definition: "The vertical distance from the axis to the top of the wave (crest) or bottom of the wave (trough). It is also half the vertical height of the wave.", topic: "Waves", level: "National 5", keywords: ["vertical distance", "height", "peak", "trough"] },
+  { term: "Wavelength", definition: "The distance between any two repeated points on adjacent waves.", topic: "Waves", level: "National 5", keywords: ["distance", "adjacent", "repeated"] },
+  { term: "Wave Speed", definition: "The distance travelled per second.", topic: "Waves", level: "National 5", keywords: ["distance per second"] },
+  { term: "Diffraction", definition: "The bending of waves through gaps or around obstacles.", topic: "Waves", level: "National 5", keywords: ["bending", "gaps", "obstacles"] },
+
   // National 5 - EM Spectrum
-  { term: "Electromagnetic Spectrum", definition: "A group of all the types of electromagnetic radiation ordered in terms of their wavelength/frequency.", topic: "Waves", level: "National 5", keywords: ['radiation', 'wavelength', 'frequency'] },
-  { term: "Refraction", definition: "The change in speed of light as it passes between media.", topic: "Waves", level: "National 5", keywords: ['change in speed', 'medium', ‘between’] },
-  { term: "Normal", definition: "A dashed line that is drawn perpendicular (at 90°) to any surface.", topic: "Waves", level: "National 5", keywords: ['perpendicular'] },
-  { term: "Angle of Incidence", definition: "The angle measured between the incident ray and the normal.", topic: "Waves", level: "National 5", keywords: ['incident ray', 'normal'] },
-  { term: "Angle of Refraction", definition: "The angle measured between the refracted ray and the normal.", topic: "Waves", level: "National 5", keywords: ['refracted ray', 'normal'] },
+  { term: "Electromagnetic Spectrum", definition: "A group of all the types of electromagnetic radiation ordered in terms of their wavelength/frequency.", topic: "Waves", level: "National 5", keywords: ["radiation", "wavelength", "frequency"] },
+  { term: "Refraction", definition: "The change in speed of light as it passes between media.", topic: "Waves", level: "National 5", keywords: ["change in speed", "medium", "between"] },
+  { term: "Normal", definition: "A dashed line that is drawn perpendicular (at 90°) to any surface.", topic: "Waves", level: "National 5", keywords: ["perpendicular"] },
+  { term: "Angle of Incidence", definition: "The angle measured between the incident ray and the normal.", topic: "Waves", level: "National 5", keywords: ["incident ray", "normal"] },
+  { term: "Angle of Refraction", definition: "The angle measured between the refracted ray and the normal.", topic: "Waves", level: "National 5", keywords: ["refracted ray", "normal"] },
 
   // Higher — Equations of Motion
   { term: "Uniform acceleration", definition: "Motion where the rate of change of velocity remains constant over time", topic: "Equations of Motion", level: "Higher", keywords: ["constant", "velocity"] },
