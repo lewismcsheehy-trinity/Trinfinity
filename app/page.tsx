@@ -591,6 +591,66 @@ function saveDefProgress(level: string, progress: Record<string, DefProgress>) {
   } catch {}
 }
 
+// --- Per-user progress helpers ---
+
+interface ExamProgress {
+  mc: Record<string, { correct: number; total: number }>
+  paper: Record<string, { correct: number; total: number }>
+}
+
+interface CalcProgress {
+  singleEq: Record<number, { correct: number; total: number }>
+  examLevel: { correct: number; total: number }
+  correctMe: { correct: number; total: number }
+}
+
+function loadUserDefProgress(userId: string, level: string): Record<string, DefProgress> {
+  try {
+    if (typeof window === "undefined") return {}
+    if (!VALID_LEVELS.includes(level)) return {}
+    const saved = localStorage.getItem(`trinfinity_def_progress_${userId}_${level}`)
+    return saved ? JSON.parse(saved) : {}
+  } catch { return {} }
+}
+
+function saveUserDefProgress(userId: string, level: string, progress: Record<string, DefProgress>): void {
+  try {
+    if (typeof window === "undefined") return
+    if (!VALID_LEVELS.includes(level)) return
+    localStorage.setItem(`trinfinity_def_progress_${userId}_${level}`, JSON.stringify(progress))
+  } catch {}
+}
+
+function loadUserExamProgress(userId: string, level: string): ExamProgress {
+  try {
+    if (typeof window === "undefined") return { mc: {}, paper: {} }
+    const saved = localStorage.getItem(`trinfinity_exam_progress_${userId}_${level}`)
+    return saved ? JSON.parse(saved) : { mc: {}, paper: {} }
+  } catch { return { mc: {}, paper: {} } }
+}
+
+function saveUserExamProgress(userId: string, level: string, progress: ExamProgress): void {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.setItem(`trinfinity_exam_progress_${userId}_${level}`, JSON.stringify(progress))
+  } catch {}
+}
+
+function loadUserCalcProgress(userId: string, level: string): CalcProgress {
+  try {
+    if (typeof window === "undefined") return { singleEq: {}, examLevel: { correct: 0, total: 0 }, correctMe: { correct: 0, total: 0 } }
+    const saved = localStorage.getItem(`trinfinity_calc_progress_${userId}_${level}`)
+    return saved ? JSON.parse(saved) : { singleEq: {}, examLevel: { correct: 0, total: 0 }, correctMe: { correct: 0, total: 0 } }
+  } catch { return { singleEq: {}, examLevel: { correct: 0, total: 0 }, correctMe: { correct: 0, total: 0 } } }
+}
+
+function saveUserCalcProgress(userId: string, level: string, progress: CalcProgress): void {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.setItem(`trinfinity_calc_progress_${userId}_${level}`, JSON.stringify(progress))
+  } catch {}
+}
+
 function shuffleArray<T>(arr: T[]): T[] {
   const result = [...arr]
   for (let i = result.length - 1; i > 0; i--) {
@@ -812,10 +872,12 @@ function DefinitionsMode({
   selectedLevel,
   onBack,
   isDarkMode,
+  currentUserId,
 }: {
   selectedLevel: string
   onBack: () => void
   isDarkMode: boolean
+  currentUserId?: string
 }) {
   type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
@@ -837,7 +899,9 @@ function DefinitionsMode({
   const [swappedSelections, setSwappedSelections] = useState<Set<number>>(new Set())
   const [kwBuilderPlaced, setKwBuilderPlaced] = useState<Record<number, string[]>>({})
   const [kwBuilderBank, setKwBuilderBank] = useState<Record<number, string[]>>({})
-  const [progress, setProgress] = useState<Record<string, DefProgress>>(() => loadDefProgress(selectedLevel))
+  const [progress, setProgress] = useState<Record<string, DefProgress>>(() =>
+    currentUserId ? loadUserDefProgress(currentUserId, selectedLevel) : loadDefProgress(selectedLevel)
+  )
 
   const unitTopicsForLevel = DEF_UNIT_TOPICS[selectedLevel] ?? {}
   const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
@@ -962,7 +1026,8 @@ function DefinitionsMode({
       })
     })
     setProgress(updated)
-    saveDefProgress(selectedLevel, updated)
+    if (currentUserId) saveUserDefProgress(currentUserId, selectedLevel, updated)
+    else saveDefProgress(selectedLevel, updated)
     setSubmitted(true)
     setPhase("results")
   }
@@ -2040,10 +2105,12 @@ function CalculationsMode({
   selectedLevel,
   onBack,
   isDarkMode,
+  currentUserId,
 }: {
   selectedLevel: string
   onBack: () => void
   isDarkMode: boolean
+  currentUserId?: string
 }) {
   type CalcSubMode = "single-equation" | "exam-level" | "correct-me" | null
   type CalcPhase = "hub" | "level-select" | "quiz" | "results"
@@ -2242,6 +2309,28 @@ function CalculationsMode({
       if (isExam && !isLastStep) {
         setCurrentStepIdx((s) => s + 1)
       } else if (isLastQ) {
+        if (currentUserId) {
+          const existing = loadUserCalcProgress(currentUserId, selectedLevel)
+          if (subMode === "single-equation") {
+            // Count correct answers using original question indices (mcAnswers is keyed by original index)
+            let correct = 0
+            questions.forEach((q, origIdx) => {
+              if (q.options && q.correctOption !== undefined && mcAnswers[origIdx] === q.correctOption) {
+                correct++
+              }
+            })
+            const mcTotal = questions.filter((q) => q.options && q.correctOption !== undefined).length
+            const prev = existing.singleEq[eqLevel] ?? { correct: 0, total: 0 }
+            existing.singleEq[eqLevel] = { correct: prev.correct + correct, total: prev.total + mcTotal }
+          } else if (subMode === "exam-level") {
+            // Exam-level is self-assessed; track sessions completed (total only, no auto-graded correct)
+            existing.examLevel = { correct: existing.examLevel.correct, total: existing.examLevel.total + 1 }
+          } else if (subMode === "correct-me") {
+            const correct = questions.filter((q, i) => hotspotChoice[i] === q.mistakeOptionIndex).length
+            existing.correctMe = { correct: existing.correctMe.correct + correct, total: existing.correctMe.total + questions.length }
+          }
+          saveUserCalcProgress(currentUserId, selectedLevel, existing)
+        }
         setPhase("results")
       } else {
         setCurrentIdx((i) => i + 1)
@@ -5384,6 +5473,7 @@ function GenericModal({
   selectedLevel,
   isDarkMode,
   topicPerformance,
+  currentUser,
 }: {
   activeModal: string | null
   onClose: () => void
@@ -5392,127 +5482,611 @@ function GenericModal({
   selectedLevel: string
   isDarkMode: boolean
   topicPerformance: Record<string, { correct: number; total: number }>
+  currentUser: UserAccount | null
 }) {
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
+  const [selectedPupilId, setSelectedPupilId] = useState<string | null>(null)
+
   if (!activeModal) return null
 
+  const isTeacher = currentUser?.accountType === "teacher"
   const subtopics = QA_SUBTOPICS[selectedLevel] || []
-  
-  // Calculate overall stats
+
+  // ── Pupil progress view ──────────────────────────────────────────────────
   const totalQuestions = Object.values(topicPerformance).reduce((sum, p) => sum + p.total, 0)
   const totalCorrect = Object.values(topicPerformance).reduce((sum, p) => sum + p.correct, 0)
   const overallPercentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0
   const topicsAttempted = Object.keys(topicPerformance).filter(t => topicPerformance[t].total > 0).length
 
+  // ── Teacher progress helpers ─────────────────────────────────────────────
+  const allGroups = loadClassGroups()
+  const allAccounts = loadAccounts()
+  const teacherClasses = isTeacher && currentUser
+    ? allGroups.filter((g) => g.teacherId === currentUser.id)
+    : []
+
+  function getPupilName(id: string): string {
+    return allAccounts.find((a) => a.id === id)?.name ?? "Unknown Pupil"
+  }
+
+  function getPupilDefSummary(pupilId: string): { correct: number; total: number } | null {
+    const prog = loadUserDefProgress(pupilId, selectedLevel)
+    const vals = Object.values(prog)
+    if (vals.length === 0) return null
+    const total = vals.reduce((s, p) => s + p.correct + p.incorrect, 0)
+    const correct = vals.reduce((s, p) => s + p.correct, 0)
+    return total > 0 ? { correct, total } : null
+  }
+
+  function getPupilExamSummary(pupilId: string): { mc: { correct: number; total: number } | null; paper: { correct: number; total: number } | null } {
+    const prog = loadUserExamProgress(pupilId, selectedLevel)
+    const mcVals = Object.values(prog.mc)
+    const paperVals = Object.values(prog.paper)
+    const mcTotal = mcVals.reduce((s, p) => s + p.total, 0)
+    const mcCorrect = mcVals.reduce((s, p) => s + p.correct, 0)
+    const paperTotal = paperVals.reduce((s, p) => s + p.total, 0)
+    const paperCorrect = paperVals.reduce((s, p) => s + p.correct, 0)
+    return {
+      mc: mcTotal > 0 ? { correct: mcCorrect, total: mcTotal } : null,
+      paper: paperTotal > 0 ? { correct: paperCorrect, total: paperTotal } : null,
+    }
+  }
+
+  function getPupilCalcSummary(pupilId: string): { correct: number; total: number } | null {
+    const prog = loadUserCalcProgress(pupilId, selectedLevel)
+    const singleEqVals = Object.values(prog.singleEq)
+    const total =
+      singleEqVals.reduce((s, p) => s + p.total, 0) +
+      prog.examLevel.total +
+      prog.correctMe.total
+    const correct =
+      singleEqVals.reduce((s, p) => s + p.correct, 0) +
+      prog.examLevel.correct +
+      prog.correctMe.correct
+    return total > 0 ? { correct, total } : null
+  }
+
+  function pct(s: { correct: number; total: number } | null): number | null {
+    if (!s || s.total === 0) return null
+    return Math.round((s.correct / s.total) * 100)
+  }
+
+  function perfColor(p: number): string {
+    return p >= 70 ? "text-emerald-600" : p >= 50 ? "text-amber-600" : "text-red-600"
+  }
+
+  function perfBarColor(p: number): string {
+    return p >= 70 ? "bg-emerald-500" : p >= 50 ? "bg-amber-500" : "bg-red-500"
+  }
+
+  const selectedClass = teacherClasses.find((g) => g.id === selectedClassId) ?? null
+  const selectedPupil = selectedPupilId && selectedClass?.memberIds.includes(selectedPupilId) ? selectedPupilId : null
+
+  // Class overview for selected class
+  function classOverview(group: ClassGroup) {
+    const pupils = group.memberIds
+    const defScores = pupils.map((id) => pct(getPupilDefSummary(id))).filter((p): p is number => p !== null)
+    const mcScores = pupils.map((id) => pct(getPupilExamSummary(id).mc)).filter((p): p is number => p !== null)
+    const paperScores = pupils.map((id) => pct(getPupilExamSummary(id).paper)).filter((p): p is number => p !== null)
+    const calcScores = pupils.map((id) => pct(getPupilCalcSummary(id))).filter((p): p is number => p !== null)
+    const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null
+    return {
+      def: avg(defScores),
+      mc: avg(mcScores),
+      paper: avg(paperScores),
+      calc: avg(calcScores),
+      defCount: defScores.length,
+      mcCount: mcScores.length,
+      paperCount: paperScores.length,
+      calcCount: calcScores.length,
+      total: pupils.length,
+    }
+  }
+
+  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className={`w-full max-w-lg rounded-[2.5rem] shadow-2xl p-10 border-4 border-[#800000] ${
+        className={`w-full max-w-2xl rounded-[2.5rem] shadow-2xl border-4 border-[#800000] flex flex-col max-h-[90vh] ${
           isDarkMode ? "bg-slate-900" : "bg-white"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-3xl font-black italic tracking-tighter uppercase">
-            {activeModal === "progress" ? "My Progress" : activeModal}
-          </h3>
+        {/* Header */}
+        <div className="flex justify-between items-center p-8 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            {isTeacher && activeModal === "progress" && selectedClassId && !selectedPupilId && (
+              <button
+                onClick={() => { setSelectedClassId(null); setSelectedPupilId(null) }}
+                className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            {isTeacher && activeModal === "progress" && selectedClassId && selectedPupilId && (
+              <button
+                onClick={() => setSelectedPupilId(null)}
+                className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            <h3 className="text-2xl font-black italic tracking-tighter uppercase">
+              {activeModal === "progress"
+                ? isTeacher
+                  ? selectedPupilId
+                    ? getPupilName(selectedPupilId)
+                    : selectedClassId
+                      ? (selectedClass?.name ?? "Class")
+                      : "Class Progress"
+                  : "My Progress"
+                : activeModal}
+            </h3>
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
             <X />
           </button>
         </div>
-        
-        {activeModal === "progress" && (
-          <div className="space-y-6">
-            {/* Overall Stats */}
-            <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-3xl font-black text-[#800000]">{overallPercentage}%</p>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Overall</p>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-8 pb-8">
+
+          {/* ── Teacher progress view ──────────────────────────────────────── */}
+          {activeModal === "progress" && isTeacher && !selectedClassId && (
+            <div className="space-y-4">
+              <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Your Classes
+              </p>
+              {teacherClasses.length === 0 ? (
+                <div className={`p-6 rounded-2xl text-center border ${cardBg}`}>
+                  <GraduationCap className="w-10 h-10 mx-auto mb-3 text-slate-400" />
+                  <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    No classes yet — create a class to start tracking pupil progress.
+                  </p>
                 </div>
-                <div>
-                  <p className="text-3xl font-black text-amber-600">{totalQuestions}</p>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Questions</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-black text-emerald-600">{topicsAttempted}</p>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Topics</p>
-                </div>
-              </div>
+              ) : (
+                teacherClasses.map((group) => {
+                  const ov = classOverview(group)
+                  return (
+                    <button
+                      key={group.id}
+                      onClick={() => { setSelectedClassId(group.id); setSelectedPupilId(null) }}
+                      className={`w-full text-left p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] hover:shadow-md ${cardBg}`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                            <GraduationCap className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <p className="font-black text-base">{group.name}</p>
+                            <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                              {group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                      </div>
+                      {/* Mini overview row */}
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { label: "Defs", val: ov.def, count: ov.defCount },
+                          { label: "MCQ", val: ov.mc, count: ov.mcCount },
+                          { label: "Paper", val: ov.paper, count: ov.paperCount },
+                          { label: "Calc", val: ov.calc, count: ov.calcCount },
+                        ].map(({ label, val, count }) => (
+                          <div key={label} className={`p-2 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                            <p className={`text-sm font-black ${val !== null ? perfColor(val) : "text-slate-400"}`}>
+                              {val !== null ? `${val}%` : "—"}
+                            </p>
+                            <p className={`text-[10px] font-bold uppercase ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
+                            <p className={`text-[9px] ${isDarkMode ? "text-slate-600" : "text-slate-300"}`}>
+                              {count}/{ov.total}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </button>
+                  )
+                })
+              )}
             </div>
-            
-            {/* Topic Breakdown */}
-            <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
-              <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Topic Breakdown</p>
-              {subtopics.map((topic) => {
-                const perf = topicPerformance[topic]
-                const score = perf && perf.total > 0 ? Math.round((perf.correct / perf.total) * 100) : null
-                const hasData = perf && perf.total > 0
-                
+          )}
+
+          {/* ── Teacher: class detail view ─────────────────────────────────── */}
+          {activeModal === "progress" && isTeacher && selectedClassId && !selectedPupilId && selectedClass && (
+            <div className="space-y-5">
+              {/* Class Overview */}
+              {(() => {
+                const ov = classOverview(selectedClass)
                 return (
-                  <div
-                    key={topic}
-                    className={`p-4 rounded-2xl border ${
-                      isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-bold">{topic}</span>
-                      {hasData ? (
-                        <span className={`text-sm font-black ${
-                          score! >= 70 ? "text-emerald-600" : score! >= 50 ? "text-amber-600" : "text-red-600"
-                        }`}>
-                          {score}%
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">Not attempted</span>
-                      )}
+                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
+                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      Class Overview — {selectedLevel}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: "Definitions", val: ov.def, count: ov.defCount, icon: "📖" },
+                        { label: "Exam MCQ", val: ov.mc, count: ov.mcCount, icon: "🎯" },
+                        { label: "Exam Paper", val: ov.paper, count: ov.paperCount, icon: "📝" },
+                        { label: "Calculations", val: ov.calc, count: ov.calcCount, icon: "🔢" },
+                      ].map(({ label, val, count, icon }) => (
+                        <div key={label} className={`p-4 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-base">{icon}</span>
+                            <p className={`text-xs font-black uppercase ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{label}</p>
+                          </div>
+                          {val !== null ? (
+                            <>
+                              <p className={`text-2xl font-black ${perfColor(val)}`}>{val}%</p>
+                              <div className={`h-1.5 rounded-full mt-1 ${isDarkMode ? "bg-slate-600" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(val)}`} style={{ width: `${val}%` }} />
+                              </div>
+                              <p className={`text-[10px] mt-1 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                                {count} of {ov.total} attempted
+                              </p>
+                            </>
+                          ) : (
+                            <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No data yet</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    {hasData && (
-                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all ${
-                            score! >= 70 ? "bg-emerald-500" : score! >= 50 ? "bg-amber-500" : "bg-red-500"
-                          }`}
-                          style={{ width: `${score}%` }}
-                        />
+                    {/* Analysis text */}
+                    {(ov.def !== null || ov.mc !== null || ov.paper !== null || ov.calc !== null) && (
+                      <div className={`mt-4 p-3 rounded-xl border ${isDarkMode ? "border-slate-600 bg-slate-700/30" : "border-amber-100 bg-amber-50"}`}>
+                        <p className={`text-xs font-black uppercase mb-1 text-amber-600`}>💡 Quick Analysis</p>
+                        <p className={`text-xs leading-relaxed ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                          {[
+                            ov.def !== null && `Definitions avg: ${ov.def}% (${ov.defCount}/${ov.total} pupils).`,
+                            ov.mc !== null && `MCQ avg: ${ov.mc}% (${ov.mcCount}/${ov.total} pupils).`,
+                            ov.paper !== null && `Paper avg: ${ov.paper}% (${ov.paperCount}/${ov.total} pupils).`,
+                            ov.calc !== null && `Calculations avg: ${ov.calc}% (${ov.calcCount}/${ov.total} pupils).`,
+                            (() => {
+                              const scores = [ov.def, ov.mc, ov.paper, ov.calc].filter((v): v is number => v !== null)
+                              if (scores.length === 0) return null
+                              const min = Math.min(...scores)
+                              const labels = ["Definitions", "MCQ", "Paper", "Calculations"]
+                              const vals = [ov.def, ov.mc, ov.paper, ov.calc]
+                              const weakIdx = vals.indexOf(min)
+                              return min < 60 ? `Weakest area: ${labels[weakIdx]} — consider focusing practice here.` : "Good overall performance across all areas."
+                            })(),
+                          ].filter(Boolean).join(" ")}
+                        </p>
                       </div>
                     )}
                   </div>
                 )
-              })}
+              })()}
+
+              {/* Pupil List */}
+              <div>
+                <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  Pupils ({selectedClass.memberIds.length})
+                </p>
+                {selectedClass.memberIds.length === 0 ? (
+                  <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No pupils have joined this class yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedClass.memberIds.map((pupilId) => {
+                      const defS = getPupilDefSummary(pupilId)
+                      const examS = getPupilExamSummary(pupilId)
+                      const calcS = getPupilCalcSummary(pupilId)
+                      const defPct = pct(defS)
+                      const mcPct = pct(examS.mc)
+                      const paperPct = pct(examS.paper)
+                      const calcPct = pct(calcS)
+                      return (
+                        <button
+                          key={pupilId}
+                          onClick={() => setSelectedPupilId(pupilId)}
+                          className={`w-full text-left p-4 rounded-2xl border-2 transition-all hover:scale-[1.01] hover:shadow-md ${cardBg}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
+                                {getPupilName(pupilId).charAt(0).toUpperCase()}
+                              </div>
+                              <span className="font-bold text-sm">{getPupilName(pupilId)}</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          </div>
+                          <div className="grid grid-cols-4 gap-1.5 text-center">
+                            {[
+                              { label: "Defs", val: defPct },
+                              { label: "MCQ", val: mcPct },
+                              { label: "Paper", val: paperPct },
+                              { label: "Calc", val: calcPct },
+                            ].map(({ label, val }) => (
+                              <div key={label} className={`px-1 py-1.5 rounded-lg ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                                <p className={`text-xs font-black ${val !== null ? perfColor(val) : "text-slate-400"}`}>
+                                  {val !== null ? `${val}%` : "—"}
+                                </p>
+                                <p className={`text-[9px] font-bold uppercase ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        
-        {activeModal === "coverage" && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            {subtopics.map((t) => (
-              <div
-                key={t}
-                className={`flex justify-between items-center p-4 rounded-2xl border ${
-                  isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"
-                }`}
-              >
-                <span className="text-sm font-bold">{t}</span>
-                <button
-                  onClick={() => onToggleTopic(t)}
-                  className={`w-12 h-7 rounded-full relative transition-colors ${
-                    userCoverage[t] ? "bg-amber-500" : isDarkMode ? "bg-slate-600" : "bg-slate-300"
+          )}
+
+          {/* ── Teacher: individual pupil detail ──────────────────────────── */}
+          {activeModal === "progress" && isTeacher && selectedClassId && selectedPupil && (
+            <div className="space-y-4">
+              {/* Definitions */}
+              {(() => {
+                const prog = loadUserDefProgress(selectedPupil, selectedLevel)
+                const unitTopics = DEF_UNIT_TOPICS[selectedLevel] ?? {}
+                const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
+                const byTopic = Object.entries(unitTopics)
+                  .flatMap(([unit, topics]) => (topics as string[]).map((t) => ({ unit, t })))
+                  .filter(({ t }) => levelEntries.some((e) => e.topic === t))
+                  .map(({ unit, t }) => {
+                    const entries = levelEntries.filter((e) => e.topic === t)
+                    const vals = entries.map((e) => prog[e.term]).filter(Boolean)
+                    const total = vals.reduce((s, p) => s + p.correct + p.incorrect, 0)
+                    const correct = vals.reduce((s, p) => s + p.correct, 0)
+                    return { unit, topic: t, pct: total > 0 ? Math.round((correct / total) * 100) : null, total }
+                  })
+                  .filter((x) => x.total > 0)
+                return (
+                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
+                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      📖 Definitions
+                    </p>
+                    {byTopic.length === 0 ? (
+                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No definitions attempted yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {byTopic.map(({ topic, pct: p }) => (
+                          <div key={topic}>
+                            <div className="flex justify-between items-center mb-0.5">
+                              <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
+                              <span className={`text-xs font-black ${p !== null ? perfColor(p) : "text-slate-400"}`}>
+                                {p !== null ? `${p}%` : "—"}
+                              </span>
+                            </div>
+                            {p !== null && (
+                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Exam MCQ */}
+              {(() => {
+                const prog = loadUserExamProgress(selectedPupil, selectedLevel)
+                const mcTopics = Object.entries(prog.mc).filter(([, v]) => v.total > 0)
+                return (
+                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
+                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      🎯 Exam — Multiple Choice
+                    </p>
+                    {mcTopics.length === 0 ? (
+                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No MCQ attempts yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {mcTopics.map(([topic, v]) => {
+                          const p = Math.round((v.correct / v.total) * 100)
+                          return (
+                            <div key={topic}>
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
+                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
+                              </div>
+                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Exam Paper */}
+              {(() => {
+                const prog = loadUserExamProgress(selectedPupil, selectedLevel)
+                const paperTopics = Object.entries(prog.paper).filter(([, v]) => v.total > 0)
+                return (
+                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
+                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      📝 Exam — Paper Questions
+                    </p>
+                    {paperTopics.length === 0 ? (
+                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No paper attempts yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {paperTopics.map(([topic, v]) => {
+                          const p = Math.round((v.correct / v.total) * 100)
+                          return (
+                            <div key={topic}>
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
+                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
+                              </div>
+                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Calculations */}
+              {(() => {
+                const prog = loadUserCalcProgress(selectedPupil, selectedLevel)
+                const singleEqEntries = Object.entries(prog.singleEq).filter(([, v]) => v.total > 0)
+                const hasCalc = singleEqEntries.length > 0 || prog.examLevel.total > 0 || prog.correctMe.total > 0
+                return (
+                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
+                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      🔢 Calculations
+                    </p>
+                    {!hasCalc ? (
+                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No calculations attempted yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {singleEqEntries.map(([lvl, v]) => {
+                          const p = v.total > 0 ? Math.round((v.correct / v.total) * 100) : null
+                          const lvlInfo = CALC_SINGLE_EQ_LEVELS[Number(lvl) - 1]
+                          return p !== null ? (
+                            <div key={lvl}>
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                                  {lvlInfo?.emoji ?? ""} {lvlInfo?.label ?? `Level ${lvl}`}
+                                </span>
+                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
+                              </div>
+                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
+                              </div>
+                            </div>
+                          ) : null
+                        })}
+                        {prog.examLevel.total > 0 && (
+                          <div>
+                            <div className="flex justify-between items-center mb-0.5">
+                              <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>📋 Exam Level</span>
+                              <span className={`text-xs font-black text-emerald-600`}>{prog.examLevel.total} completed</span>
+                            </div>
+                          </div>
+                        )}
+                        {prog.correctMe.total > 0 && (() => {
+                          const p = Math.round((prog.correctMe.correct / prog.correctMe.total) * 100)
+                          return (
+                            <div>
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>🔍 Correct Me!</span>
+                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
+                              </div>
+                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* ── Pupil progress view ────────────────────────────────────────── */}
+          {activeModal === "progress" && !isTeacher && (
+            <div className="space-y-6">
+              {/* Overall Stats */}
+              <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-3xl font-black text-[#800000]">{overallPercentage}%</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Overall</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-amber-600">{totalQuestions}</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Questions</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-emerald-600">{topicsAttempted}</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Topics</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Topic Breakdown */}
+              <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Topic Breakdown</p>
+                {subtopics.map((topic) => {
+                  const perf = topicPerformance[topic]
+                  const score = perf && perf.total > 0 ? Math.round((perf.correct / perf.total) * 100) : null
+                  const hasData = perf && perf.total > 0
+                  return (
+                    <div
+                      key={topic}
+                      className={`p-4 rounded-2xl border ${
+                        isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold">{topic}</span>
+                        {hasData ? (
+                          <span className={`text-sm font-black ${
+                            score! >= 70 ? "text-emerald-600" : score! >= 50 ? "text-amber-600" : "text-red-600"
+                          }`}>
+                            {score}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Not attempted</span>
+                        )}
+                      </div>
+                      {hasData && (
+                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              score! >= 70 ? "bg-emerald-500" : score! >= 50 ? "bg-amber-500" : "bg-red-500"
+                            }`}
+                            style={{ width: `${score}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Coverage view ──────────────────────────────────────────────── */}
+          {activeModal === "coverage" && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {subtopics.map((t) => (
+                <div
+                  key={t}
+                  className={`flex justify-between items-center p-4 rounded-2xl border ${
+                    isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"
                   }`}
                 >
-                  <div
-                    className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                      userCoverage[t] ? "translate-x-5" : ""
+                  <span className="text-sm font-bold">{t}</span>
+                  <button
+                    onClick={() => onToggleTopic(t)}
+                    className={`w-12 h-7 rounded-full relative transition-colors ${
+                      userCoverage[t] ? "bg-amber-500" : isDarkMode ? "bg-slate-600" : "bg-slate-300"
                     }`}
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+                        userCoverage[t] ? "translate-x-5" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -5604,13 +6178,13 @@ export default function App() {
 
   const updateTopicPerformance = () => {
     const newPerformance = { ...topicPerformance }
-    
+
     currentQuestions.forEach((q, idx) => {
       const topic = q.subtopic || q.topic
       if (!newPerformance[topic]) {
         newPerformance[topic] = { correct: 0, total: 0 }
       }
-      
+
       if (q.type === "mc") {
         newPerformance[topic].total += 1
         if (userSelections[idx] === q.answer) {
@@ -5623,8 +6197,28 @@ export default function App() {
         })
       }
     })
-    
+
     setTopicPerformance(newPerformance)
+
+    // Persist exam progress per user
+    if (currentUser) {
+      const existing = loadUserExamProgress(currentUser.id, selectedLevel)
+      currentQuestions.forEach((q, idx) => {
+        const topic = q.subtopic || q.topic
+        if (q.type === "mc") {
+          if (!existing.mc[topic]) existing.mc[topic] = { correct: 0, total: 0 }
+          existing.mc[topic].total += 1
+          if (userSelections[idx] === q.answer) existing.mc[topic].correct += 1
+        } else if (q.type === "paper") {
+          if (!existing.paper[topic]) existing.paper[topic] = { correct: 0, total: 0 }
+          q.parts.forEach((part) => {
+            existing.paper[topic].total += part.marks
+            existing.paper[topic].correct += paperMarks[part.id] || 0
+          })
+        }
+      })
+      saveUserExamProgress(currentUser.id, selectedLevel, existing)
+    }
   }
 
   const handleFinishQuiz = () => {
@@ -5813,6 +6407,7 @@ export default function App() {
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
+            currentUserId={currentUser?.id}
           />
         )}
         {view === "calculations" && (
@@ -5820,6 +6415,7 @@ export default function App() {
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
+            currentUserId={currentUser?.id}
           />
         )}
         {view === "assignment" && (
@@ -5839,6 +6435,7 @@ export default function App() {
         selectedLevel={selectedLevel}
         isDarkMode={isDarkMode}
         topicPerformance={topicPerformance}
+        currentUser={currentUser}
       />
       <AuthModal
         isOpen={authModalOpen}
