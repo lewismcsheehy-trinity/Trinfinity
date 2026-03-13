@@ -2404,7 +2404,7 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
     ],
     hard: [
       { id: "Ek-h1", stem: "A 1.2 t car travels at 72 km/h. Calculate its kinetic energy.", equation: "Ek = ½mv²", correctAnswer: "240 000 J", markScheme: "m = 1 200 kg;  v = 72 km/h = 20 ms⁻¹;  Ek = ½ × 1 200 × 400 = 240 000 J" },
-      { id: "Ek-h2", stem: "A 500 g ball has kinetic energy of 90 J. Calculate its speed.", equation: "Ek = ½mv²  →  v = √(2Ek ÷ m)", correctAnswer: "18.97 ms⁻¹", markScheme: "m = 0.500 kg;  v = √(2×90 ÷ 0.500) = √360 ≈ 19.0 ms⁻¹" },
+      { id: "Ek-h2", stem: "A 500 g ball has kinetic energy of 90 J. Calculate its speed.", equation: "Ek = ½mv²  →  v = √(2Ek ÷ m)", correctAnswer: "19.0 ms⁻¹", markScheme: "m = 0.500 kg;  v = √(2×90 ÷ 0.500) = √360 ≈ 19.0 ms⁻¹" },
     ],
   },
 
@@ -2468,7 +2468,7 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
     easy: [
       { id: "Eh-e1", stem: "Calculate the heat energy needed to raise 2 kg of water by 5 °C. (c = 4 200 Jkg⁻¹°C⁻¹)", equation: "Eh = cmΔT", options: ["42 000 J", "8 400 J", "2 100 J", "100 800 J"], correctOption: 0, markScheme: "Eh = 4 200 × 2 × 5 = 42 000 J" },
       { id: "Eh-e2", stem: "800 J of heat energy raises the temperature of 0.5 kg of a substance by 4 °C. Calculate the specific heat capacity.", equation: "Eh = cmΔT  →  c = Eh ÷ (mΔT)", options: ["400 Jkg⁻¹°C⁻¹", "1 600 Jkg⁻¹°C⁻¹", "6 400 Jkg⁻¹°C⁻¹", "100 Jkg⁻¹°C⁻¹"], correctOption: 0, markScheme: "c = 800 ÷ (0.5 × 4) = 800 ÷ 2 = 400 Jkg⁻¹°C⁻¹" },
-      { id: "Eh-e3", stem: "5 040 J of energy heats 1.2 kg of water. (c = 4 200 Jkg⁻¹°C⁻¹) Calculate the temperature rise.", equation: "Eh = cmΔT  →  ΔT = Eh ÷ (cm)", options: ["1 °C", "25 200 °C", "4 °C", "1 °C"], correctOption: 0, markScheme: "ΔT = 5 040 ÷ (4 200 × 1.2) = 5 040 ÷ 5 040 = 1 °C" },
+      { id: "Eh-e3", stem: "5 040 J of energy heats 1.2 kg of water. (c = 4 200 Jkg⁻¹°C⁻¹) Calculate the temperature rise.", equation: "Eh = cmΔT  →  ΔT = Eh ÷ (cm)", options: ["1 °C", "25 200 °C", "4 °C", "10 °C"], correctOption: 0, markScheme: "ΔT = 5 040 ÷ (4 200 × 1.2) = 5 040 ÷ 5 040 = 1 °C" },
     ],
     medium: [
       { id: "Eh-m1", stem: "Calculate the heat energy needed to raise 3 kg of copper by 20 °C. (c = 385 Jkg⁻¹°C⁻¹)", equation: "Eh = cmΔT", correctAnswer: "23 100 J", markScheme: "Eh = 385 × 3 × 20 = 23 100 J" },
@@ -2593,7 +2593,7 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
       { id: "Emc2-m2", stem: "A fission reaction releases 3.2 × 10⁻¹¹ J. (c = 3.0 × 10⁸ ms⁻¹) Calculate the mass converted.", equation: "E = mc²  →  m = E ÷ c²", correctAnswer: "3.6 × 10⁻²⁸ kg", markScheme: "m = 3.2×10⁻¹¹ ÷ 9.0×10¹⁶ = 3.6×10⁻²⁸ kg" },
     ],
     hard: [
-      { id: "Emc2-h1", stem: "A reaction converts 2.0 μg of mass into energy. (c = 3.0 × 10⁸ ms⁻¹) Calculate the energy released in joules.", equation: "E = mc²", correctAnswer: "1.8 × 10¹¹ J", markScheme: "m = 2.0×10⁻⁶ × 10⁻³ = 2.0×10⁻⁹ kg;  E = 2.0×10⁻⁹ × 9.0×10¹⁶ = 1.8×10⁸ J" },
+      { id: "Emc2-h1", stem: "A reaction converts 2.0 μg of mass into energy. (c = 3.0 × 10⁸ ms⁻¹) Calculate the energy released in joules.", equation: "E = mc²", correctAnswer: "1.8 × 10⁸ J", markScheme: "m = 2.0 μg = 2.0×10⁻⁶ g = 2.0×10⁻⁹ kg;  E = 2.0×10⁻⁹ × 9.0×10¹⁶ = 1.8×10⁸ J" },
     ],
   },
 
@@ -2610,7 +2610,7 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
       { id: "temp-m3", stem: "The temperature of a gas changes from 17 °C to 117 °C. Calculate the temperature change in kelvin.", equation: "T(K) = T(°C) + 273", correctAnswer: "100 K", markScheme: "T₁ = 290 K;  T₂ = 390 K;  ΔT = 100 K" },
     ],
     hard: [
-      { id: "temp-h1", stem: "A gas has temperature −173 °C. Express this in kelvin and as a fraction of the boiling point of nitrogen (77 K).", equation: "T(K) = T(°C) + 273", correctAnswer: "100 K; approx 1.3×", markScheme: "T = −173 + 273 = 100 K;  100 ÷ 77 ≈ 1.30 times the boiling point of nitrogen" },
+      { id: "temp-h1", stem: "A gas has temperature −173 °C. Convert to kelvin.", equation: "T(K) = T(°C) + 273", correctAnswer: "100 K", markScheme: "T = −173 + 273 = 100 K" },
       { id: "temp-h2", stem: "The temperature of a gas is doubled from 150 K. Calculate the new temperature in °C.", equation: "T(°C) = T(K) − 273", correctAnswer: "27 °C", markScheme: "New T = 150 × 2 = 300 K;  T(°C) = 300 − 273 = 27 °C" },
     ],
   },
