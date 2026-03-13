@@ -39,6 +39,16 @@ import {
   TrendingDown,
   BarChart2,
   Lightbulb,
+  LogIn,
+  LogOut,
+  UserCircle,
+  Users,
+  GraduationCap,
+  ChevronDown,
+  Plus,
+  UserPlus,
+  Copy,
+  CheckCheck,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -137,6 +147,85 @@ interface PaperQuestion {
 }
 
 type Question = MCQuestion | PaperQuestion
+
+// --- Auth Types & Helpers ---
+
+type AccountType = "pupil" | "teacher"
+
+interface UserAccount {
+  id: string
+  name: string
+  email: string
+  accountType: AccountType
+}
+
+interface ClassGroup {
+  id: string
+  name: string
+  teacherId: string
+  memberIds: string[]
+  code: string
+}
+
+function generateId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
+function generateClassCode(): string {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    const arr = new Uint8Array(4)
+    crypto.getRandomValues(arr)
+    return Array.from(arr, (b) => b.toString(36)).join("").slice(0, 6).toUpperCase()
+  }
+  return Math.random().toString(36).slice(2, 8).toUpperCase()
+}
+
+function loadAccounts(): UserAccount[] {
+  if (typeof window === "undefined") return []
+  try {
+    return JSON.parse(localStorage.getItem("trinfinity_accounts") || "[]")
+  } catch {
+    return []
+  }
+}
+
+function saveAccounts(accounts: UserAccount[]): void {
+  if (typeof window === "undefined") return
+  localStorage.setItem("trinfinity_accounts", JSON.stringify(accounts))
+}
+
+function loadCurrentUser(): UserAccount | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem("trinfinity_current_user")
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function saveCurrentUser(user: UserAccount | null): void {
+  if (typeof window === "undefined") return
+  if (user) localStorage.setItem("trinfinity_current_user", JSON.stringify(user))
+  else localStorage.removeItem("trinfinity_current_user")
+}
+
+function loadClassGroups(): ClassGroup[] {
+  if (typeof window === "undefined") return []
+  try {
+    return JSON.parse(localStorage.getItem("trinfinity_class_groups") || "[]")
+  } catch {
+    return []
+  }
+}
+
+function saveClassGroups(groups: ClassGroup[]): void {
+  if (typeof window === "undefined") return
+  localStorage.setItem("trinfinity_class_groups", JSON.stringify(groups))
+}
 
 // --- Definitions Mode Types & Data ---
 
@@ -3067,19 +3156,527 @@ function AssignmentMode({
 
 // --- Components ---
 
+// --- Auth Modal ---
+
+function AuthModal({
+  isOpen,
+  onClose,
+  onSignIn,
+  isDarkMode,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSignIn: (user: UserAccount) => void
+  isDarkMode: boolean
+}) {
+  const [tab, setTab] = useState<"signin" | "signup">("signin")
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [accountType, setAccountType] = useState<AccountType>("pupil")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+
+  // Reset form state each time the modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTab("signin")
+      setName("")
+      setEmail("")
+      setAccountType("pupil")
+      setError("")
+      setSuccess("")
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  function handleSignIn(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    const accounts = loadAccounts()
+    const found = accounts.find((a) => a.email.toLowerCase() === email.toLowerCase())
+    if (!found) {
+      setError("No account found with that email. Please create an account first.")
+      return
+    }
+    saveCurrentUser(found)
+    onSignIn(found)
+    onClose()
+  }
+
+  function handleSignUp(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    if (!name.trim() || !email.trim()) {
+      setError("Please fill in all fields.")
+      return
+    }
+    const accounts = loadAccounts()
+    if (accounts.find((a) => a.email.toLowerCase() === email.toLowerCase())) {
+      setError("An account with this email already exists. Please sign in.")
+      return
+    }
+    const newUser: UserAccount = {
+      id: generateId(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      accountType,
+    }
+    saveAccounts([...accounts, newUser])
+    saveCurrentUser(newUser)
+    setSuccess("Account created!")
+    setTimeout(() => {
+      onSignIn(newUser)
+      onClose()
+    }, 800)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className={`relative w-full max-w-md rounded-2xl shadow-2xl p-8 ${
+          isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
+        }`}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
+            <Atom className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-[#800000]">Trinity Boost</h2>
+            <p className="text-xs text-slate-500">Physics Study Portal</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+          <button
+            onClick={() => { setTab("signin"); setError(""); }}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
+              tab === "signin"
+                ? "bg-[#800000] text-white shadow-md"
+                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setTab("signup"); setError(""); }}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
+              tab === "signup"
+                ? "bg-[#800000] text-white shadow-md"
+                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
+
+        {tab === "signin" ? (
+          <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
+                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
+                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
+              />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <button
+              type="submit"
+              className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                required
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
+                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
+                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
+                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
+                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
+              />
+            </div>
+
+            {/* Account Type Selection */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">I am a…</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setAccountType("pupil")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                    accountType === "pupil"
+                      ? "border-[#800000] bg-[#800000]/10"
+                      : isDarkMode ? "border-slate-700 hover:border-slate-500" : "border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  <UserCircle className={`w-7 h-7 ${accountType === "pupil" ? "text-[#800000]" : "text-slate-400"}`} />
+                  <span className={`text-sm font-bold ${accountType === "pupil" ? "text-[#800000]" : ""}`}>Pupil</span>
+                  <span className="text-[10px] text-slate-400 text-center leading-tight">Access quizzes &amp; progress</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("teacher")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                    accountType === "teacher"
+                      ? "border-amber-600 bg-amber-600/10"
+                      : isDarkMode ? "border-slate-700 hover:border-slate-500" : "border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  <GraduationCap className={`w-7 h-7 ${accountType === "teacher" ? "text-amber-600" : "text-slate-400"}`} />
+                  <span className={`text-sm font-bold ${accountType === "teacher" ? "text-amber-600" : ""}`}>Teacher</span>
+                  <span className="text-[10px] text-slate-400 text-center leading-tight">Manage classes &amp; view progress</span>
+                </button>
+              </div>
+            </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {success && <p className="text-green-500 text-sm font-semibold">{success}</p>}
+            <button
+              type="submit"
+              className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create Account
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// --- Class Management (Teacher) ---
+
+function ClassManagement({
+  currentUser,
+  isDarkMode,
+  onClose,
+}: {
+  currentUser: UserAccount
+  isDarkMode: boolean
+  onClose: () => void
+}) {
+  const [groups, setGroups] = useState<ClassGroup[]>(() => loadClassGroups())
+  const [newClassName, setNewClassName] = useState("")
+  const [joinCode, setJoinCode] = useState("")
+  const [joinError, setJoinError] = useState("")
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  const myGroups = currentUser.accountType === "teacher"
+    ? groups.filter((g) => g.teacherId === currentUser.id)
+    : groups.filter((g) => g.memberIds.includes(currentUser.id))
+
+  const allAccounts = loadAccounts()
+
+  function getMemberName(id: string): string {
+    return allAccounts.find((a) => a.id === id)?.name ?? "Unknown"
+  }
+
+  function handleCreateClass(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newClassName.trim()) return
+    const newGroup: ClassGroup = {
+      id: generateId(),
+      name: newClassName.trim(),
+      teacherId: currentUser.id,
+      memberIds: [],
+      code: generateClassCode(),
+    }
+    const updated = [...groups, newGroup]
+    saveClassGroups(updated)
+    setGroups(updated)
+    setNewClassName("")
+  }
+
+  function handleDeleteClass(groupId: string) {
+    const updated = groups.filter((g) => g.id !== groupId)
+    saveClassGroups(updated)
+    setGroups(updated)
+  }
+
+  function handleJoinClass(e: React.FormEvent) {
+    e.preventDefault()
+    setJoinError("")
+    const group = groups.find((g) => g.code === joinCode.trim().toUpperCase())
+    if (!group) {
+      setJoinError("Class code not found. Please check and try again.")
+      return
+    }
+    if (group.memberIds.includes(currentUser.id)) {
+      setJoinError("You are already in this class.")
+      return
+    }
+    const updated = groups.map((g) =>
+      g.id === group.id ? { ...g, memberIds: [...g.memberIds, currentUser.id] } : g
+    )
+    saveClassGroups(updated)
+    setGroups(updated)
+    setJoinCode("")
+  }
+
+  function handleLeaveClass(groupId: string) {
+    const updated = groups.map((g) =>
+      g.id === groupId ? { ...g, memberIds: g.memberIds.filter((id) => id !== currentUser.id) } : g
+    )
+    saveClassGroups(updated)
+    setGroups(updated)
+  }
+
+  function copyCode(code: string) {
+    navigator.clipboard.writeText(code).then(
+      () => {
+        setCopiedCode(code)
+        setTimeout(() => setCopiedCode(null), 2000)
+      },
+      () => {
+        setCopiedCode(code)
+        setTimeout(() => setCopiedCode(null), 2000)
+      }
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className={`relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-8 ${
+          isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
+        }`}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black">Class Management</h2>
+            <p className="text-xs text-slate-500">
+              {currentUser.accountType === "teacher" ? "Manage your class groups" : "Your enrolled classes"}
+            </p>
+          </div>
+        </div>
+
+        {currentUser.accountType === "teacher" ? (
+          <>
+            {/* Create new class */}
+            <form onSubmit={handleCreateClass} className="flex gap-2 mb-6">
+              <input
+                type="text"
+                value={newClassName}
+                onChange={(e) => setNewClassName(e.target.value)}
+                placeholder="New class name…"
+                className={`flex-1 px-4 py-2.5 rounded-xl border text-sm ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500"
+                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
+                } outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500`}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" />
+                Create
+              </button>
+            </form>
+
+            {myGroups.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-8">No classes yet. Create one above.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {myGroups.map((group) => (
+                  <div
+                    key={group.id}
+                    className={`rounded-xl border p-4 ${
+                      isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold">{group.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => copyCode(group.code)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                            copiedCode === group.code
+                              ? "border-green-500 text-green-600 bg-green-50 dark:bg-green-900/20"
+                              : isDarkMode ? "border-slate-600 hover:border-amber-500 text-slate-300 hover:text-amber-400" : "border-slate-300 hover:border-amber-500 text-slate-600 hover:text-amber-600"
+                          }`}
+                          title="Copy join code"
+                        >
+                          {copiedCode === group.code ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          {group.code}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClass(group.id)}
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete class"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs text-slate-400">{group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}</span>
+                    </div>
+                    {group.memberIds.length > 0 && (
+                      <ul className="flex flex-col gap-1 mt-2">
+                        {group.memberIds.map((id) => (
+                          <li key={id} className="flex items-center gap-2 text-sm">
+                            <UserCircle className="w-4 h-4 text-slate-400" />
+                            {getMemberName(id)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Join a class */}
+            <form onSubmit={handleJoinClass} className="flex gap-2 mb-6">
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="Enter class code…"
+                maxLength={6}
+                className={`flex-1 px-4 py-2.5 rounded-xl border text-sm uppercase tracking-widest font-mono ${
+                  isDarkMode
+                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500"
+                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
+                } outline-none focus:ring-2 focus:ring-[#800000]/20 focus:border-[#800000]`}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2.5 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-4 h-4" />
+                Join
+              </button>
+            </form>
+            {joinError && <p className="text-red-500 text-sm mb-4">{joinError}</p>}
+
+            {myGroups.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-8">You haven't joined any classes yet.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {myGroups.map((group) => {
+                  const resolvedName = getMemberName(group.teacherId)
+                  const teacherName = resolvedName !== "Unknown"
+                    ? resolvedName
+                    : allAccounts.find((a) => a.id === group.teacherId)?.name ?? "Teacher"
+                  return (
+                    <div
+                      key={group.id}
+                      className={`rounded-xl border p-4 ${
+                        isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold">{group.name}</h3>
+                        <button
+                          onClick={() => handleLeaveClass(group.id)}
+                          className="text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
+                        >
+                          Leave
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
+                        <span className="text-xs text-slate-400">{teacherName}</span>
+                        <span className="text-slate-300 dark:text-slate-600">·</span>
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs text-slate-400">{group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function Navbar({
   view,
   appMode,
   selectedLevel,
   onHome,
   isDarkMode,
+  currentUser,
+  onSignInClick,
+  onSignOut,
+  onClassesClick,
 }: {
   view: ViewType
   appMode: AppMode
   selectedLevel: string
   onHome: () => void
   isDarkMode: boolean
+  currentUser: UserAccount | null
+  onSignInClick: () => void
+  onSignOut: () => void
+  onClassesClick: () => void
 }) {
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+
   return (
     <nav
       className={`fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md border-b transition-colors duration-300 ${
@@ -3134,9 +3731,83 @@ function Navbar({
         </div>
       )}
 
-      <button onClick={onHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-        <Home className="w-6 h-6" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button onClick={onHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+          <Home className="w-6 h-6" />
+        </button>
+
+        {currentUser ? (
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
+                isDarkMode
+                  ? "border-slate-700 bg-slate-800 hover:border-slate-500"
+                  : "border-slate-200 bg-white hover:border-slate-400"
+              }`}
+            >
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black ${
+                  currentUser.accountType === "teacher" ? "bg-amber-600" : "bg-[#800000]"
+                }`}
+              >
+                {currentUser.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="hidden sm:block text-sm font-semibold max-w-[100px] truncate">{currentUser.name}</span>
+              {currentUser.accountType === "teacher" && (
+                <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-700">
+                  Teacher
+                </span>
+              )}
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </button>
+
+            {userMenuOpen && (
+              <div
+                className={`absolute right-0 top-full mt-2 w-52 rounded-xl shadow-xl border overflow-hidden ${
+                  isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
+                }`}
+              >
+                <div className={`px-4 py-3 border-b ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                  <p className="text-sm font-bold truncate">{currentUser.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                </div>
+                <button
+                  onClick={() => { onClassesClick(); setUserMenuOpen(false) }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${
+                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-amber-600" />
+                  {currentUser.accountType === "teacher" ? "Manage Classes" : "My Classes"}
+                </button>
+                <button
+                  onClick={() => { onSignOut(); setUserMenuOpen(false) }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500 transition-colors ${
+                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
+                  }`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+
+            {/* Click-outside overlay */}
+            {userMenuOpen && (
+              <div className="fixed inset-0 z-[-1]" onClick={() => setUserMenuOpen(false)} />
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={onSignInClick}
+            className="flex items-center gap-2 px-4 py-2 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors shadow-md"
+          >
+            <LogIn className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign In</span>
+          </button>
+        )}
+      </div>
     </nav>
   )
 }
@@ -4870,6 +5541,20 @@ export default function App() {
   const [timingMode, setTimingMode] = useState<TimingMode>("none")
   const [numberOfQuestions, setNumberOfQuestions] = useState(5)
 
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => loadCurrentUser())
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [classesModalOpen, setClassesModalOpen] = useState(false)
+
+  function handleSignIn(user: UserAccount) {
+    setCurrentUser(user)
+  }
+
+  function handleSignOut() {
+    saveCurrentUser(null)
+    setCurrentUser(null)
+  }
+
   // Calculate weak topics based on performance data
   const weakTopics = useMemo(() => {
     const subtopics = QA_SUBTOPICS[selectedLevel] || []
@@ -5050,7 +5735,17 @@ export default function App() {
     <div
       className={`min-h-screen transition-colors duration-500 ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"}`}
     >
-      <Navbar view={view} appMode={appMode} selectedLevel={selectedLevel} onHome={() => setView("landing")} isDarkMode={isDarkMode} />
+      <Navbar
+        view={view}
+        appMode={appMode}
+        selectedLevel={selectedLevel}
+        onHome={() => setView("landing")}
+        isDarkMode={isDarkMode}
+        currentUser={currentUser}
+        onSignInClick={() => setAuthModalOpen(true)}
+        onSignOut={handleSignOut}
+        onClassesClick={() => setClassesModalOpen(true)}
+      />
       <main className="pb-20">
         {view === "landing" && <Landing onSelectLevel={handleLevelSelect} isDarkMode={isDarkMode} />}
         {view === "mode" && (
@@ -5145,6 +5840,19 @@ export default function App() {
         isDarkMode={isDarkMode}
         topicPerformance={topicPerformance}
       />
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSignIn={handleSignIn}
+        isDarkMode={isDarkMode}
+      />
+      {classesModalOpen && currentUser && (
+        <ClassManagement
+          currentUser={currentUser}
+          isDarkMode={isDarkMode}
+          onClose={() => setClassesModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
