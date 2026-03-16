@@ -1890,6 +1890,8 @@ interface CalcQuestion {
   markScheme: string
   /** For "correct-me" questions: index of the wrong option */
   mistakeOptionIndex?: number
+  /** For "correct-me" questions: step-by-step lines of working (replaces options) */
+  workingLines?: string[]
   /** For multi-step exam questions: sub-steps */
   steps?: CalcStep[]
 }
@@ -2128,45 +2130,75 @@ const CALC_EXAM_QUESTIONS: CalcQuestion[] = [
 const CALC_CORRECT_ME_QUESTIONS: CalcQuestion[] = [
   {
     id: "cm-1",
-    stem: "A student calculated the weight of a 5 kg mass on Earth (g = 9.8 Nkg⁻¹). Identify the mistake in their working.",
-    equation: "W = m × g",
-    options: [
-      "W = 5 ÷ 9.8 = 0.51 N   ✗ (divided instead of multiplied)",
-      "W = 5 × 9.8 = 49 N      ✓ (correct working)",
-      "W = 5 + 9.8 = 14.8 N   ✗ (added instead of multiplied)",
-      "W = 9.8 − 5 = 4.8 N    ✗ (subtracted instead of multiplied)",
+    stem: "A student calculated the weight of a 5 kg mass on Earth (g = 9.8 Nkg⁻¹). One line contains a mistake — tap it.",
+    equation: "W = mg",
+    workingLines: [
+      "W = mg",
+      "W = 5 ÷ 9.8",
+      "W = 0.51 N",
     ],
-    correctOption: 0,
-    mistakeOptionIndex: 0,
-    markScheme: "The student divided by g instead of multiplying. Correct: W = m × g = 5 × 9.8 = 49 N.",
+    mistakeOptionIndex: 1,
+    markScheme: "Line 2 is wrong: the student divided by g instead of multiplying.\nCorrect working: W = m × g = 5 × 9.8 = 49 N",
   },
   {
     id: "cm-2",
-    stem: "A student calculated the frequency of a wave (v = 340 ms⁻¹, λ = 0.68 m). Spot the error.",
+    stem: "A student found the frequency of a wave with speed 340 ms⁻¹ and wavelength 0.68 m. One line contains a mistake — tap it.",
     equation: "f = v ÷ λ",
-    options: [
-      "f = 340 × 0.68 = 231.2 Hz   ✗ (multiplied instead of divided)",
-      "f = 340 ÷ 0.68 = 500 Hz     ✓ (correct working)",
-      "f = 0.68 ÷ 340 = 0.002 Hz  ✗ (inverted the fraction)",
-      "f = 340 + 0.68 = 340.68 Hz ✗ (added instead of divided)",
+    workingLines: [
+      "f = v ÷ λ",
+      "f = 340 × 0.68",
+      "f = 231.2 Hz",
     ],
-    correctOption: 0,
-    mistakeOptionIndex: 0,
-    markScheme: "The student multiplied v × λ instead of dividing. Correct: f = v ÷ λ = 340 ÷ 0.68 = 500 Hz.",
+    mistakeOptionIndex: 1,
+    markScheme: "Line 2 is wrong: the student multiplied v × λ instead of dividing.\nCorrect working: f = v ÷ λ = 340 ÷ 0.68 = 500 Hz",
   },
   {
     id: "cm-3",
-    stem: "A student used F = ma to find the force on a 2 kg object accelerating at 3 ms⁻². Find the mistake.",
-    equation: "F = m × a",
-    options: [
-      "F = 2 × 3 = 6 N            ✓ (correct working)",
-      "F = 2 + 3 = 5 N             ✗ (added instead of multiplied)",
-      "F = 3 ÷ 2 = 1.5 N          ✗ (divided a by m instead of multiplying)",
-      "F = 2 − 3 = −1 N           ✗ (subtracted instead of multiplied)",
+    stem: "A student used F = ma to find the force on a 2 kg object accelerating at 3 ms⁻². One line contains a mistake — tap it.",
+    equation: "F = ma",
+    workingLines: [
+      "F = ma",
+      "F = 2 + 3",
+      "F = 5 N",
     ],
-    correctOption: 1,
     mistakeOptionIndex: 1,
-    markScheme: "The student added m and a instead of multiplying. Correct: F = m × a = 2 × 3 = 6 N.",
+    markScheme: "Line 2 is wrong: the student added m and a instead of multiplying.\nCorrect working: F = m × a = 2 × 3 = 6 N",
+  },
+  {
+    id: "cm-4",
+    stem: "A student calculated the kinetic energy of a 4 kg object moving at 3 ms⁻¹. One line contains a mistake — tap it.",
+    equation: "Ek = ½mv²",
+    workingLines: [
+      "Ek = ½mv²",
+      "Ek = ½ × 4 × 3",
+      "Ek = 6 J",
+    ],
+    mistakeOptionIndex: 1,
+    markScheme: "Line 2 is wrong: the student forgot to square the velocity.\nCorrect working: Ek = ½ × 4 × 3² = ½ × 4 × 9 = 18 J",
+  },
+  {
+    id: "cm-5",
+    stem: "A student calculated the current through a 12 Ω resistor with a voltage of 6 V across it. One line contains a mistake — tap it.",
+    equation: "V = IR  →  I = V ÷ R",
+    workingLines: [
+      "I = V ÷ R",
+      "I = 12 ÷ 6",
+      "I = 2 A",
+    ],
+    mistakeOptionIndex: 1,
+    markScheme: "Line 2 is wrong: the student divided R by V instead of V by R.\nCorrect working: I = V ÷ R = 6 ÷ 12 = 0.5 A",
+  },
+  {
+    id: "cm-6",
+    stem: "A student calculated the gravitational potential energy of a 3 kg mass raised 5 m on Earth (g = 10 Nkg⁻¹). One line contains a mistake — tap it.",
+    equation: "Ep = mgh",
+    workingLines: [
+      "Ep = mgh",
+      "Ep = 3 × 5",
+      "Ep = 15 J",
+    ],
+    mistakeOptionIndex: 1,
+    markScheme: "Line 2 is wrong: the student forgot to include g in the calculation.\nCorrect working: Ep = m × g × h = 3 × 10 × 5 = 150 J",
   },
 ]
 
@@ -2916,7 +2948,7 @@ function CalculationsMode({
     const isDifficultyMode = subMode === "easy" || subMode === "medium" || subMode === "hard"
 
     // Easy = MC answers; Medium/Hard = typed
-    const useMC = isCorrectMe || subMode === "easy"
+    const useMC = subMode === "easy"
 
     const steps = currentQ.steps ?? []
     const currentStep = isExam && steps.length > 0 ? steps[currentStepIdx] : null
@@ -3049,33 +3081,77 @@ function CalculationsMode({
             )}
 
             {/* Answer input */}
-            {isCorrectMe && currentQ.options ? (
-              <div className="space-y-3 mt-4">
-                <p className={`text-sm font-black uppercase tracking-wide mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-                  🔍 Which line contains the mistake?
+            {isCorrectMe && currentQ.workingLines ? (
+              <div className="mt-5">
+                <p className={`text-sm font-black uppercase tracking-wide mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                  🔍 Tap the line that contains the mistake:
                 </p>
-                {currentQ.options.map((opt, oi) => {
-                  const chosen = hotspotChoice[currentIdx] === oi
-                  const showResult = submitted
-                  const isCorrectChoice = oi === currentQ.correctOption
-                  let cls = `w-full text-left px-4 py-3 rounded-xl border-2 font-mono text-sm transition-all `
-                  if (showResult) {
-                    if (isCorrectChoice) cls += "border-green-500 bg-green-50 dark:bg-green-900/20 font-black"
-                    else if (chosen) cls += "border-red-500 bg-red-50 dark:bg-red-900/20"
-                    else cls += isDarkMode ? "border-slate-700 opacity-50" : "border-slate-200 opacity-50"
-                  } else {
-                    cls += chosen
-                      ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
-                      : isDarkMode
-                        ? "border-slate-700 hover:border-amber-500"
-                        : "border-slate-200 hover:border-[#800000]"
-                  }
-                  return (
-                    <button key={oi} disabled={submitted} onClick={() => setHotspotChoice((p) => ({ ...p, [currentIdx]: oi }))} className={cls}>
-                      {opt}
-                    </button>
-                  )
-                })}
+                <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? "border-slate-600" : "border-slate-200"}`}>
+                  {currentQ.workingLines.map((line, li) => {
+                    const chosen = hotspotChoice[currentIdx] === li
+                    const showResult = submitted
+                    const isMistakeLine = li === currentQ.mistakeOptionIndex
+                    let rowCls = `w-full text-left px-5 py-3 font-mono text-base flex items-center gap-3 transition-all border-b last:border-b-0 `
+                    if (showResult) {
+                      if (isMistakeLine) {
+                        rowCls += isDarkMode
+                          ? "border-red-700 bg-red-900/30 text-red-300"
+                          : "border-red-300 bg-red-50 text-red-800"
+                      } else {
+                        rowCls += isDarkMode
+                          ? "border-slate-700 bg-slate-800/60 text-slate-400"
+                          : "border-slate-200 bg-white text-slate-500"
+                      }
+                    } else {
+                      if (chosen) {
+                        rowCls += isDarkMode
+                          ? "border-amber-600 bg-amber-900/30 text-amber-200"
+                          : "border-amber-300 bg-amber-50 text-amber-900"
+                      } else {
+                        rowCls += isDarkMode
+                          ? "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-amber-300"
+                          : "border-slate-200 bg-white text-slate-800 hover:bg-amber-50 hover:text-[#800000]"
+                      }
+                    }
+                    return (
+                      <button
+                        key={li}
+                        disabled={submitted}
+                        onClick={() => setHotspotChoice((p) => ({ ...p, [currentIdx]: li }))}
+                        className={rowCls}
+                      >
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                          showResult && isMistakeLine
+                            ? "bg-red-500 text-white"
+                            : showResult
+                              ? isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-200 text-slate-500"
+                              : chosen
+                                ? "bg-amber-500 text-white"
+                                : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {li + 1}
+                        </span>
+                        <span>{line}</span>
+                        {showResult && isMistakeLine && (
+                          <span className="ml-auto text-xs font-black text-red-500 shrink-0">← mistake here</span>
+                        )}
+                        {showResult && !isMistakeLine && (
+                          <span className={`ml-auto text-xs font-bold shrink-0 ${isDarkMode ? "text-green-400" : "text-green-600"}`}>✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {submitted && hotspotChoice[currentIdx] !== undefined && hotspotChoice[currentIdx] !== currentQ.mistakeOptionIndex && (
+                  <p className={`mt-2 text-sm font-bold ${isDarkMode ? "text-red-400" : "text-red-600"}`}>
+                    ✗ Incorrect — the mistake was on line {(currentQ.mistakeOptionIndex ?? 0) + 1}.
+                  </p>
+                )}
+                {submitted && hotspotChoice[currentIdx] === currentQ.mistakeOptionIndex && (
+                  <p className={`mt-2 text-sm font-bold ${isDarkMode ? "text-green-400" : "text-green-600"}`}>
+                    ✓ Correct — you spotted the mistake!
+                  </p>
+                )}
               </div>
             ) : useMC && currentQ.options ? (
               <div className="grid grid-cols-2 gap-3 mt-4">
