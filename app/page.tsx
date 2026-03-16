@@ -49,6 +49,9 @@ import {
   UserPlus,
   Copy,
   CheckCheck,
+  Upload,
+  BookMarked,
+  RefreshCw,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -718,6 +721,89 @@ function saveUserCalcProgress(userId: string, level: string, progress: CalcProgr
     if (typeof window === "undefined") return
     localStorage.setItem(`trinfinity_calc_progress_${userId}_${level}`, JSON.stringify(progress))
   } catch {}
+}
+
+// ── Question bank document helpers ──────────────────────────────────────────
+
+interface CalcDocumentEntry {
+  fileName: string
+  content: string
+  uploadedAt: number
+}
+
+function loadCalcDocument(equationId: string): CalcDocumentEntry | null {
+  try {
+    if (typeof window === "undefined") return null
+    const saved = localStorage.getItem(`trinfinity_calc_doc_${equationId}`)
+    if (!saved) return null
+    return JSON.parse(saved)
+  } catch { return null }
+}
+
+function saveCalcDocument(equationId: string, entry: CalcDocumentEntry): void {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.setItem(`trinfinity_calc_doc_${equationId}`, JSON.stringify(entry))
+  } catch {}
+}
+
+function removeCalcDocument(equationId: string): void {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.removeItem(`trinfinity_calc_doc_${equationId}`)
+  } catch {}
+}
+
+interface AICalcQuestionsCache {
+  questions: CalcQuestion[]
+  generatedAt: number
+}
+
+const AI_QUESTIONS_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+function loadAICalcQuestions(equationId: string, difficulty: string): CalcQuestion[] | null {
+  try {
+    if (typeof window === "undefined") return null
+    const saved = localStorage.getItem(`trinfinity_ai_calc_${equationId}_${difficulty}`)
+    if (!saved) return null
+    const cache: AICalcQuestionsCache = JSON.parse(saved)
+    if (Date.now() - cache.generatedAt > AI_QUESTIONS_TTL_MS) return null
+    return cache.questions
+  } catch { return null }
+}
+
+function saveAICalcQuestions(equationId: string, difficulty: string, questions: CalcQuestion[]): void {
+  try {
+    if (typeof window === "undefined") return
+    const cache: AICalcQuestionsCache = { questions, generatedAt: Date.now() }
+    localStorage.setItem(`trinfinity_ai_calc_${equationId}_${difficulty}`, JSON.stringify(cache))
+  } catch {}
+}
+
+async function generateAndCacheCalcQuestions(
+  equationId: string,
+  equationFormula: string,
+  equationDescription: string,
+  difficulty: string,
+): Promise<CalcQuestion[]> {
+  const docEntry = loadCalcDocument(equationId)
+  const body = {
+    equationId,
+    equationFormula,
+    equationDescription,
+    difficulty,
+    documentContext: docEntry?.content ?? null,
+  }
+  const res = await fetch("/api/generate-calc-questions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error("Generation failed")
+  const data = await res.json()
+  if (!data.questions) throw new Error("No questions returned")
+  saveAICalcQuestions(equationId, difficulty, data.questions)
+  return data.questions
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -2689,19 +2775,44 @@ function CalculationsMode({
   const [submitted, setSubmitted] = useState(false)
   const [hotspotChoice, setHotspotChoice] = useState<Record<number, number>>({})
   const [currentStepIdx, setCurrentStepIdx] = useState(0)
+  const [isPreparingQuestions, setIsPreparingQuestions] = useState(false)
 
   const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
 
-  const startEquationQuiz = (equationId: string, difficulty: CalcDifficulty) => {
+  const startEquationQuiz = async (equationId: string, difficulty: CalcDifficulty) => {
     setSelectedEquationId(equationId)
     setSubMode(difficulty)
-    setQuestions(getEquationQuestions(equationId, difficulty))
     setCurrentIdx(0)
     setTypedAnswers({})
     setMcAnswers({})
     setSubmitted(false)
     setHotspotChoice({})
+
+    // Check for cached AI-generated questions first
+    const cached = loadAICalcQuestions(equationId, difficulty)
+    if (cached && cached.length > 0) {
+      setQuestions(cached)
+      setPhase("quiz")
+      // Generate fresh batch in background for next session
+      const eqInfo = SQA_EQUATIONS.find((e) => e.id === equationId)
+      if (eqInfo) {
+        generateAndCacheCalcQuestions(equationId, eqInfo.formula, eqInfo.description, difficulty).catch(() => {})
+      }
+      return
+    }
+
+    // No cache: show static questions immediately then generate in background
+    setQuestions(getEquationQuestions(equationId, difficulty))
     setPhase("quiz")
+
+    // Trigger AI generation in background (results cached for next session)
+    const eqInfo = SQA_EQUATIONS.find((e) => e.id === equationId)
+    if (eqInfo) {
+      setIsPreparingQuestions(true)
+      generateAndCacheCalcQuestions(equationId, eqInfo.formula, eqInfo.description, difficulty)
+        .catch(() => {})
+        .finally(() => setIsPreparingQuestions(false))
+    }
   }
 
   const startExamLevel = () => {
@@ -6238,15 +6349,18 @@ function FloatingMenu({
   toggleDarkMode,
   openModal,
   view,
+  currentUser,
 }: {
   isDarkMode: boolean
   toggleDarkMode: () => void
   openModal: (modal: string) => void
   view: ViewType
+  currentUser: UserAccount | null
 }) {
 const [isOpen, setIsOpen] = useState(false)
   const showSyllabus = view === "mode" || view === "setup"
   const showProgress = view !== "landing"
+  const isTeacher = currentUser?.accountType === "teacher"
   
   return (
   <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
@@ -6278,6 +6392,20 @@ const [isOpen, setIsOpen] = useState(false)
                 <Table2 className="w-5 h-5 text-amber-600" />
               </div>
               <span className="text-sm font-black uppercase tracking-widest">Syllabus</span>
+            </button>
+          )}
+          {isTeacher && (
+            <button
+              onClick={() => {
+                openModal("question-banks")
+                setIsOpen(false)
+              }}
+              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-emerald-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+            >
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <BookMarked className="w-5 h-5 text-emerald-600" />
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">Question Banks</span>
             </button>
           )}
           <button
@@ -6322,6 +6450,8 @@ function GenericModal({
 }) {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
   const [selectedPupilId, setSelectedPupilId] = useState<string | null>(null)
+  const [docUploadStatus, setDocUploadStatus] = useState<Record<string, "uploading" | "done" | "error" | undefined>>({})
+  const [docRefresh, setDocRefresh] = useState(0)
 
   if (!activeModal) return null
 
@@ -6460,7 +6590,9 @@ function GenericModal({
                       ? (selectedClass?.name ?? "Class")
                       : "Class Progress"
                   : "My Progress"
-                : activeModal}
+                : activeModal === "question-banks"
+                  ? "Question Banks"
+                  : activeModal}
             </h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
@@ -6922,6 +7054,139 @@ function GenericModal({
               ))}
             </div>
           )}
+
+          {/* ── Question Banks view (teacher only) ─────────────────────────── */}
+          {activeModal === "question-banks" && isTeacher && (
+            <div className="space-y-4">
+              <div className={`p-4 rounded-2xl border ${cardBg}`}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex-shrink-0">
+                    <BookMarked className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-black text-sm">Upload Calculation Documents</p>
+                    <p className={`text-xs mt-1 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      Upload a PDF or text document of worked examples for each equation. When pupils start a session,
+                      the AI will automatically generate 15 fresh questions based on your document — creating an
+                      almost-infinite variety so questions never repeat.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                SQA Equations
+              </p>
+              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                {SQA_EQUATIONS.map((eq) => {
+                  const doc = loadCalcDocument(eq.id)
+                  const status = docUploadStatus[eq.id]
+                  return (
+                    <div
+                      key={`${eq.id}-${docRefresh}`}
+                      className={`p-4 rounded-2xl border ${cardBg}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-black text-sm font-mono truncate">{eq.formula}</p>
+                          <p className={`text-xs truncate ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            {eq.description}
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              eq.sqaLevel === "N5" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                              eq.sqaLevel === "Higher" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                              "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                            }`}>{eq.sqaLevel}</span>
+                          </p>
+                          {doc && (
+                            <p className={`text-[11px] mt-1 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>
+                              ✓ {doc.fileName} · {new Date(doc.uploadedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {status === "uploading" && (
+                            <RefreshCw className="w-4 h-4 animate-spin text-emerald-500" />
+                          )}
+                          {status === "done" && (
+                            <span className="text-emerald-500 text-xs font-bold">Saved!</span>
+                          )}
+                          {status === "error" && (
+                            <span className="text-red-500 text-xs font-bold">Error</span>
+                          )}
+                          {doc && (
+                            <button
+                              onClick={() => {
+                                removeCalcDocument(eq.id)
+                                setDocRefresh((n) => n + 1)
+                              }}
+                              className={`p-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                isDarkMode ? "text-red-400 hover:bg-red-900/30" : "text-red-500 hover:bg-red-50"
+                              }`}
+                              title="Remove document"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <label className={`cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+                            doc
+                              ? isDarkMode ? "bg-slate-700 hover:bg-slate-600 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                          }`}>
+                            <Upload className="w-3.5 h-3.5" />
+                            {doc ? "Replace" : "Upload"}
+                            <input
+                              type="file"
+                              accept=".txt,.pdf,.doc,.docx"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                setDocUploadStatus((s) => ({ ...s, [eq.id]: "uploading" }))
+                                try {
+                                  let content = ""
+                                  if (file.type === "application/pdf") {
+                                    // PDF binary is decoded as latin1 (ISO-8859-1) to preserve all byte values
+                                    // intact before extracting text tokens from the raw PDF stream
+                                    const arrayBuffer = await file.arrayBuffer()
+                                    const uint8Array = new Uint8Array(arrayBuffer)
+                                    const text = new TextDecoder("latin1").decode(uint8Array)
+                                    // PDF text is stored in parenthesised strings: (text token)
+                                    // Limit each token to 200 chars to skip binary blobs masquerading as text
+                                    const PDF_TOKEN_MAX_CHARS = 200
+                                    const matches = text.match(new RegExp(`\\(([^)]{2,${PDF_TOKEN_MAX_CHARS}})\\)`, "g")) ?? []
+                                    content = matches
+                                      .map((m) => m.slice(1, -1))
+                                      .filter((s) => /[a-zA-Z]/.test(s))
+                                      .join(" ")
+                                    if (content.length < 20) {
+                                      content = `Document: ${file.name}\n[PDF content — use as context for generating physics calculation questions about ${eq.description} using the formula ${eq.formula}]`
+                                    }
+                                  } else {
+                                    content = await file.text()
+                                  }
+                                  saveCalcDocument(eq.id, {
+                                    fileName: file.name,
+                                    content,
+                                    uploadedAt: Date.now(),
+                                  })
+                                  setDocUploadStatus((s) => ({ ...s, [eq.id]: "done" }))
+                                  setDocRefresh((n) => n + 1)
+                                  setTimeout(() => setDocUploadStatus((s) => ({ ...s, [eq.id]: undefined })), 2000)
+                                } catch {
+                                  setDocUploadStatus((s) => ({ ...s, [eq.id]: "error" }))
+                                }
+                                // Reset input so same file can be re-uploaded
+                                e.target.value = ""
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -7262,7 +7527,7 @@ export default function App() {
           />
         )}
       </main>
-      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} />
+      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} currentUser={currentUser} />
       <GenericModal
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
