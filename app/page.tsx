@@ -5045,6 +5045,18 @@ function SetupView({
   const isPracticeOrMC = appMode === "mc" || appMode === "practice"
   const isPastPaper = questionSource !== "ai"
 
+  // Compute unique subtopics from the selected past paper
+  const pastPaperSubtopics = isPastPaper
+    ? Array.from(
+        new Set(
+          (availablePastPapers.find((p) => p.id === questionSource)?.questions ?? []).map(
+            (q) => q.subtopic
+          )
+        )
+      )
+    : []
+  const topicsToShow = isPastPaper ? pastPaperSubtopics : subtopics
+
   // Auto-select topics from coverage for retrieval mode
   useEffect(() => {
     if (appMode === "retrieval") {
@@ -5085,7 +5097,7 @@ function SetupView({
 
       <div className="grid lg:grid-cols-3 gap-8 pb-32">
         <div className="lg:col-span-2 space-y-8">
-          {(appMode === "mc" || appMode === "paper") && availablePastPapers.length > 0 && (
+          {appMode === "mc" && availablePastPapers.length > 0 && (
             <section
               className={`p-8 rounded-3xl shadow-sm border ${
                 isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -5146,7 +5158,45 @@ function SetupView({
               </div>
             </section>
           )}
-          {appMode !== "retrieval" && appMode !== "practice" && !isPastPaper && (
+          {appMode === "paper" && availablePastPapers.length > 1 && (
+            <section
+              className={`p-8 rounded-3xl shadow-sm border ${
+                isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+              }`}
+            >
+              <h3 className="text-lg font-black mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-500" />
+                Past Paper
+              </h3>
+              <div className="space-y-3">
+                {availablePastPapers.map((paper) => (
+                  <label
+                    key={paper.id}
+                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors border ${
+                      questionSource === paper.id
+                        ? "border-[#800000] bg-red-50 dark:bg-red-950/20"
+                        : isDarkMode
+                          ? "border-slate-700 bg-slate-900 hover:border-slate-600"
+                          : "border-slate-100 bg-slate-50 hover:border-slate-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="questionSource"
+                      value={paper.id}
+                      checked={questionSource === paper.id}
+                      onChange={() => { setQuestionSource(paper.id) }}
+                      className="accent-[#800000]"
+                    />
+                    <div>
+                      <p className="font-black text-sm text-slate-800 dark:text-white">{paper.label}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
+          {appMode !== "retrieval" && appMode !== "practice" && (
             <section
               className={`p-8 rounded-3xl shadow-sm border ${
                 isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -5163,9 +5213,13 @@ function SetupView({
                   </span>
                 )}
               </h3>
-
+              {isPastPaper && (
+                <p className="text-xs text-slate-500 mb-4">
+                  Select topics from this past paper to include in your assessment.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
-                {subtopics.map((topic) => {
+                {topicsToShow.map((topic) => {
                   const isSelected = selectedTopics.includes(topic)
                   return (
                     <button
@@ -5241,26 +5295,33 @@ function SetupView({
               isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
             }`}>
               <h3 className="text-lg font-black mb-2 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-500" />
-                Past Paper Questions
+                <Settings2 className="w-5 h-5 text-slate-400" />
+                Assessment Options
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Questions are loaded directly from the selected past paper. No AI generation required.
-              </p>
-              {availablePastPapers.filter(p => p.id === questionSource).map(paper => (
-                <div key={paper.id} className="space-y-2">
-                  {paper.questions.map((q, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700">
-                      <span className="w-6 h-6 rounded-full bg-[#800000] text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</span>
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{q.topic}</span>
-                      <span className="text-xs text-slate-400">— {q.subtopic}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
+              <div className="space-y-4 mt-4">
+                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                  isDarkMode
+                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
+                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
+                }`}>
+                  <div>
+                    <p className="font-black text-slate-800 dark:text-white">Mixed Questions</p>
+                    <p className="text-xs text-slate-500">
+                      Include all questions from the past paper, filtered by your coverage settings
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={includeMultiTopic}
+                    onChange={(e) => setIncludeMultiTopic(e.target.checked)}
+                    className="w-6 h-6 rounded-lg accent-[#800000]"
+                  />
+                </label>
+              </div>
             </section>
           )}
 
+          {!isPastPaper && (
           <section
             className={`p-8 rounded-3xl shadow-sm border ${
               isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -5350,6 +5411,7 @@ function SetupView({
               </label>
             </div>
           </section>
+          )}
 
           <section
             className={`p-8 rounded-3xl shadow-sm border ${
@@ -5497,10 +5559,10 @@ function SetupView({
 
       <div className="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-50">
         <button
-          disabled={!isPastPaper && selectedTopics.length === 0}
+          disabled={selectedTopics.length === 0 && !(isPastPaper && includeMultiTopic)}
           onClick={() => onGenerate(selectedTopics.join(","))}
           className={`pointer-events-auto px-12 py-5 rounded-full font-black text-xl shadow-2xl transition-all flex items-center gap-3 border-4 ${
-            isPastPaper || selectedTopics.length > 0
+            selectedTopics.length > 0 || (isPastPaper && includeMultiTopic)
               ? "bg-[#800000] text-white border-amber-500 hover:scale-105 active:scale-95"
               : "bg-slate-200 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50"
           }`}
@@ -5510,7 +5572,7 @@ function SetupView({
           ) : (
             <Zap className="w-6 h-6 fill-amber-400 text-amber-400" />
           )}
-          {isGenerating ? "Prepping Papers..." : isPastPaper ? "Load Past Paper" : "Start Assessment"}
+          {isGenerating ? "Prepping Papers..." : "Start Assessment"}
         </button>
       </div>
 
@@ -7396,7 +7458,12 @@ export default function App() {
 
   const handleModeSelect = (mode: AppMode) => {
     setAppMode(mode)
-    setQuestionSource("ai")
+    const papers = PAST_PAPER_BANKS[selectedLevel] || []
+    if (mode === "paper" && papers.length > 0) {
+      setQuestionSource(papers[0].id)
+    } else {
+      setQuestionSource("ai")
+    }
     if (mode === "mc" || mode === "practice") {
       setIncludeALevel(false)
       setIncludeOpenEnded(false)
@@ -7469,7 +7536,55 @@ export default function App() {
       const banks = PAST_PAPER_BANKS[selectedLevel] || []
       const bank = banks.find((b) => b.id === questionSource)
       if (bank) {
-        setCurrentQuestions(bank.questions)
+        const selectedTopicsList = topicString.split(",").filter(Boolean)
+        const topicsSet = new Set(selectedTopicsList)
+
+        let filteredQuestions: Question[]
+
+        if (includeMultiTopic) {
+          // Mixed Questions mode: include all questions unless topic not covered
+          const hasCoverage = Object.values(userCoverage).some(Boolean)
+          filteredQuestions = bank.questions.filter((q) => {
+            if (q.type !== "paper") return false
+            const pq = q as PaperQuestion
+            // When coverage is configured, only include topics the student has covered
+            if (hasCoverage) return userCoverage[pq.subtopic] === true
+            return true
+          })
+        } else {
+          // Normal mode: include only questions matching selected topics
+          filteredQuestions = bank.questions
+            .filter((q) => {
+              if (q.type !== "paper") return false
+              const pq = q as PaperQuestion
+              return topicsSet.has(pq.subtopic)
+            })
+            .map((q) => {
+              const pq = q as PaperQuestion
+              // Apply dependency filtering: remove parts whose dependsOn are not satisfied
+              const includedIds = new Set(pq.parts.map((p) => p.id))
+              let changed = true
+              while (changed) {
+                changed = false
+                for (const part of pq.parts) {
+                  if (includedIds.has(part.id) && part.dependsOn && part.dependsOn.length > 0) {
+                    for (const depId of part.dependsOn) {
+                      if (!includedIds.has(depId)) {
+                        includedIds.delete(part.id)
+                        changed = true
+                        break
+                      }
+                    }
+                  }
+                }
+              }
+              const validParts = pq.parts.filter((p) => includedIds.has(p.id))
+              return { ...pq, parts: validParts }
+            })
+            .filter((q) => (q as PaperQuestion).parts.length > 0)
+        }
+
+        setCurrentQuestions(filteredQuestions)
         setCurrentQuestionIdx(0)
         setUserSelections({})
         setPaperAnswers({})
