@@ -1,0 +1,178 @@
+{
+"source": "SQA National 5 Physics 2025 Section 2",
+"questions": [
+{
+"type": "paper",
+"topic": "Dynamics",
+"subtopic": "Vectors and Scalars",
+"question": "A gardener is mowing grass with a lawnmower. The gardener walks from point X to point Y as shown, while pushing the lawnmower.\n[Diagram: A path from X to Y. X is the starting point. The gardener moves 32 m East, then 15 m North, then 4 m West to reach Y.]",
+"parts": [
+{
+"id": "ai",
+"text": "By scale diagram or otherwise, determine the magnitude of the resultant displacement of the gardener from point X to point Y.",
+"marks": 2,
+"answer": "31.7 m",
+"markingScheme": "Resultant horizontal distance = 32 - 4 = 28 m\nResultant vertical distance = 15 m\n$R^2 = 28^2 + 15^2$\n$R = 31.7$ m (1 mark for substitution into Pythagoras, 1 mark for final answer)."
+},
+{
+"id": "aii",
+"text": "By scale diagram or otherwise, determine the direction of the resultant displacement of the gardener from point X to point Y.",
+"marks": 2,
+"answer": "062",
+"markingScheme": "$\tan\theta = 28/15$ or $\tan\theta = 15/28$\n$\theta = 28^{\circ}$ (from North) or $62^{\circ}$ (from East)\nBearing = 062 (1 mark for trig substitution, 1 mark for bearing)."
+},
+{
+"id": "b",
+"text": "The gardener takes 55 s to walk from point X to point Y. Determine the average velocity of the gardener from point X to point Y.",
+"marks": 3,
+"answer": "0.58 m s^-1 at bearing 062",
+"markingScheme": "$v = s/t$ (1)\n$v = 31.7 / 55$ (1)\n$v = 0.58$ m s$^{-1}$ (at bearing 062) (1)\n[ecf from (a)]",
+"dependsOn": [
+"ai",
+"aii"
+]
+},
+{
+"id": "c",
+"text": "The gardener pushes the lawnmower with an average force of 68 N while walking between point X and point Y. Calculate the work done in moving the lawnmower between point X and point Y.",
+"marks": 3,
+"answer": "3.5 \u00d7 10^3 J",
+"markingScheme": "Total distance $d = 32 + 15 + 4 = 51$ m\n$E_w = Fd$ (1)\n$E_w = 68 \u00d7 51$ (1)\n$E_w = 3468$ J (1)\nAccept $3.5 \u00d7 10^3$ J"
+}
+]
+},
+{
+"type": "paper",
+"topic": "Dynamics",
+"subtopic": "Newton's Laws",
+"question": "The Falcon Heavy rocket is used to carry a satellite from Earth into space.",
+"parts": [
+{
+"id": "ai",
+"text": "The total mass of the rocket and satellite at launch is 1.43 \u00d7 10^6 kg. Calculate the weight of the rocket and satellite at launch.",
+"marks": 3,
+"answer": "1.40 \u00d7 10^7 N",
+"markingScheme": "$W = mg$ (1)\n$W = 1.43 \u00d7 10^6 \u00d7 9.8$ (1)\n$W = 1.40 \u00d7 10^7$ N (1)"
+},
+{
+"id": "aii",
+"text": "At launch, the initial upward thrust acting on the rocket is 2.28 \u00d7 10^7 N. Determine the initial acceleration of the rocket and satellite.",
+"marks": 4,
+"answer": "6.15 m s^-2",
+"markingScheme": "$F_{un} = \text{Thrust} - \text{Weight}$ (1)\n$F_{un} = 2.28 \u00d7 10^7 - 1.40 \u00d7 10^7 = 8.8 \u00d7 10^6$ N (1)\n$a = F_{un} / m$ (1)\n$a = 8.8 \u00d7 10^6 / 1.43 \u00d7 10^6 = 6.15$ m s$^{-2}$ (1)\n[ecf from (a)(i)]",
+"dependsOn": [
+"ai"
+]
+},
+{
+"id": "bi",
+"text": "Two reusable parts are the payload fairing sections. On the diagram below, show all the forces acting on one of the payload fairing sections as it falls vertically through the Earth's atmosphere. You must name these forces and show their directions.\n[Diagram: A box representing the fairing section.]",
+"marks": 2,
+"answer": "Weight (down) and Air Resistance/Drag (up)",
+"markingScheme": "Arrow pointing down labeled 'Weight' (1)\nArrow pointing up labeled 'Air Resistance' or 'Drag' or 'Friction' (1)"
+},
+{
+"id": "bii",
+"text": "At one point, as it falls through the atmosphere, a parachute attached to the payload fairing section is opened. This causes the speed of the payload fairing section to decrease rapidly. Explain, in terms of forces, how the parachute reduces the speed of the payload fairing section.",
+"marks": 2,
+"answer": "The upward force is greater than the weight, creating an upward unbalanced force.",
+"markingScheme": "Air resistance/upward force increases (1)\nAir resistance/upward force is now greater than weight OR there is an upward unbalanced force (1)"
+},
+{
+"id": "biii",
+"text": "The graph shows how the vertical velocity $v_v$ of one of the payload fairing sections varies with time from the moment the parachute is opened. [Diagram: Velocity-time graph showing a decrease to a constant terminal velocity at point P]. The weight of the payload fairing section is 9300 N. State the magnitude of the total upward force acting on the payload fairing section at point P. You must justify your answer.",
+"marks": 2,
+"answer": "9300 N",
+"markingScheme": "9300 N (1)\nVelocity is constant / forces are balanced / acceleration is zero (1)"
+}
+]
+},
+{
+"type": "paper",
+"topic": "Dynamics",
+"subtopic": "Newton's Laws",
+"question": "Ski jumping is a winter sport in which competitors aim to achieve the longest jump after sliding down a specially designed curved ramp. During the jump, ski jumpers adopt a specific position. The length of the jump is measured from the end of the ramp to where the ski jumper lands.",
+"parts": [
+{
+"id": "a",
+"text": "Using your knowledge of physics, comment on factors that affect the length of a jump made by a ski jumper.",
+"marks": 3,
+"answer": "[Open-ended physics comment]",
+"markingScheme": "Marks are awarded for breadth and depth of understanding:\n0 marks - no relevant physics\n1 mark - limited understanding\n2 marks - reasonable understanding\n3 marks - good understanding (e.g., mention of air resistance, lift, projectile motion components, gravitational potential to kinetic energy conversion)."
+}
+]
+},
+{
+"type": "paper",
+"topic": "Space",
+"subtopic": "Space Exploration",
+"question": "In 2023, a spacecraft was launched from Earth to investigate the asteroid Psyche. Psyche is located in the asteroid belt, between Mars and Jupiter.",
+"parts": [
+{
+"id": "a",
+"text": "On its journey to Psyche the spacecraft will pass close by the planet Mars. Explain how passing close to Mars will reduce the journey time to Psyche.",
+"marks": 2,
+"answer": "Gravitational pull of Mars increases the spacecraft's speed.",
+"markingScheme": "The planet's gravity pulls on the spacecraft (1)\nThis increases the spacecraft's velocity/speed (1)"
+},
+{
+"id": "bi",
+"text": "On its journey, the spacecraft uses an ion drive engine to provide thrust. The ion drive engine produces a small unbalanced force on the spacecraft. Explain how this small unbalanced force can still result in a large increase in speed, even though the spacecraft has a large mass.",
+"marks": 1,
+"answer": "The force acts for a very long time.",
+"markingScheme": "The force acts for a long time ($a=v-u/t$ or $F=ma$) (1)"
+},
+{
+"id": "bii",
+"text": "The ion drive engine is powered by solar cells. Near the Earth the solar cells provide 20 kW of electrical power. As the spacecraft approaches Psyche, the solar cells will only produce 2.3 kW of electrical power. Explain why the solar cells produce less power as the spacecraft approaches Psyche.",
+"marks": 1,
+"answer": "The spacecraft is further from the Sun.",
+"markingScheme": "Spacecraft is further from the Sun / Light intensity is less (1)"
+},
+{
+"id": "ci",
+"text": "When the spacecraft reaches its destination, it will go into orbit around Psyche. Initially, the spacecraft will complete 41 orbits of Psyche in 56 days. Determine the orbital period of the spacecraft.",
+"marks": 1,
+"answer": "1.4 days",
+"markingScheme": "$T = 56 / 41$\n$T = 1.37$ days (Accept 1.4) (1)"
+},
+{
+"id": "cii",
+"text": "After 56 days the spacecraft will move to an orbit closer to Psyche. State the effect this change will have on the orbital period of the spacecraft.",
+"marks": 1,
+"answer": "Orbital period decreases.",
+"markingScheme": "Decreases (1)"
+}
+]
+},
+{
+"type": "paper",
+"topic": "Electricity",
+"subtopic": "Current, voltage and resistance",
+"question": "A Van de Graaff generator is a device that is used to generate an electric charge on a hollow metal dome.",
+"parts": [
+{
+"id": "a",
+"text": "During a classroom demonstration a teacher places some small aluminium foil dishes on top of the dome. When the Van de Graaff generator is switched on, the metal dome becomes positively charged. The foil dishes are observed to \u2018fly away\u2019 from the metal dome as shown. Explain why the foil dishes are repelled from the metal dome.",
+"marks": 1,
+"answer": "Like charges repel.",
+"markingScheme": "The dishes and the dome have the same charge (positive) and like charges repel (1)"
+},
+{
+"id": "bi",
+"text": "The teacher then discharges the dome by placing a small metal sphere near the dome. During the discharge, 2.50 \u00d7 10^-6 C of charge is transferred to the dome in 0.80 ms. Calculate the average current during the discharge.",
+"marks": 3,
+"answer": "3.1 \u00d7 10^-3 A",
+"markingScheme": "$I = Q/t$ (1)\n$I = 2.50 \u00d7 10^{-6} / 0.80 \u00d7 10^{-3}$ (1)\n$I = 3.13 \u00d7 10^{-3}$ A (1)"
+},
+{
+"id": "bii",
+"text": "The magnitude of the charge on an electron is 1.60 \u00d7 10^-19 C. Determine the number of electrons transferred during the discharge process.",
+"marks": 1,
+"answer": "1.56 \u00d7 10^13",
+"markingScheme": "$N = 2.50 \u00d7 10^{-6} / 1.60 \u00d7 10^{-19} = 1.56 \u00d7 10^{13}$ (1)"
+}
+]
+}
+]
+}
