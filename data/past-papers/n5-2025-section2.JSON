@@ -19,7 +19,7 @@
 "text": "By scale diagram or otherwise, determine the direction of the resultant displacement of the gardener from point X to point Y.",
 "marks": 2,
 "answer": "062",
-"markingScheme": "$\tan\theta = 28/15$ or $\tan\theta = 15/28$\n$\theta = 28^{\circ}$ (from North) or $62^{\circ}$ (from East)\nBearing = 062 (1 mark for trig substitution, 1 mark for bearing)."
+"markingScheme": "$\\tan\\theta = 28/15$ or $\\tan\\theta = 15/28$\n$\\theta = 28^{\\circ}$ (from North) or $62^{\\circ}$ (from East)\nBearing = 062 (1 mark for trig substitution, 1 mark for bearing)."
 },
 {
 "id": "b",
@@ -59,7 +59,7 @@
 "text": "At launch, the initial upward thrust acting on the rocket is 2.28 \u00d7 10^7 N. Determine the initial acceleration of the rocket and satellite.",
 "marks": 4,
 "answer": "6.15 m s^-2",
-"markingScheme": "$F_{un} = \text{Thrust} - \text{Weight}$ (1)\n$F_{un} = 2.28 \u00d7 10^7 - 1.40 \u00d7 10^7 = 8.8 \u00d7 10^6$ N (1)\n$a = F_{un} / m$ (1)\n$a = 8.8 \u00d7 10^6 / 1.43 \u00d7 10^6 = 6.15$ m s$^{-2}$ (1)\n[ecf from (a)(i)]",
+"markingScheme": "$F_{un} = \\text{Thrust} - \\text{Weight}$ (1)\n$F_{un} = 2.28 \u00d7 10^7 - 1.40 \u00d7 10^7 = 8.8 \u00d7 10^6$ N (1)\n$a = F_{un} / m$ (1)\n$a = 8.8 \u00d7 10^6 / 1.43 \u00d7 10^6 = 6.15$ m s$^{-2}$ (1)\n[ecf from (a)(i)]",
 "dependsOn": [
 "ai"
 ]
