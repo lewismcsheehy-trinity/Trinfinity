@@ -8,6 +8,8 @@ export interface RawPaperPart {
   answer: string
   markingScheme: string
   dependsOn?: string[]
+  featureTag?: "standard" | "a-level" | "open-ended"
+  topicTag?: string
 }
 
 export interface RawPaperQuestion {
@@ -86,6 +88,7 @@ export const questions: RawPaperQuestion[] = [
         markingScheme:
           "• Fun = 2.28 × 10⁷ − 1.4014 × 10⁷ = 8.786 × 10⁶ (N) (1)\n• Fun = ma (1)\n• 8.786 × 10⁶ = 1.43 × 10⁶ × a (1)\n• a = 6.14... m s⁻² (1)\n\nConsistency with (a)(i).",
         dependsOn: ["ai"],
+        featureTag: "a-level",
       },
       {
         id: "bi",
@@ -127,6 +130,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "",
         markingScheme:
           "The candidate's response will be marked out of 3. Marks are awarded for the breadth and/or depth of understanding shown.\n• 0 marks: No relevant physics/understanding.\n• 1 mark: Limited understanding (e.g., mention of air resistance).\n• 2 marks: Reasonable understanding (e.g., mention of forces and effect on acceleration).\n• 3 marks: Good understanding (e.g., detailed discussion of projectile motion, lift, and drag).",
+        featureTag: "open-ended",
       },
     ],
   },
@@ -300,6 +304,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "",
         markingScheme:
           "The candidate's response will be marked out of 3. Marks are awarded for the breadth and/or depth of understanding shown.\n• Correctly identifies that electrons are already in the wires.\n• Correctly identifies that electrical energy is converted to light (not the electrons).\n• Correctly identifies that adding another lamp increases resistance and decreases current.",
+        featureTag: "open-ended",
       },
     ],
   },

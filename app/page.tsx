@@ -141,6 +141,8 @@ interface PaperPart {
   answer: string
   markingScheme: string
   dependsOn?: string[]
+  featureTag?: "standard" | "a-level" | "open-ended"
+  topicTag?: string
 }
 
 interface PaperQuestion {
@@ -5307,13 +5309,49 @@ function SetupView({
                   <div>
                     <p className="font-black text-slate-800 dark:text-white">Mixed Questions</p>
                     <p className="text-xs text-slate-500">
-                      Include all questions from the past paper, filtered by your coverage settings
+                      Include parts from other topics covered in your syllabus
                     </p>
                   </div>
                   <input
                     type="checkbox"
                     checked={includeMultiTopic}
                     onChange={(e) => setIncludeMultiTopic(e.target.checked)}
+                    className="w-6 h-6 rounded-lg accent-[#800000]"
+                  />
+                </label>
+                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                  isDarkMode
+                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
+                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
+                }`}>
+                  <div>
+                    <p className="font-black text-slate-800 dark:text-white">A-Level Challenge</p>
+                    <p className="text-xs text-slate-500">
+                      Include parts tagged as A-level challenge questions
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={includeALevel}
+                    onChange={(e) => setIncludeALevel(e.target.checked)}
+                    className="w-6 h-6 rounded-lg accent-[#800000]"
+                  />
+                </label>
+                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
+                  isDarkMode
+                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
+                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
+                }`}>
+                  <div>
+                    <p className="font-black text-slate-800 dark:text-white">Open Ended</p>
+                    <p className="text-xs text-slate-500">
+                      Include open-ended &ldquo;using your knowledge&rdquo; questions
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={includeOpenEnded}
+                    onChange={(e) => setIncludeOpenEnded(e.target.checked)}
                     className="w-6 h-6 rounded-lg accent-[#800000]"
                   />
                 </label>
@@ -7538,53 +7576,73 @@ export default function App() {
       if (bank) {
         const selectedTopicsList = topicString.split(",").filter(Boolean)
         const topicsSet = new Set(selectedTopicsList)
+        const hasCoverage = Object.values(userCoverage).some(Boolean)
 
-        let filteredQuestions: Question[]
+        // Build the set of allowed topics when Mixed Questions is on
+        const mixedTopicsSet = new Set(topicsSet)
+        if (includeMultiTopic && hasCoverage) {
+          Object.entries(userCoverage).forEach(([topic, covered]) => {
+            if (covered) mixedTopicsSet.add(topic)
+          })
+        }
 
-        if (includeMultiTopic) {
-          // Mixed Questions mode: include all questions unless topic not covered
-          const hasCoverage = Object.values(userCoverage).some(Boolean)
-          filteredQuestions = bank.questions.filter((q) => {
-            if (q.type !== "paper") return false
-            const pq = q as PaperQuestion
-            // When coverage is configured, only include topics the student has covered
-            if (hasCoverage) return userCoverage[pq.subtopic] === true
+        // Helper: filter and validate parts for a question given an allowed topic set
+        const filterParts = (pq: PaperQuestion, allowedTopics: Set<string>): PaperPart[] => {
+          // Step 1: filter by topic tag (part's topicTag or inherited question subtopic)
+          const byTopic = pq.parts.filter((p) => {
+            const partTopic = p.topicTag || pq.subtopic
+            return allowedTopics.has(partTopic)
+          })
+          // Step 2: filter by feature tag
+          const byFeature = byTopic.filter((p) => {
+            if (p.featureTag === "a-level" && !includeALevel) return false
+            if (p.featureTag === "open-ended" && !includeOpenEnded) return false
             return true
           })
-        } else {
-          // Normal mode: include only questions matching selected topics
-          filteredQuestions = bank.questions
-            .filter((q) => {
-              if (q.type !== "paper") return false
-              const pq = q as PaperQuestion
-              return topicsSet.has(pq.subtopic)
-            })
-            .map((q) => {
-              const pq = q as PaperQuestion
-              // Apply dependency filtering: remove parts whose dependsOn are not satisfied
-              const includedIds = new Set(pq.parts.map((p) => p.id))
-              let changed = true
-              while (changed) {
-                changed = false
-                for (const part of pq.parts) {
-                  if (includedIds.has(part.id) && part.dependsOn && part.dependsOn.length > 0) {
-                    for (const depId of part.dependsOn) {
-                      if (!includedIds.has(depId)) {
-                        includedIds.delete(part.id)
-                        changed = true
-                        break
-                      }
-                    }
+          // Step 3: dependency filtering — remove parts whose dependsOn are not satisfied
+          const includedIds = new Set(byFeature.map((p) => p.id))
+          let changed = true
+          while (changed) {
+            changed = false
+            for (const part of byFeature) {
+              if (includedIds.has(part.id) && part.dependsOn && part.dependsOn.length > 0) {
+                for (const depId of part.dependsOn) {
+                  if (!includedIds.has(depId)) {
+                    includedIds.delete(part.id)
+                    changed = true
+                    break
                   }
                 }
               }
-              const validParts = pq.parts.filter((p) => includedIds.has(p.id))
-              return { ...pq, parts: validParts }
-            })
-            .filter((q) => (q as PaperQuestion).parts.length > 0)
+            }
+          }
+          return byFeature.filter((p) => includedIds.has(p.id))
         }
 
-        setCurrentQuestions(filteredQuestions)
+        // Determine which topic set to use for question-level filtering
+        // A question is a candidate if its subtopic is selected, or any part's topicTag is selected
+        const isQuestionCandidate = (pq: PaperQuestion): boolean => {
+          if (topicsSet.has(pq.subtopic)) return true
+          return pq.parts.some((p) => p.topicTag && topicsSet.has(p.topicTag))
+        }
+
+        const filteredQuestions: Question[] = bank.questions
+          .filter((q) => {
+            if (q.type !== "paper") return false
+            return isQuestionCandidate(q as PaperQuestion)
+          })
+          .map((q) => {
+            const pq = q as PaperQuestion
+            const allowedTopics = includeMultiTopic ? mixedTopicsSet : topicsSet
+            const validParts = filterParts(pq, allowedTopics)
+            return { ...pq, parts: validParts }
+          })
+          .filter((q) => (q as PaperQuestion).parts.length > 0)
+
+        // Apply numberOfQuestions limit — each whole question counts as one question
+        const limitedQuestions = numberOfQuestions > 0 ? filteredQuestions.slice(0, numberOfQuestions) : filteredQuestions
+
+        setCurrentQuestions(limitedQuestions)
         setCurrentQuestionIdx(0)
         setUserSelections({})
         setPaperAnswers({})
