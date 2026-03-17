@@ -22,81 +22,88 @@ export interface RawPaperQuestion {
 
 export const source = "SQA National 5 Physics 2025 Section 2"
 
+
 export const questions: RawPaperQuestion[] = [
   {
     type: "paper",
-    topic: "Dynamics",
+    topic: "Vectors and Scalars",
     subtopic: "Vectors and Scalars",
     question:
-      "A gardener is mowing grass with a lawnmower. The gardener walks from point X to point Y as shown, while pushing the lawnmower. [Diagram: A path from X to Y. From X, the gardener moves 32 m East, then 15 m North, then 4 m West to reach Y. The diagram is not to scale.]",
+      "A gardener is mowing grass with a lawnmower. The gardener walks from point X to point Y as shown, while pushing the lawnmower. [Diagram: A path starting at X, going 15 m North, then 32 m East, then 4 m South to point Y. Not to scale.]",
     parts: [
       {
         id: "ai",
         text: "By scale diagram or otherwise, determine the magnitude of the resultant displacement of the gardener from point X to point Y.",
         marks: 2,
-        answer: "32 m",
+        answer: "$33.8\\text{ m}$",
         markingScheme:
-          "• Resultant horizontal displacement = 28 (m) (1)\n• Resultant displacement = √ (28² + 15²) = 31.76... (m) (1)\n\nOR\n\n• (Consistent) scale diagram (1)\n• Resultant displacement 32 m (± 1 m) (1)",
+          "• $s^2 = 11^2 + 32^2$ (1)\n• $s = 33.8\\text{ m}$ (1)",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "aii",
         text: "By scale diagram or otherwise, determine the direction of the resultant displacement of the gardener from point X to point Y.",
         marks: 2,
-        answer: "(0)28",
+        answer: "$071$ (or bearing $071$)",
         markingScheme:
-          "• tan θ = 15/28 (1)\n• (0)28 (1)\n\nOR\n\n• (Consistent) scale diagram (1)\n• (0)28 (± 2°) (1)",
+          "• $\\tan\\theta = \\frac{32}{11}$ (1)\n• $\\theta = 71^\\circ$ (1)",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "b",
         text: "The gardener takes 55 s to walk from point X to point Y. Determine the average velocity of the gardener from point X to point Y.",
         marks: 3,
-        answer: "0.58 m s⁻¹ (0)28",
+        answer: "$0.61\\text{ m s}^{-1}$ at $071$",
         markingScheme:
-          "• v = s / t (1)\n• v = 32 / 55 (1)\n• v = 0.58 m s⁻¹ (0)28 (1)\n\nDirection must be consistent with (a)(ii).",
+          "• $v = \\frac{s}{t}$ (1)\n• $v = \\frac{33.8}{55}$ (1)\n• $v = 0.61\\text{ m s}^{-1}$ at $071$ (1)",
         dependsOn: ["ai", "aii"],
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "c",
         text: "The gardener pushes the lawnmower with an average force of 68 N while walking between point X and point Y. Calculate the work done in moving the lawnmower between point X and point Y.",
         marks: 3,
-        answer: "3.5 × 10³ J",
+        answer: "$3468\\text{ J}$",
         markingScheme:
-          "• Ew = Fd (1)\n• Ew = 68 × (32 + 15 + 4) = 68 × 51 (1)\n• Ew = 3.5 × 10³ J (3468 J) (1)",
+          "• $d = 15 + 32 + 4 = 51\\text{ m}$ (1)\n• $E_w = Fd$ (1)\n• $E_w = 68 \\times 51 = 3468\\text{ J}$ (1)",
+        topicTag: "Newton's Laws",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Dynamics",
+    topic: "Newton's Laws",
     subtopic: "Newton's Laws",
     question:
-      "The Falcon Heavy rocket is used to carry a satellite from Earth into space. [Image: Falcon Heavy rocket at launch.]",
+      "The Falcon Heavy rocket is used to carry a satellite from Earth into space. [Diagram: A rocket on a launchpad.]",
     parts: [
       {
         id: "ai",
-        text: "The total mass of the rocket and satellite at launch is 1.43 × 10⁶ kg. Calculate the weight of the rocket and satellite at launch.",
+        text: "The total mass of the rocket and satellite at launch is $1.43 \\times 10^6\\text{ kg}$. Calculate the weight of the rocket and satellite at launch.",
         marks: 3,
-        answer: "1.40 × 10⁷ N",
+        answer: "$1.40 \\times 10^7\\text{ N}$",
         markingScheme:
-          "• W = mg (1)\n• W = 1.43 × 10⁶ × 9.8 (1)\n• W = 1.40 × 10⁷ N (1)",
+          "• $W = mg$ (1)\n• $W = 1.43 \\times 10^6 \\times 9.8$ (1)\n• $W = 1.40 \\times 10^7\\text{ N}$ (1)",
+        topicTag: "Newton's Laws",
       },
       {
         id: "aii",
-        text: "At launch, the initial upward thrust acting on the rocket is 2.28 × 10⁷ N. Determine the initial acceleration of the rocket and satellite.",
+        text: "At launch, the initial upward thrust acting on the rocket is $2.28 \\times 10^7\\text{ N}$. Determine the initial acceleration of the rocket and satellite.",
         marks: 4,
-        answer: "6.2 m s⁻²",
+        answer: "$6.15\\text{ m s}^{-2}$",
         markingScheme:
-          "• Fun = 2.28 × 10⁷ − 1.4014 × 10⁷ = 8.786 × 10⁶ (N) (1)\n• Fun = ma (1)\n• 8.786 × 10⁶ = 1.43 × 10⁶ × a (1)\n• a = 6.14... m s⁻² (1)\n\nConsistency with (a)(i).",
+          "• $F = \\text{thrust} - \\text{weight}$ (1)\n• $F = 2.28 \\times 10^7 - 1.40 \\times 10^7 = 0.88 \\times 10^7\\text{ N}$ (1)\n• $a = \\frac{F}{m}$ (1)\n• $a = 6.15\\text{ m s}^{-2}$ (1)",
         dependsOn: ["ai"],
-        featureTag: "a-level",
+        topicTag: "Newton's Laws",
       },
       {
         id: "bi",
-        text: "The rocket is designed so that many parts are reusable. Two reusable parts are the payload fairing sections, which protect the satellite during launch. Once the rocket reaches space, the payload fairing sections are detached and re-enter the Earth's atmosphere. [Diagram: Payload fairing sections and satellite.] On the diagram below, show all the forces acting on one of the payload fairing sections as it falls vertically through the Earth's atmosphere. You must name these forces and show their directions.",
+        text: "The rocket is designed so that many parts are reusable. Two reusable parts are the payload fairing sections... On the diagram below, show all the forces acting on one of the payload fairing sections as it falls vertically through the Earth's atmosphere. You must name these forces and show their directions. [Diagram: A rectangular box representing a fairing section.]",
         marks: 2,
         answer: "",
         markingScheme:
-          "• Upward arrow labelled 'Air resistance' / 'Drag' / 'Friction' (1)\n• Downward arrow labelled 'Weight' (1)",
+          "• arrow pointing up labeled 'air resistance' or 'drag' (1)\n• arrow pointing down labeled 'weight' (1)",
+        topicTag: "Newton's Laws",
       },
       {
         id: "bii",
@@ -104,24 +111,26 @@ export const questions: RawPaperQuestion[] = [
         marks: 2,
         answer: "",
         markingScheme:
-          "• (Air resistance increases so) there is an upward unbalanced force. (1)\n• (The upward unbalanced force is in the opposite direction to motion so) the fairing decelerates/slows down. (1)",
+          "• Air resistance increases (1)\n• Upward/unbalanced force is in the opposite direction to motion (1)",
+        topicTag: "Newton's Laws",
       },
       {
         id: "biii",
-        text: "The graph shows how the vertical velocity vv of one of the payload fairing sections varies with time from the moment the parachute is opened. [Graph: Velocity vs Time. Velocity decreases from an initial value and then levels off to a constant value at point P.] The weight of the payload fairing section is 9300 N. State the magnitude of the total upward force acting on the payload fairing section at point P. You must justify your answer.",
+        text: "The graph shows how the vertical velocity $v_v$ varies with time... The weight of the payload fairing section is 9300 N. State the magnitude of the total upward force acting on the payload fairing section at point P. You must justify your answer. [Diagram: $v-t$ graph showing velocity becoming constant at point P.]",
         marks: 2,
         answer: "9300 N",
         markingScheme:
-          "• 9300 N (1)\n• At P it is travelling at constant velocity/terminal velocity/forces are balanced. (1)",
+          "• 9300 N (1)\n• (Constant velocity means) forces are balanced/unbalanced force is zero (1)",
+        topicTag: "Newton's Laws",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Dynamics",
-    subtopic: "Newton's Laws",
+    topic: "Projectile Motion",
+    subtopic: "Projectile Motion",
     question:
-      "Ski jumping is a winter sport in which competitors aim to achieve the longest jump after sliding down a specially designed curved ramp. During the jump, ski jumpers adopt the position shown below. [Image: Ski jumper in mid-air.] The length of the jump is measured from the end of the ramp to where the ski jumper lands.",
+      "Ski jumping is a winter sport in which competitors aim to achieve the longest jump after sliding down a specially designed curved ramp. During the jump, ski jumpers adopt the position shown below. [Diagram: A ski jumper mid-air.]",
     parts: [
       {
         id: "a",
@@ -129,17 +138,18 @@ export const questions: RawPaperQuestion[] = [
         marks: 3,
         answer: "",
         markingScheme:
-          "The candidate's response will be marked out of 3. Marks are awarded for the breadth and/or depth of understanding shown.\n• 0 marks: No relevant physics/understanding.\n• 1 mark: Limited understanding (e.g., mention of air resistance).\n• 2 marks: Reasonable understanding (e.g., mention of forces and effect on acceleration).\n• 3 marks: Good understanding (e.g., detailed discussion of projectile motion, lift, and drag).",
+          "The candidate will gain credit for the breadth and/or depth of their conceptual understanding (marked out of 3).",
         featureTag: "open-ended",
+        topicTag: "Projectile Motion",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Space",
+    topic: "Space Exploration",
     subtopic: "Space Exploration",
     question:
-      "In 2023, a spacecraft was launched from Earth to investigate the asteroid Psyche. Psyche is located in the asteroid belt, between Mars and Jupiter. The spacecraft will reach Psyche in 2029.",
+      "In 2023, a spacecraft was launched from Earth to investigate the asteroid Psyche. Psyche is located in the asteroid belt, between Mars and Jupiter.",
     parts: [
       {
         id: "a",
@@ -147,31 +157,35 @@ export const questions: RawPaperQuestion[] = [
         marks: 2,
         answer: "",
         markingScheme:
-          "• The gravitational pull of Mars (1)\n• accelerates the spacecraft/increases its speed. (1)",
+          "• (The spacecraft) gains energy/velocity from the planet (Mars) (1)\n• Due to the gravitational pull/field of the planet (1)",
+        topicTag: "Space Exploration",
       },
       {
         id: "bi",
-        text: "On its journey, the spacecraft uses an ion drive engine to provide thrust. The ion drive engine produces a small unbalanced force on the spacecraft. Explain how this small unbalanced force can still result in a large increase in speed, even though the spacecraft has a large mass.",
+        text: "The ion drive engine produces a small unbalanced force on the spacecraft. Explain how this small unbalanced force can still result in a large increase in speed, even though the spacecraft has a large mass.",
         marks: 1,
         answer: "",
         markingScheme:
-          "• The engine is on for a long time. (1)",
+          "• The force acts for a (very) long time (1)",
+        topicTag: "Acceleration",
       },
       {
         id: "bii",
-        text: "The ion drive engine is powered by solar cells. Near the Earth the solar cells provide 20 kW of electrical power. As the spacecraft approaches Psyche, the solar cells will only produce 2.3 kW of electrical power. Explain why the solar cells produce less power as the spacecraft approaches Psyche.",
+        text: "Near the Earth the solar cells provide 20 kW of electrical power. As the spacecraft approaches Psyche, the solar cells will only produce 2.3 kW. Explain why the solar cells produce less power as the spacecraft approaches Psyche.",
         marks: 1,
         answer: "",
         markingScheme:
-          "• (It is further from the Sun so) light intensity is less. (1)",
+          "• (Psyche is) further from the Sun (so light intensity is less) (1)",
+        topicTag: "Cosmology",
       },
       {
         id: "ci",
-        text: "When the spacecraft reaches its destination, it will go into orbit around Psyche. Initially, the spacecraft will complete 41 orbits of Psyche in 56 days. Determine the orbital period of the spacecraft.",
+        text: "Initially, the spacecraft will complete 41 orbits of Psyche in 56 days. Determine the orbital period of the spacecraft.",
         marks: 1,
-        answer: "1.4 days",
+        answer: "1.37 days (or 32.8 hours)",
         markingScheme:
-          "• T = 56 / 41 = 1.36... days (1)",
+          "• $T = \\frac{56}{41} = 1.37$ days (1)",
+        topicTag: "Space Exploration",
       },
       {
         id: "cii",
@@ -180,81 +194,88 @@ export const questions: RawPaperQuestion[] = [
         answer: "Period decreases",
         markingScheme:
           "• (Orbital period) decreases (1)",
+        topicTag: "Space Exploration",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Electricity",
+    topic: "Current, voltage and resistance",
     subtopic: "Current, voltage and resistance",
     question:
       "A Van de Graaff generator is a device that is used to generate an electric charge on a hollow metal dome.",
     parts: [
       {
         id: "a",
-        text: "During a classroom demonstration a teacher places some small aluminium foil dishes on top of the dome. When the Van de Graaff generator is switched on, the metal dome becomes positively charged. The foil dishes are observed to ‘fly away’ from the metal dome as shown. [Diagram: Metal dome with foil dishes flying off.] Explain why the foil dishes are repelled from the metal dome.",
+        text: "When the Van de Graaff generator is switched on, the metal dome becomes positively charged. The foil dishes are observed to 'fly away' from the metal dome as shown. [Diagram: Foil dishes lifting off a dome.] Explain why the foil dishes are repelled from the metal dome.",
         marks: 1,
         answer: "",
         markingScheme:
-          "• (Dishes and dome have the) same (type of) charge. (1)",
+          "• (The dishes) have the same charge (as the dome) (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "bi",
-        text: "The teacher then discharges the dome by placing a small metal sphere near the dome, as shown. [Diagram: Sphere near dome causing a spark.] During the discharge, 2.50 × 10⁻⁶ C of charge is transferred to the dome in 0.80 ms. Calculate the average current during the discharge.",
+        text: "During the discharge, $2.50 \\times 10^{-6}\\text{ C}$ of charge is transferred to the dome in 0.80 ms. Calculate the average current during the discharge.",
         marks: 3,
-        answer: "3.1 × 10⁻³ A",
+        answer: "$3.1 \\times 10^{-3}\\text{ A}$",
         markingScheme:
-          "• Q = It (1)\n• 2.50 × 10⁻⁶ = I × 0.80 × 10⁻³ (1)\n• I = 3.125 × 10⁻³ A (1)",
+          "• $Q = It$ (1)\n• $2.50 \\times 10^{-6} = I \\times 0.80 \\times 10^{-3}$ (1)\n• $I = 3.1 \\times 10^{-3}\\text{ A}$ (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "bii",
-        text: "The magnitude of the charge on an electron is 1.60 × 10⁻¹⁹ C. Determine the number of electrons transferred during the discharge process.",
+        text: "The magnitude of the charge on an electron is $1.60 \\times 10^{-19}\\text{ C}$. Determine the number of electrons transferred during the discharge process.",
         marks: 1,
-        answer: "1.56 × 10¹³",
+        answer: "$1.56 \\times 10^{13}$",
         markingScheme:
-          "• 2.50 × 10⁻⁶ / 1.60 × 10⁻¹⁹ = 1.5625 × 10¹³ (1)",
+          "• $N = \\frac{2.50 \\times 10^{-6}}{1.60 \\times 10^{-19}} = 1.56 \\times 10^{13}$ (1)",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Electricity",
+    topic: "Current, voltage and resistance",
     subtopic: "Current, voltage and resistance",
     question:
-      "A student carries out an investigation to determine the resistance of a resistor R. The student is provided with the following components: resistor R, 6.0 V battery, variable resistor, ammeter, voltmeter, connecting leads.",
+      "A student carries out an investigation to determine the resistance of a resistor R. [Diagram: A 6.0 V battery, resistor R, and a variable resistor in series.]",
     parts: [
       {
         id: "a",
-        text: "Complete the circuit diagram to show how these components are connected to allow the student to measure the current in and voltage across resistor R, for a range of different voltages across resistor R. [Partial diagram provided with Battery, R, and Variable Resistor in series.]",
+        text: "Complete the circuit diagram to show how these components are connected to allow the student to measure the current in and voltage across resistor R.",
         marks: 2,
         answer: "",
         markingScheme:
-          "• Ammeter in series with R (1)\n• Voltmeter in parallel with R (1)",
+          "• Ammeter in series with R (1)\n• Voltmeter in parallel across R (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "b",
-        text: "The student obtains a range of readings for the current in and the voltage across resistor R. The student uses these readings to draw the following graph. [Graph: Current in R (A) vs Voltage across R (V). Linear passing through origin. At V=5.0, I=0.08.] Using the gradient of the graph, determine the resistance of resistor R.",
+        text: "The student obtains a range of readings... [Table/Graph: $I-V$ graph showing a straight line through the origin.] Using the gradient of the graph, determine the resistance of resistor R.",
         marks: 2,
-        answer: "63 Ω",
+        answer: "$62.5\\text{ }\\Omega$",
         markingScheme:
-          "• m = (0.08 − 0) / (5.0 − 0) = 0.016 (1)\n• R = 1 / m = 1 / 0.016 = 62.5 Ω (1)\n\nOR\n\n• R = V / I (1)\n• R = 5.0 / 0.08 = 62.5 Ω (1)",
+          "• $m = \\frac{y_2 - y_1}{x_2 - x_1} = \\frac{0.08}{5.0}$ (1)\n• $R = \\frac{1}{m} = 62.5\\text{ }\\Omega$ (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "c",
-        text: "The student now replaces resistor R with a filament lamp and repeats the investigation. A sketch graph of the student’s results is shown. [Graph: Current vs Voltage curve, gradient decreasing.] State a conclusion that can be made about the resistance of the filament lamp.",
+        text: "The student now replaces resistor R with a filament lamp... [Diagram: $I-V$ graph showing a curve.] State a conclusion that can be made about the resistance of the filament lamp.",
         marks: 1,
-        answer: "Resistance increases",
+        answer: "Resistance increases (as voltage/current increases)",
         markingScheme:
-          "• Resistance (of lamp) increases (as the voltage increases). (1)",
+          "• (The resistance) increases (1)",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Electricity",
+    topic: "Electrical Power",
     subtopic: "Electrical Power",
     question:
-      "At night a path is illuminated by a set of four LED spotlights. Each spotlight consists of an LED and a resistor connected in series. The circuit diagram shows how the four spotlights are connected. [Diagram: Four branches in parallel connected to 12V supply. Each branch has one spotlight.]",
+      "At night a path is illuminated by a set of four LED spotlights. Each spotlight consists of an LED and a resistor connected in series. [Diagram: Four series-pairs of LED+resistor connected in parallel to a 12 V supply.]",
     parts: [
       {
         id: "a",
@@ -262,7 +283,8 @@ export const questions: RawPaperQuestion[] = [
         marks: 1,
         answer: "",
         markingScheme:
-          "• If one goes out the others stay on.\nOR\n• They all get (the full) 12 V. (1)",
+          "• If one goes out the others stay on / each gets the full supply voltage (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "b",
@@ -270,15 +292,17 @@ export const questions: RawPaperQuestion[] = [
         marks: 3,
         answer: "1.6 A",
         markingScheme:
-          "• P = IV (1)\n• 4 × 4.8 = I × 12 (1)\n• I = 1.6 A (1)",
+          "• $P = IV$ (1)\n• $4 \\times 4.8 = I \\times 12$ (1)\n• $I = 1.6\\text{ A}$ (1)",
+        topicTag: "Electrical Power",
       },
       {
         id: "ci",
-        text: "The spotlight circuit is connected to the circuit shown below, so that the spotlights switch on automatically when it gets dark. [Diagram: Voltage divider with LDR and Variable Resistor. Relay connected across Variable Resistor.] State the name of component X.",
+        text: "State the name of component X. [Diagram: A potential divider with an LDR as the bottom component.]",
         marks: 1,
-        answer: "LDR",
+        answer: "LDR (Light Dependent Resistor)",
         markingScheme:
-          "• LDR (light dependent resistor) (1)",
+          "• LDR (1)",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "cii",
@@ -286,16 +310,17 @@ export const questions: RawPaperQuestion[] = [
         marks: 3,
         answer: "",
         markingScheme:
-          "• As light (level) decreases, resistance of X increases. (1)\n• Voltage across X/V_out increases. (1)\n• Relay (activates). (1)",
+          "• Resistance of LDR increases (1)\n• Voltage across LDR/X increases (1)\n• This switches on the transistor/relay (1)",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Electricity",
+    topic: "Current, voltage and resistance",
     subtopic: "Current, voltage and resistance",
     question:
-      "A student is describing how the following circuit works. [Diagram: Simple circuit with battery and lamp.] The student states: ‘When I connect the battery to the lamp, electrons are fired out from the battery and whizz round the circuit. The electrons are changed into light by the lamp. If I add another lamp to the circuit the lamps will be dimmer.’",
+      "A student is describing how a battery and lamp circuit works. The student states: 'When I connect the battery to the lamp, electrons are fired out from the battery and whizz round the circuit. The electrons are changed into light by the lamp. If I add another lamp to the circuit the lamps will be dimmer.'",
     parts: [
       {
         id: "a",
@@ -303,59 +328,64 @@ export const questions: RawPaperQuestion[] = [
         marks: 3,
         answer: "",
         markingScheme:
-          "The candidate's response will be marked out of 3. Marks are awarded for the breadth and/or depth of understanding shown.\n• Correctly identifies that electrons are already in the wires.\n• Correctly identifies that electrical energy is converted to light (not the electrons).\n• Correctly identifies that adding another lamp increases resistance and decreases current.",
+          "The candidate will gain credit for the breadth and/or depth of their conceptual understanding (marked out of 3).",
         featureTag: "open-ended",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Properties of Matter",
+    topic: "Specific Heat Capacity",
     subtopic: "Specific Heat Capacity",
     question:
-      "An ice making machine is an appliance used for making ice cubes. The ice making machine operates by first cooling water to 0 °C. The water is then frozen to form ice cubes. Once formed, the ice cubes are released into a collecting tray.",
+      "An ice making machine is an appliance used for making ice cubes by cooling water to 0 °C and then freezing it.",
     parts: [
       {
         id: "ai",
         text: "The ice making machine is initially filled with 0.38 kg of water at a temperature of 22 °C. Calculate the amount of energy removed from the water to reduce the temperature of the water to 0 °C.",
         marks: 3,
-        answer: "3.5 × 10⁴ J",
+        answer: "$3.5 \\times 10^4\\text{ J}$",
         markingScheme:
-          "• Eh = cmΔT (1)\n• Eh = 4180 × 0.38 × 22 (1)\n• Eh = 34944.8 J (3.5 × 10⁴ J) (1)",
+          "• $E_h = cm\\Delta T$ (1)\n• $E_h = 4180 \\times 0.38 \\times 22$ (1)\n• $E_h = 34945\\text{ J}$ (1)",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "aii",
         text: "The ice making machine has a power rating of 120 W. Calculate the minimum amount of time it takes to reduce the temperature of the water to 0 °C.",
         marks: 3,
-        answer: "291 s",
+        answer: "$290\\text{ s}$",
         markingScheme:
-          "• P = E / t (1)\n• 120 = 34944.8 / t (1)\n• t = 291 s (1)\n\nConsistency with (a)(i).",
+          "• $P = \\frac{E}{t}$ (1)\n• $120 = \\frac{34945}{t}$ (1)\n• $t = 291\\text{ s}$ (1)",
         dependsOn: ["ai"],
+        topicTag: "Electrical Power",
       },
       {
         id: "aiii",
-        text: "In practice, the time taken to reduce the temperature of the water to 0 °C is much greater than calculated in (a)(ii), due to heat gained from the surroundings. Suggest one way the manufacturer could improve the ice making machine to overcome this problem.",
+        text: "Suggest one way the manufacturer could improve the ice making machine to overcome heat gain from surroundings.",
         marks: 1,
-        answer: "",
+        answer: "Add insulation",
         markingScheme:
-          "• Insulate (the machine). (1)",
+          "• Insulate the machine/tank (1)",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "b",
         text: "Once the water is at 0 °C, a further 15.3 kJ of energy is removed from the water to form ice cubes. Calculate the maximum mass of ice cubes produced in this process.",
         marks: 3,
-        answer: "0.046 kg",
+        answer: "$0.046\\text{ kg}$",
         markingScheme:
-          "• Eh = mL (1)\n• 15.3 × 10³ = m × 3.34 × 10⁵ (1)\n• m = 0.0458... kg (1)",
+          "• $E_h = mL_f$ (1)\n• $15.3 \\times 10^3 = m \\times 3.34 \\times 10^5$ (1)\n• $m = 0.0458\\text{ kg}$ (1)",
+        topicTag: "Specific Latent Heat",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Properties of Matter",
+    topic: "Pressure, Kinetic Theory and Gas Laws",
     subtopic: "Pressure, Kinetic Theory and Gas Laws",
     question:
-      "A student sets up the apparatus shown to investigate how the volume of a fixed mass of air is related to its pressure, when temperature is kept constant. [Diagram: Syringe connected to a pressure meter.] The student varies the volume of the air in the syringe and measures the pressure of the air in the syringe with the pressure meter.",
+      "A student investigates how the volume of a fixed mass of air is related to its pressure, when temperature is kept constant. [Diagram: A syringe connected to a pressure meter.]",
     parts: [
       {
         id: "a",
@@ -363,48 +393,53 @@ export const questions: RawPaperQuestion[] = [
         marks: 1,
         answer: "",
         markingScheme:
-          "• Particles collide with the walls (of the syringe/container). (1)",
+          "• Particles collide with the walls (of the syringe/container) (1)",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "bi",
-        text: "For each volume of air in the syringe the student calculates the value of 1/volume. The results of the experiment are shown in the table. [Table: 1/volume (ml⁻¹) | Pressure (kPa): 0.05 | 32, 0.10 | 67, 0.13 | 81, 0.17 | 112, 0.25 | 160] Using the graph paper, draw a graph of these results.",
+        text: "Using the graph paper, draw a graph of these results. [Table: $1/V$ vs Pressure data provided.]",
         marks: 3,
         answer: "",
         markingScheme:
-          "• Correct axes labels and units (1)\n• Correct scales (1)\n• Points plotted correctly and line of best fit drawn (1)",
+          "• Correct axes and labels (1)\n• Points plotted correctly (1)\n• Line of best fit drawn (1)",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "bii",
-        text: "Using information from your graph, state a conclusion that can be made about the relationship between the volume of a fixed mass of air at constant temperature and its pressure.",
+        text: "Using information from your graph, state a conclusion that can be made about the relationship between the volume and its pressure.",
         marks: 1,
-        answer: "Pressure is inversely proportional to volume",
+        answer: "Pressure is inversely proportional to volume ($P \\propto 1/V$)",
         markingScheme:
-          "• Pressure is inversely proportional to volume. (1)\n\n(Accept: P ∝ 1/V)",
+          "• Pressure is inversely proportional to volume (1)",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "biii",
         text: "Using your graph, determine the volume of trapped air in the syringe at a pressure of 148 kPa.",
         marks: 2,
-        answer: "4.3 ml",
+        answer: "$4.3\\text{ ml}$",
         markingScheme:
-          "• 1/V = 0.23 (ml⁻¹) (1)\n• V = 1 / 0.23 = 4.3 ml (1)\n\nConsistency with graph.",
+          "• $1/V = 0.23$ (from graph) (1)\n• $V = 4.35\\text{ ml}$ (1)",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "c",
         text: "Suggest one way in which the experimental procedure could be improved to give more reliable results.",
         marks: 1,
-        answer: "Repeat the experiment",
+        answer: "Repeat and average",
         markingScheme:
-          "• Repeat the experiment and calculate an average. (1)",
+          "• Repeat the experiment and calculate an average (1)",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Waves",
+    topic: "Wave properties",
     subtopic: "Wave properties",
     question:
-      "Scotland’s first wave park for watersports opened in Edinburgh in 2024. A wave generator produces water waves that travel along the length of a pool. The wave generator produces 500 waves in 30 minutes and the length of the pool is 160 m.",
+      "A wave generator produces 500 water waves in 30 minutes in a 160 m long pool.",
     parts: [
       {
         id: "a",
@@ -412,7 +447,8 @@ export const questions: RawPaperQuestion[] = [
         marks: 1,
         answer: "",
         markingScheme:
-          "• (Vibration of particles is) at right angles to (the direction of) energy travel/wave travel. (1)",
+          "• Particles vibrate at right angles to the direction of energy travel (1)",
+        topicTag: "Wave properties",
       },
       {
         id: "bi",
@@ -420,15 +456,17 @@ export const questions: RawPaperQuestion[] = [
         marks: 2,
         answer: "0.28 Hz",
         markingScheme:
-          "• f = N / t (1)\n• f = 500 / (30 × 60) = 0.277... Hz (1)",
+          "• $f = \\frac{N}{t} = \\frac{500}{30 \\times 60}$ (1)\n• $f = 0.277\\text{ Hz}$ (1)",
+        topicTag: "Wave properties",
       },
       {
         id: "bii",
         text: "Each wave takes 32 s to travel the length of the pool. Calculate the average speed of the waves.",
         marks: 3,
-        answer: "5.0 m s⁻¹",
+        answer: "5.0 m s\u207b\u00b9",
         markingScheme:
-          "• v = d / t (1)\n• v = 160 / 32 (1)\n• v = 5.0 m s⁻¹ (1)",
+          "• $v = \\frac{d}{t}$ (1)\n• $v = \\frac{160}{32}$ (1)\n• $v = 5.0\\text{ m s}^{-1}$ (1)",
+        topicTag: "Wave properties",
       },
       {
         id: "biii",
@@ -436,25 +474,27 @@ export const questions: RawPaperQuestion[] = [
         marks: 3,
         answer: "18 m",
         markingScheme:
-          "• v = fλ (1)\n• 5.0 = 0.28 × λ (1)\n• λ = 17.8... m (1)\n\nConsistency with (b)(i) and (b)(ii).",
+          "• $v = f\\lambda$ (1)\n• $5.0 = 0.28 \\times \\lambda$ (1)\n• $\\lambda = 17.9\\text{ m}$ (1)",
         dependsOn: ["bi", "bii"],
+        topicTag: "Wave properties",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Waves",
+    topic: "EM Spectrum",
     subtopic: "EM Spectrum",
     question:
-      "Many golfers now use either a GPS device or an infrared laser rangefinder to measure the distance required for their next shot.",
+      "Golfers use either a GPS device (microwaves) or an infrared laser rangefinder. GPS satellites orbit at 20,200 km.",
     parts: [
       {
         id: "ai",
-        text: "The GPS device receives microwave signals from satellites orbiting the Earth. The satellites orbit at an altitude of 20 200 km and with a period of 12 hours. At one point in time a satellite is directly overhead. Show that the time taken for a microwave signal to travel from the satellite to the GPS device is 0.067 s.",
+        text: "Show that the time taken for a microwave signal to travel from the satellite to the GPS device is 0.067 s.",
         marks: 2,
         answer: "0.067 s",
         markingScheme:
-          "• d = vt (1)\n• 20 200 × 10³ = 3.0 × 10⁸ × t (1)\n• t = 0.0673... s",
+          "• $t = \\frac{d}{v} = \\frac{20200 \\times 10^3}{3 \\times 10^8}$ (1)\n• $t = 0.0673\\text{ s}$ (1)",
+        topicTag: "EM Spectrum",
       },
       {
         id: "aii",
@@ -462,48 +502,53 @@ export const questions: RawPaperQuestion[] = [
         marks: 2,
         answer: "No",
         markingScheme:
-          "• No (1)\n• Period is 12 hours (must be 24 hours) / altitude is 20 200 km (must be 36 000 km). (1)",
+          "• No (1)\n• Period is 12 hours (not 24) / altitude is not 36,000 km (1)",
+        topicTag: "Space Exploration",
       },
       {
         id: "bi",
-        text: "The laser rangefinder emits a beam of infrared radiation with a wavelength of 904 nm. The beam of infrared radiation is directed towards a distant object. The beam reflects from the object and is detected in the rangefinder. State a suitable detector for infrared radiation in the rangefinder.",
+        text: "State a suitable detector for infrared radiation in the rangefinder.",
         marks: 1,
-        answer: "Photodiode",
+        answer: "Photodiode / Phototransistor / Thermistor",
         markingScheme:
-          "• Phototransistor / Photodiode / Thermistor / Thermocouple (1)",
+          "• Photodiode (or other valid detector) (1)",
+        topicTag: "EM Spectrum",
       },
       {
         id: "bii",
-        text: "Calculate the frequency of the infrared radiation emitted by the rangefinder.",
+        text: "Calculate the frequency of the infrared radiation (904 nm) emitted by the rangefinder.",
         marks: 3,
-        answer: "3.32 × 10¹⁴ Hz",
+        answer: "$3.32 \\times 10^{14}\\text{ Hz}$",
         markingScheme:
-          "• v = fλ (1)\n• 3.0 × 10⁸ = f × 904 × 10⁻⁹ (1)\n• f = 3.318... × 10¹⁴ Hz (1)",
+          "• $v = f\\lambda$ (1)\n• $3 \\times 10^8 = f \\times 904 \\times 10^{-9}$ (1)\n• $f = 3.32 \\times 10^{14}\\text{ Hz}$ (1)",
+        topicTag: "EM Spectrum",
       },
       {
         id: "biii",
-        text: "A golfer aims the beam of infrared radiation towards a target. The time taken between the infrared radiation being emitted and received by the rangefinder is 1.2 × 10⁻⁶ s. Determine the distance of the target from the golfer.",
+        text: "The time taken for the radiation to be emitted and received is $1.2 \\times 10^{-6}\\text{ s}$. Determine the distance of the target from the golfer.",
         marks: 4,
         answer: "180 m",
         markingScheme:
-          "• d = vt (1)\n• d = 3.0 × 10⁸ × 1.2 × 10⁻⁶ = 360 (m) (1)\n• target distance = 360 / 2 (1)\n• target distance = 180 m (1)",
+          "• $t = 0.6 \\times 10^{-6}\\text{ s}$ (one way) (1)\n• $d = vt$ (1)\n• $d = 3 \\times 10^8 \\times 0.6 \\times 10^{-6}$ (1)\n• $d = 180\\text{ m}$ (1)",
+        topicTag: "Wave properties",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Waves",
+    topic: "Refraction of light",
     subtopic: "Refraction of light",
     question:
-      "A student carries out an experiment to investigate the path of red light through a circular glass block. [Diagram: Ray entering a glass block at an angle. Normal line shown. Angle in air is X, angle in glass is Y.]",
+      "A student investigates the path of red light through a circular glass block. [Diagram: Ray entering air-glass boundary at angle X and refracting to angle Y inside.]",
     parts: [
       {
         id: "a",
         text: "State the names given to angles X and Y.",
         marks: 1,
-        answer: "X: angle of incidence, Y: angle of refraction",
+        answer: "X: angle of incidence; Y: angle of refraction",
         markingScheme:
-          "• X: angle of incidence, Y: angle of refraction (1)",
+          "• Both correct (1)",
+        topicTag: "Refraction of light",
       },
       {
         id: "b",
@@ -511,24 +556,26 @@ export const questions: RawPaperQuestion[] = [
         marks: 2,
         answer: "",
         markingScheme:
-          "• Speed of light changes/decreases (1)\n• Different (optical) density (1)",
+          "• Speed of light decreases (1)\n• Change in speed causes change in direction (1)",
+        topicTag: "Refraction of light",
       },
       {
         id: "c",
-        text: "Complete the diagram below to show the path of the ray of red light after it exits the block. [Diagram provided for completion.]",
+        text: "Complete the diagram below to show the path of the ray of red light after it exits the block (at the center of the flat edge).",
         marks: 1,
         answer: "",
         markingScheme:
-          "• Ray exits along the normal without bending. (1)",
+          "• Ray exits along the normal/radius (no further refraction) (1)",
+        topicTag: "Refraction of light",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Radiation",
+    topic: "Nuclear Radiation",
     subtopic: "Nuclear Radiation",
     question:
-      "Leaks in underground wastewater pipes can be investigated using a radioactive material known as a tracer. A small quantity of the tracer is added to the water entering the pipe being investigated and the radiation emitted is monitored over a period of a few hours. [Diagram: Underground pipe with a leak. Detector above ground detects radiation coming through various layers.]",
+      "Leaks in underground wastewater pipes are investigated using a radioactive tracer. [Diagram: A pipe under several layers of earth and road, with a leak being detected from the surface.]",
     parts: [
       {
         id: "a",
@@ -536,64 +583,91 @@ export const questions: RawPaperQuestion[] = [
         marks: 1,
         answer: "",
         markingScheme:
-          "• (Only) gamma is able to penetrate the ground to reach the detector. (1)",
+          "• Gamma is the only one that can penetrate the ground/layers (1)",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "bi",
         text: "State what is meant by the term half-life.",
         marks: 1,
-        answer: "",
+        answer: "Time for the activity of a source to fall to half its original value.",
         markingScheme:
-          "• Time for activity to decrease by half. (1)",
+          "• Correct definition (1)",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "bii",
-        text: "[Table: Isotope | Radiation | Half-life: bismuth-204 | beta | 11 hours, sodium-24 | gamma | 15 hours, barium-133 | gamma | 11 years, barium-137m | gamma | 2.6 minutes] Select the most suitable isotope from the table to be used as a tracer for this investigation. You must justify your answer.",
+        text: "From the list: sodium-24 (15h), bismuth-204 (11.2h), barium-133 (10.5y), barium-137m (2.6m). State which source should be used and justify your answer.",
         marks: 2,
         answer: "sodium-24",
         markingScheme:
-          "• sodium-24 (1)\n• It is a gamma emitter and has a suitable half-life (not too short/long). (1)",
+          "• sodium-24 (1)\n• gamma emitter AND suitable half-life (not too short/long) (1)",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "ci",
-        text: "The graph shows how the activity of the tracer varies with time. [Graph: Activity vs Time. At t=0, A=200 kBq. At t=300, A=50 kBq.] Determine the half-life of the tracer.",
+        text: "Determine the half-life of this source. [Diagram: Activity vs Time graph starting at 800 kBq.]",
         marks: 1,
         answer: "150 s",
         markingScheme:
-          "• 150 s (± 10 s) (1)",
+          "• 150 s (1)",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "cii",
-        text: "Determine the activity of the tracer after 300 s.",
+        text: "Predict the activity of the source at 700 s.",
         marks: 1,
         answer: "50 kBq",
         markingScheme:
           "• 50 kBq (1)",
+        dependsOn: ["ci"],
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
   {
     type: "paper",
-    topic: "Radiation",
+    topic: "Nuclear Radiation",
     subtopic: "Nuclear Radiation",
     question:
-      "Security scanners at some airports use X-rays to detect hidden objects inside luggage.",
+      "A full-body airport scanner uses X-rays. A 64 kg passenger receives an equivalent dose of 0.25 \u00b5Sv.",
     parts: [
       {
-        id: "a",
-        text: "X-rays are a form of ionising radiation. State what is meant by the term ionisation.",
-        marks: 1,
-        answer: "Loss or gain of electrons",
+        id: "ai",
+        text: "Calculate the absorbed dose received by the passenger.",
+        marks: 3,
+        answer: "$0.25\\text{ }\\mu\\text{Gy}$",
         markingScheme:
-          "• (Loss or gain of) electrons from an atom. (1)",
+          "• $H = D w_r$ (1)\n• $0.25 \\times 10^{-6} = D \\times 1$ (1)\n• $D = 0.25 \\times 10^{-6}\\text{ Gy}$ (1)",
+        topicTag: "Nuclear Radiation",
+      },
+      {
+        id: "aii",
+        text: "Calculate the energy absorbed by the passenger.",
+        marks: 3,
+        answer: "$1.6 \\times 10^{-5}\\text{ J}$",
+        markingScheme:
+          "• $D = \\frac{E}{m}$ (1)\n• $0.25 \\times 10^{-6} = \\frac{E}{64}$ (1)\n• $E = 1.6 \\times 10^{-5}\\text{ J}$ (1)",
+        dependsOn: ["ai"],
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "b",
-        text: "The scanner is operated by a member of airport staff. Suggest one safety precaution the member of staff operating the scanner could take to minimise their exposure to the X-rays.",
+        text: "State what is meant by the term ionisation.",
         marks: 1,
-        answer: "Stand behind a lead screen",
+        answer: "Loss or gain of electrons from an atom.",
         markingScheme:
-          "• Increase distance / decrease time / use shielding (lead screen). (1)",
+          "• Loss or gain of electrons (1)",
+        topicTag: "Nuclear Radiation",
+      },
+      {
+        id: "c",
+        text: "Suggest one safety precaution the staff operating the scanner could take to minimise exposure.",
+        marks: 1,
+        answer: "Stand behind a screen / increase distance",
+        markingScheme:
+          "• Lead screen / distance / time (1)",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
