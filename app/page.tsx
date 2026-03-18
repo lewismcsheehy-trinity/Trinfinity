@@ -122,7 +122,23 @@ const QA_SUBTOPICS: Record<string, string[]> = {
 
 type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment"
+type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment"
+
+type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
+
+interface Subject {
+  id: SubjectId
+  label: string
+  desc: string
+  dept: string
+}
+
+const SUBJECTS: Subject[] = [
+  { id: "Physics", label: "Physics", desc: "Mechanics, Electricity, Waves & more", dept: "Physics Dept" },
+  { id: "Biology", label: "Biology", desc: "Cells, Organisms, Ecosystems & more", dept: "Biology Dept" },
+  { id: "Chemistry", label: "Chemistry", desc: "Bonding, Reactions, Analysis & more", dept: "Chemistry Dept" },
+  { id: "Practical Electronics", label: "Practical Electronics", desc: "Circuits, Components & Electronics", dept: "Physics Dept" },
+]
 
 interface MCQuestion {
   type: "mc"
@@ -4718,6 +4734,7 @@ function Navbar({
   view,
   appMode,
   selectedLevel,
+  selectedSubject,
   onHome,
   isDarkMode,
   currentUser,
@@ -4728,6 +4745,7 @@ function Navbar({
   view: ViewType
   appMode: AppMode
   selectedLevel: string
+  selectedSubject: SubjectId
   onHome: () => void
   isDarkMode: boolean
   currentUser: UserAccount | null
@@ -4749,11 +4767,13 @@ function Navbar({
         </div>
         <div className="flex flex-col leading-none">
           <span className="text-xl font-black tracking-tight text-[#800000] dark:text-red-500">Trinity High</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Physics Dept</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+            {SUBJECTS.find((s) => s.id === selectedSubject)!.dept}
+          </span>
         </div>
       </div>
 
-      {view !== "landing" && (
+      {view !== "landing" && view !== "subject-select" && (
         <div className="hidden md:flex items-center gap-4 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-600" />
@@ -4872,13 +4892,13 @@ function Navbar({
   )
 }
 
-function Landing({ onSelectLevel, isDarkMode }: { onSelectLevel: (level: string) => void; isDarkMode: boolean }) {
-  const levels = [
-    { id: "National 5", desc: "SCQF Level 5 Fundamentals" },
-    { id: "Higher", desc: "SCQF Level 6 Advanced Concepts" },
-    { id: "Advanced Higher", desc: "SCQF Level 7 Calculus Based" },
-  ]
-
+function SubjectSelection({
+  onSelectSubject,
+  isDarkMode,
+}: {
+  onSelectSubject: (subject: SubjectId) => void
+  isDarkMode: boolean
+}) {
   return (
     <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-4xl w-full">
@@ -4890,7 +4910,75 @@ function Landing({ onSelectLevel, isDarkMode }: { onSelectLevel: (level: string)
             Trinity Boost.
           </h1>
           <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Select your academic level to access custom physics assessments and mark schemes.
+            Choose your subject to access custom assessments and mark schemes.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          {SUBJECTS.map((subject) => (
+            <button
+              key={subject.id}
+              onClick={() => onSelectSubject(subject.id)}
+              className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
+                isDarkMode
+                  ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
+                  : "bg-white border-slate-200 hover:border-[#800000]"
+              }`}
+            >
+              <div
+                className={`text-2xl font-black mb-2 transition-colors ${
+                  isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
+                }`}
+              >
+                {subject.label}
+              </div>
+              <p className="text-sm text-slate-500">{subject.desc}</p>
+              <div className="mt-6 flex justify-center">
+                <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Landing({
+  onSelectLevel,
+  onBack,
+  selectedSubject,
+  isDarkMode,
+}: {
+  onSelectLevel: (level: string) => void
+  onBack: () => void
+  selectedSubject: SubjectId
+  isDarkMode: boolean
+}) {
+  const levels = [
+    { id: "National 5", desc: "SCQF Level 5 Fundamentals" },
+    {
+      id: "Higher",
+      displayId: selectedSubject === "Biology" ? "Human Higher" : undefined,
+      desc: "SCQF Level 6 Advanced Concepts",
+    },
+    { id: "Advanced Higher", desc: "SCQF Level 7 Calculus Based" },
+  ]
+
+  const subjectInfo = SUBJECTS.find((s) => s.id === selectedSubject)!
+
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-4xl w-full">
+        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest mb-6 border border-amber-200 dark:border-amber-800">
+            {subjectInfo.label}
+          </div>
+          <h1 className={`text-5xl md:text-7xl font-black mb-6 ${isDarkMode ? "text-white" : "text-[#800000]"}`}>
+            Trinity Boost.
+          </h1>
+          <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            Select your academic level to access custom {subjectInfo.label.toLowerCase()} assessments and mark schemes.
           </p>
         </div>
 
@@ -4910,7 +4998,7 @@ function Landing({ onSelectLevel, isDarkMode }: { onSelectLevel: (level: string)
                   isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
                 }`}
               >
-                {level.id}
+                {level.displayId ?? level.id}
               </div>
               <p className="text-sm text-slate-500">{level.desc}</p>
               <div className="mt-6 flex justify-center">
@@ -4919,6 +5007,13 @@ function Landing({ onSelectLevel, isDarkMode }: { onSelectLevel: (level: string)
             </button>
           ))}
         </div>
+
+        <button
+          onClick={onBack}
+          className={`text-sm font-semibold transition-colors ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-[#800000]"}`}
+        >
+          ← Back to Subjects
+        </button>
       </div>
     </div>
   )
@@ -7429,8 +7524,9 @@ function GenericModal({
 // --- Main App Logic ---
 
 export default function App() {
-  const [view, setView] = useState<ViewType>("landing")
+  const [view, setView] = useState<ViewType>("subject-select")
   const [selectedLevel, setSelectedLevel] = useState("National 5")
+  const [selectedSubject, setSelectedSubject] = useState<SubjectId>("Physics")
   const [appMode, setAppMode] = useState<AppMode>(null)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [activeModal, setActiveModal] = useState<string | null>(null)
@@ -7487,6 +7583,11 @@ export default function App() {
     if (isDarkMode) document.documentElement.classList.add("dark")
     else document.documentElement.classList.remove("dark")
   }, [isDarkMode])
+
+  const handleSubjectSelect = (subject: SubjectId) => {
+    setSelectedSubject(subject)
+    setView("landing")
+  }
 
   const handleLevelSelect = (level: string) => {
     setSelectedLevel(level)
@@ -7759,7 +7860,8 @@ export default function App() {
         view={view}
         appMode={appMode}
         selectedLevel={selectedLevel}
-        onHome={() => setView("landing")}
+        selectedSubject={selectedSubject}
+        onHome={() => setView("subject-select")}
         isDarkMode={isDarkMode}
         currentUser={currentUser}
         onSignInClick={() => setAuthModalOpen(true)}
@@ -7767,7 +7869,15 @@ export default function App() {
         onClassesClick={() => setClassesModalOpen(true)}
       />
       <main className="pb-20">
-        {view === "landing" && <Landing onSelectLevel={handleLevelSelect} isDarkMode={isDarkMode} />}
+        {view === "subject-select" && <SubjectSelection onSelectSubject={handleSubjectSelect} isDarkMode={isDarkMode} />}
+        {view === "landing" && (
+          <Landing
+            onSelectLevel={handleLevelSelect}
+            onBack={() => setView("subject-select")}
+            selectedSubject={selectedSubject}
+            isDarkMode={isDarkMode}
+          />
+        )}
         {view === "mode" && (
           <ModeSelection
             selectedLevel={selectedLevel}
