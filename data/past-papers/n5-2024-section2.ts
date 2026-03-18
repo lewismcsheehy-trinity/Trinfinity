@@ -226,7 +226,7 @@ export const questions: RawPaperQuestion[] = [
   {
     type: "paper",
     topic: "Space Exploration",
-    subtopic: "Space Exploration",
+    subtopic: "Cosmology",
     question:
       "The James Webb Space Telescope (JWST) is a space-based science observatory.",
     parts: [
