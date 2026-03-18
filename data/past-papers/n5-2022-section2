@@ -1,0 +1,189 @@
+[
+  {
+    "type": "paper",
+    "topic": "Vectors and Scalars",
+    "subtopic": "Vectors and Scalars",
+    "question": "A helicopter flies from an airport to a construction site. The construction site is 140 km due South of the airport. [Diagram: A map showing point A (airport) and point C (construction site) with a South arrow.] After staying at the construction site for a short time, the helicopter then flies to a hospital. The hospital is 130 km due West of the construction site.",
+    "parts": [
+      {
+        "id": "1ai",
+        "text": "By scale diagram or otherwise, determine the magnitude of the displacement from the airport to the hospital.",
+        "marks": 2,
+        "answer": "$190\\text{ km}$",
+        "markingScheme": "• Using Pythagoras: Resultant² $= 140^2 + 130^2$ (1)\n• Resultant $= 190\\text{ km}$ (1)\n• Accept: $191, 191.0$ (allow $\\pm 5\\text{ km}$ for scale diagram)",
+        "topicTag": "Vectors and Scalars"
+      },
+      {
+        "id": "1aii",
+        "text": "By scale diagram or otherwise, determine the direction of the displacement from the airport to the hospital.",
+        "marks": 2,
+        "answer": "$223$ (or $43^\\circ$ W of S)",
+        "markingScheme": "• Using trigonometry: $\\tan\\theta = \\frac{130}{140}$ (1)\n• $\\theta = 43^\\circ$; bearing $= 180 + 43 = 223$ (1)\n• Allow $\\pm 2^\\circ$ tolerance for scale diagram.",
+        "topicTag": "Vectors and Scalars"
+      },
+      {
+        "id": "1bi",
+        "text": "The total distance travelled by the helicopter from the airport to the hospital is 270 km. The helicopter takes 0.50 hours to complete this journey. Calculate the average speed of the helicopter for this journey, in $\\text{m s}^{-1}$.",
+        "marks": 3,
+        "answer": "$150\\text{ m s}^{-1}$",
+        "markingScheme": "• $d = \\bar{v}t$ (1)\n• $270000 = \\bar{v} \\times (0.50 \\times 60 \\times 60)$ (1)\n• $\\bar{v} = 150\\text{ m s}^{-1}$ (1)",
+        "topicTag": "Vectors and Scalars"
+      },
+      {
+        "id": "1bii",
+        "text": "State the average velocity of the helicopter for this journey.",
+        "marks": 2,
+        "answer": "$110\\text{ m s}^{-1}$ at $223$",
+        "markingScheme": "• $110\\text{ m s}^{-1}$ (1)\n• At $223$ (1)\n• Or magnitude consistent with (b)(i) and direction consistent with (a)(ii).",
+        "dependsOn": [
+          "1ai",
+          "1aii"
+        ],
+        "topicTag": "Vectors and Scalars"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Projectile Motion",
+    "subtopic": "Projectile Motion",
+    "question": "A student uses the apparatus shown to investigate the relationship between the horizontal range $d$ and the release height $h$ of a marble. [Diagram: A marble being released from a curved track at height h, traveling a horizontal distance d from the edge of a desk.]",
+    "parts": [
+      {
+        "id": "2ai",
+        "text": "The student's results are shown in the table: [Table with h (m) and d (m) values]. Using the graph paper provided on page 46, draw a graph of $d$ against $h$.",
+        "marks": 3,
+        "answer": "Best fit straight line through accurately plotted points.",
+        "markingScheme": "• Suitable scales, labels, and units (1)\n• All points plotted accurately to $\\pm$ half a division (1)\n• Best fit straight line (1)",
+        "topicTag": "Projectile Motion"
+      },
+      {
+        "id": "2aii",
+        "text": "Using your graph, determine the horizontal range $d$ when the release height $h$ is 0.25 m.",
+        "marks": 1,
+        "answer": "$0.57\\text{ m}$",
+        "markingScheme": "• Value must be consistent with the line the candidate has drawn ($\\pm$ half a division tolerance).",
+        "dependsOn": [
+          "2ai"
+        ],
+        "topicTag": "Projectile Motion"
+      },
+      {
+        "id": "2aiii",
+        "text": "Suggest one way the student could improve the apparatus to allow the landing point of the marble to be more clearly identified.",
+        "marks": 1,
+        "answer": "Place carbon paper under landing site.",
+        "markingScheme": "• Use carbon paper / sand tray / video analysis.",
+        "topicTag": "Projectile Motion"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Newton's Laws",
+    "subtopic": "Newton's Laws",
+    "question": "A spaceship of mass $5.5 \\times 10^5\\text{ kg}$ is being launched from the surface of the Earth. [Diagram: Spaceship with two vertical force arrows.]",
+    "parts": [
+      {
+        "id": "3ai",
+        "text": "Calculate the weight of the spaceship at the surface of the Earth.",
+        "marks": 3,
+        "answer": "$5.4 \\times 10^6\\text{ N}$",
+        "markingScheme": "• $W = mg$ (1)\n• $W = 5.5 \\times 10^5 \\times 9.8$ (1)\n• $W = 5.4 \\times 10^6\\text{ N}$ (1)",
+        "topicTag": "Newton's Laws"
+      },
+      {
+        "id": "3aii",
+        "text": "At launch, the engines produce a total upward thrust of $8.4 \\times 10^6\\text{ N}$. On the diagram, label the two vertical forces acting on the spaceship.",
+        "marks": 2,
+        "answer": "Thrust (up) and Weight (down).",
+        "markingScheme": "• (1) for each force correctly labelled with corresponding direction (Thrust/Rocket thrust and Weight/Gravitational pull).",
+        "topicTag": "Newton's Laws"
+      },
+      {
+        "id": "3aiii",
+        "text": "Calculate the acceleration of the spaceship at launch.",
+        "marks": 4,
+        "answer": "$5.5\\text{ m s}^{-2}$",
+        "markingScheme": "• $F_{un} = 8.4 \\times 10^6 - 5.4 \\times 10^6 = 3.0 \\times 10^6\\text{ N}$ (1)\n• $F = ma$ (1)\n• $3.0 \\times 10^6 = 5.5 \\times 10^5 \\times a$ (1)\n• $a = 5.5\\text{ m s}^{-2}$ (1)",
+        "dependsOn": [
+          "3ai"
+        ],
+        "topicTag": "Newton's Laws"
+      },
+      {
+        "id": "3b",
+        "text": "As the spaceship rises, its acceleration increases. Explain why this happens.",
+        "marks": 2,
+        "answer": "Mass/weight decreases as fuel is used.",
+        "markingScheme": "• Acceleration increases (1)\n• Weight/mass decreases (as fuel is used) OR Gravitational field strength decreases (1).",
+        "topicTag": "Newton's Laws"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Cosmology",
+    "subtopic": "Cosmology",
+    "question": "A student makes the following statement: 'When a massive star reaches the end of its life, it may explode as a supernova. This is an event of great importance for the future of the universe.' Using your knowledge of physics, comment on the student's statement.",
+    "parts": [
+      {
+        "id": "4",
+        "text": "Using your knowledge of physics, comment on the student's statement.",
+        "marks": 3,
+        "answer": "",
+        "markingScheme": "• 3 marks: demonstrate good understanding (statement of principles, application to problem).\n• 2 marks: reasonable understanding.\n• 1 mark: limited understanding.",
+        "featureTag": "open-ended",
+        "topicTag": "Cosmology"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Space Exploration",
+    "subtopic": "Space Exploration",
+    "question": "The star Rigel is 860 light-years from Earth.",
+    "parts": [
+      {
+        "id": "5ai",
+        "text": "Calculate the distance, in metres, from Rigel to Earth.",
+        "marks": 3,
+        "answer": "$8.1 \\times 10^{18}\\text{ m}$",
+        "markingScheme": "• $d = vt$ (1)\n• $d = 3.0 \\times 10^8 \\times (860 \\times 365.25 \\times 24 \\times 60 \\times 60)$ (1)\n• $d = 8.1 \\times 10^{18}\\text{ m}$ (1)",
+        "topicTag": "Space Exploration"
+      },
+      {
+        "id": "5b",
+        "text": "Rigel could have already exploded as a supernova. Explain why this might be the case.",
+        "marks": 1,
+        "answer": "Light takes 860 years to reach Earth.",
+        "markingScheme": "• Light/EM radiation will take 860 years to reach Earth OR has not reached Earth yet.",
+        "topicTag": "Space Exploration"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Current, voltage and resistance",
+    "subtopic": "Current, voltage and resistance",
+    "question": "A student investigates the resistance of two different resistors, $X$ and $Y$. [Diagram: Two circuits, each with a 6.0 V battery and a resistor.] Resistor $X$ has a resistance of $150\\text{ }\\Omega$. Resistor $Y$ has a resistance of $220\\text{ }\\Omega$.",
+    "parts": [
+      {
+        "id": "6a",
+        "text": "The student connects each resistor in turn to a 6.0 V d.c. supply. State which resistor has the greater current passing through it. You must justify your answer.",
+        "marks": 2,
+        "answer": "Resistor X",
+        "markingScheme": "• Resistor X (1)\n• Lower resistance therefore greater current (1).",
+        "topicTag": "Current, voltage and resistance"
+      },
+      {
+        "id": "6b",
+        "text": "The student then connects the two resistors in parallel to the 6.0 V d.c. supply. Calculate the total resistance of the circuit.",
+        "marks": 3,
+        "answer": "$89\\text{ }\\Omega$",
+        "markingScheme": "• $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$ (1)\n• $\\frac{1}{R_p} = \\frac{1}{150} + \\frac{1}{220}$ (1)\n• $R_p = 89\\text{ }\\Omega$ (1)",
+        "topicTag": "Current, voltage and resistance"
+      }
+    ]
+  }
+]
