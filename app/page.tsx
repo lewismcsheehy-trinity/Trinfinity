@@ -57,6 +57,7 @@ import {
   Upload,
   BookMarked,
   RefreshCw,
+  Keyboard,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -6175,7 +6176,7 @@ function Quiz({
             {q.question}
           </div>
 
-          {appMode === "mc" && q.type === "mc" ? (
+          {(appMode === "mc" || appMode === "practice") && q.type === "mc" ? (
             <div className="grid gap-4">
               {q.options.map((opt, idx) => {
                 const isSelected = userSelections[currentQuestionIdx] === idx
@@ -6382,7 +6383,7 @@ function Results({
   onHome: () => void
 }) {
   const stats = useMemo(() => {
-    if (appMode === "mc") {
+    if (appMode === "mc" || appMode === "practice") {
       const hasMCQuestions = currentQuestions.some((q) => q.type === "mc")
       if (hasMCQuestions) {
         const correct = currentQuestions.reduce(
@@ -6515,6 +6516,116 @@ function Results({
   )
 }
 
+const CHAR_CATEGORIES: Record<string, string[]> = {
+  Greek: ["α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν", "ξ", "π", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "Γ", "Δ", "Θ", "Λ", "Ξ", "Π", "Σ", "Φ", "Ψ", "Ω"],
+  Math: ["×", "÷", "±", "≈", "≠", "≤", "≥", "√", "∞", "∝", "∴", "∵", "²", "³", "⁻¹", "⁻²", "°", "½", "¼", "¾", "∫", "∂", "∇", "∑", "∏", "∈", "∉", "⊂", "∪", "∩"],
+  Units: ["m", "kg", "s", "A", "K", "mol", "cd", "N", "J", "W", "Pa", "Hz", "C", "V", "Ω", "F", "H", "T", "Wb", "Bq", "Gy", "Sv", "lm", "lx", "rad"],
+  Prefixes: ["T", "G", "M", "k", "h", "d", "c", "m", "μ", "n", "p", "f", "a"],
+}
+
+function CharacterKeyboard({ isDarkMode, onClose }: { isDarkMode: boolean; onClose: () => void }) {
+  const [activeCategory, setActiveCategory] = useState<string>("Greek")
+  const [copiedChar, setCopiedChar] = useState<string | null>(null)
+
+  const insertCharacter = (char: string) => {
+    const el = document.activeElement as HTMLInputElement | HTMLTextAreaElement
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+      const start = el.selectionStart ?? el.value.length
+      const end = el.selectionEnd ?? el.value.length
+      const newValue = el.value.substring(0, start) + char + el.value.substring(end)
+      const nativeValueSetter =
+        Object.getOwnPropertyDescriptor(
+          el.tagName === "TEXTAREA" ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
+          "value"
+        )?.set
+      if (nativeValueSetter) {
+        nativeValueSetter.call(el, newValue)
+      } else {
+        el.value = newValue
+      }
+      el.dispatchEvent(new Event("input", { bubbles: true }))
+      el.focus()
+      requestAnimationFrame(() => {
+        el.selectionStart = start + char.length
+        el.selectionEnd = start + char.length
+      })
+    } else {
+      navigator.clipboard.writeText(char).then(() => {
+        setCopiedChar(char)
+        setTimeout(() => setCopiedChar(null), 1500)
+      }).catch(() => {
+        setCopiedChar("!")
+        setTimeout(() => setCopiedChar(null), 1500)
+      })
+    }
+  }
+
+  return (
+    <div
+      className={`w-72 rounded-3xl shadow-2xl border-2 overflow-hidden animate-in fade-in slide-in-from-bottom-4 ${
+        isDarkMode ? "bg-slate-800 border-slate-600" : "bg-white border-slate-200"
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-[#800000] text-white">
+        <div className="flex items-center gap-2">
+          <Keyboard className="w-4 h-4" />
+          <span className="text-xs font-black uppercase tracking-widest">Character Keyboard</span>
+        </div>
+        <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20 transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Category tabs */}
+      <div className={`flex border-b ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+        {Object.keys(CHAR_CATEGORIES).map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${
+              activeCategory === cat
+                ? "bg-[#800000] text-white"
+                : isDarkMode
+                  ? "text-slate-400 hover:text-white hover:bg-slate-700"
+                  : "text-slate-500 hover:text-[#800000] hover:bg-slate-50"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Characters grid */}
+      <div className="p-3 grid grid-cols-6 gap-1 max-h-48 overflow-y-auto">
+        {CHAR_CATEGORIES[activeCategory].map((char) => (
+          <button
+            key={char}
+            onClick={() => insertCharacter(char)}
+            title={char}
+            className={`h-10 rounded-xl text-base font-bold transition-all hover:scale-110 active:scale-95 ${
+              isDarkMode
+                ? "bg-slate-700 hover:bg-amber-500 hover:text-white text-slate-200"
+                : "bg-slate-100 hover:bg-[#800000] hover:text-white text-slate-700"
+            }`}
+          >
+            {char}
+          </button>
+        ))}
+      </div>
+
+      <p className={`px-4 pb-3 text-[10px] text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+        {copiedChar && copiedChar !== "!"
+          ? <span className="text-emerald-600 font-bold">"{copiedChar}" copied to clipboard!</span>
+          : copiedChar === "!"
+            ? <span className="text-red-500 font-bold">Could not copy to clipboard</span>
+            : "Click to insert at cursor; copies to clipboard if no field is focused"
+        }
+      </p>
+    </div>
+  )
+}
+
 function FloatingMenu({
   isDarkMode,
   toggleDarkMode,
@@ -6529,12 +6640,17 @@ function FloatingMenu({
   currentUser: UserAccount | null
 }) {
 const [isOpen, setIsOpen] = useState(false)
+  const [showKeyboard, setShowKeyboard] = useState(false)
   const showSyllabus = view === "mode" || view === "setup"
   const showProgress = view !== "landing"
   const isTeacher = currentUser?.accountType === "teacher"
+  const isQuiz = view === "quiz"
   
   return (
   <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
+  {showKeyboard && (
+    <CharacterKeyboard isDarkMode={isDarkMode} onClose={() => setShowKeyboard(false)} />
+  )}
   {isOpen && (
   <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
   {showProgress && (
@@ -6577,6 +6693,24 @@ const [isOpen, setIsOpen] = useState(false)
                 <BookMarked className="w-5 h-5 text-emerald-600" />
               </div>
               <span className="text-sm font-black uppercase tracking-widest">Question Banks</span>
+            </button>
+          )}
+          {isQuiz && (
+            <button
+              onClick={() => {
+                setShowKeyboard((prev) => !prev)
+                setIsOpen(false)
+              }}
+              className={`bg-white dark:bg-slate-800 shadow-xl border-2 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all ${
+                showKeyboard ? "border-amber-500" : "border-violet-500"
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${showKeyboard ? "bg-amber-100 dark:bg-amber-900/30" : "bg-violet-100 dark:bg-violet-900/30"}`}>
+                <Keyboard className={`w-5 h-5 ${showKeyboard ? "text-amber-600" : "text-violet-600"}`} />
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">
+                {showKeyboard ? "Hide Keyboard" : "Char Keyboard"}
+              </span>
             </button>
           )}
           <button
@@ -7630,7 +7764,7 @@ export default function App() {
 
       // Demo Fallback
       setCurrentQuestions(
-        appMode === "mc"
+        appMode === "mc" || appMode === "practice"
           ? [
               {
                 type: "mc",
