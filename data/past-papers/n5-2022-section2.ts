@@ -27,7 +27,7 @@ export const questions: RawPaperQuestion[] = [
   {
     type: "paper",
     topic: "Dynamics",
-    subtopic: "Velocity-Time Graphs",
+    subtopic: "Velocity-time graphs",
     question:
       "The graph represents the motion of a bus travelling along a straight, level road between two stops. [Diagram: Velocity-time graph showing constant acceleration from 0 to 10 m/s in 20s (A to B), constant velocity of 10 m/s for 40s (B to C), and constant deceleration to rest in 20s (C to D).]",
     parts: [
@@ -38,7 +38,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "(Constant/uniform) acceleration",
         markingScheme:
           "\u2022 (Constant/uniform) acceleration (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
       {
         id: "1aii",
@@ -47,7 +47,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Constant/steady/uniform velocity (or speed)",
         markingScheme:
           "\u2022 Constant/steady/uniform velocity/speed (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
       {
         id: "1b",
@@ -56,7 +56,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$-0.50\\text{ m s}^{-2}$ (or magnitude $0.50\\text{ m s}^{-2}$)",
         markingScheme:
           "\u2022 $a = \\frac{v-u}{t}$ (1)\n\u2022 $a = \\frac{0 - 10}{80 - 60}$ (1)\n\u2022 $a = -0.50\\text{ m s}^{-2}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Acceleration",
       },
       {
         id: "1c",
@@ -65,14 +65,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$600\\text{ m}$",
         markingScheme:
           "\u2022 $d = \\text{area under graph}$ (1)\n\u2022 $d = (0.5 \\times 20 \\times 10) + (40 \\times 10) + (0.5 \\times 20 \\times 10)$ (1)\n\u2022 $d = 600\\text{ m}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
     ],
   },
   {
     type: "paper",
     topic: "Dynamics",
-    subtopic: "Vectors and Newton's Laws",
+    subtopic: "Newton's Laws",
     question:
       "The triathlon is an endurance race consisting of three stages: swimming, cycling, and running. (a) The first stage is a 1.5 km open-water swim. At one point, the unbalanced forward force is 25 N at bearing 090. A current exerts a force of 12 N at bearing 180.",
     parts: [
@@ -83,7 +83,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$27.7\\text{ N}$ (accept 28)",
         markingScheme:
           "\u2022 $F = \\sqrt{25^2 + 12^2}$ (1)\n\u2022 $F = 27.7\\text{ N}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "2aiB",
@@ -92,7 +92,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$116$ (or $26^\\circ$ South of East)",
         markingScheme:
           "\u2022 $\\tan\\theta = \\frac{12}{25}$ (1)\n\u2022 Bearing $= 116$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "2aii",
@@ -101,7 +101,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0.37\\text{ m s}^{-2}$",
         markingScheme:
           "\u2022 $F = ma$ (1)\n\u2022 $27.7 = 75 \\times a$ (1)\n\u2022 $a = 0.37\\text{ m s}^{-2}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "2b",
@@ -110,7 +110,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Use aerodynamic helmet/clothing, lubricate chain, etc.",
         markingScheme:
           "\u2022 Any valid suggestion like: tri-bars, aero helmet, tight clothing, lubricant. (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "2ci",
@@ -119,7 +119,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$4.4\\text{ m s}^{-1}$",
         markingScheme:
           "\u2022 $v = \\frac{d}{t}$ (1)\n\u2022 $v = \\frac{10000}{2280}$ (1)\n\u2022 $v = 4.4\\text{ m s}^{-1}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "2cii",
@@ -128,14 +128,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0\\text{ m s}^{-1}$",
         markingScheme:
           "\u2022 $0$ (because displacement is zero). (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
     ],
   },
   {
     type: "paper",
     topic: "Dynamics",
-    subtopic: "Energy and Work",
+    subtopic: "Newton's Laws",
     question:
       "A skateboarder and board (mass 65 kg) slide along a 2.0 m horizontal rail. Speed decreases from 7.0 m/s to 3.0 m/s.",
     parts: [
@@ -146,7 +146,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1300\\text{ J}$",
         markingScheme:
           "\u2022 $E_k = \\frac{1}{2}mv^2$ (1)\n\u2022 $\\Delta E_k = (0.5 \\times 65 \\times 7^2) - (0.5 \\times 65 \\times 3^2)$ (2)\n\u2022 $\\Delta E_k = 1300\\text{ J}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "3aii",
@@ -155,7 +155,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$650\\text{ N}$",
         markingScheme:
           "\u2022 $E_w = Fd$ (1)\n\u2022 $1300 = F \\times 2.0$ (1)\n\u2022 $F = 650\\text{ N}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "3b",
@@ -164,14 +164,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Curved path (parabola).",
         markingScheme:
           "\u2022 Curved path starting horizontally. (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
     ],
   },
   {
     type: "paper",
     topic: "Space",
-    subtopic: "Gravity and Weight",
+    subtopic: "Newton's Laws",
     question:
       "NASA plans a mission to the Moon, placing a spacecraft in orbit at 140 km altitude.",
     parts: [
@@ -182,7 +182,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$94\\text{ N}$",
         markingScheme:
           "\u2022 $g = 1.4\\text{ N kg}^{-1}$ (from graph) (1)\n\u2022 $W = mg = 67 \\times 1.4$ (1)\n\u2022 $W = 94\\text{ N}$ (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
       {
         id: "4b",
@@ -191,7 +191,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Temperature extremes / no atmosphere / radiation.",
         markingScheme:
           "\u2022 Any valid physics challenge like vacuum, cosmic rays, or extreme temp. (1)",
-        topicTag: "Space",
+        topicTag: "Space Exploration",
       },
       {
         id: "4c",
@@ -200,7 +200,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Acceleration increases.",
         markingScheme:
           "\u2022 Acceleration increases (1)\n\u2022 Mass decreases (fuel used) (1)\n\u2022 Weight/gravity decreases (increasing altitude) (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
     ],
   },
@@ -218,7 +218,8 @@ export const questions: RawPaperQuestion[] = [
         answer: "Open response.",
         markingScheme:
           "\u2022 Credit for breadth/depth: Sun is centre of Solar System, not Universe; Universe is expanding; stars are moving. (Max 3)",
-        topicTag: "Space",
+        featureTag: "open-ended",
+        topicTag: "Cosmology",
       },
     ],
   },
@@ -236,7 +237,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "No atmosphere to distort/absorb light.",
         markingScheme:
           "\u2022 No atmospheric distortion / no light pollution / can detect IR/UV blocked by atmosphere. (1)",
-        topicTag: "Space",
+        topicTag: "Space Exploration",
       },
       {
         id: "6bi",
@@ -245,7 +246,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "A planet outside our Solar System.",
         markingScheme:
           "\u2022 A planet orbiting another star (outside our Solar System). (1)",
-        topicTag: "Space",
+        topicTag: "Space Exploration",
       },
       {
         id: "6bii",
@@ -254,7 +255,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$3.9 \\times 10^{17}\\text{ m}$",
         markingScheme:
           "\u2022 $d = vt$ (1)\n\u2022 $d = 3 \\times 10^8 \\times (41 \\times 365.25 \\times 24 \\times 3600)$ (1)\n\u2022 $d = 3.9 \\times 10^{17}\\text{ m}$ (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "6c",
@@ -263,14 +264,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Hydrogen, Helium, and Mercury.",
         markingScheme:
           "\u2022 Hydrogen, Helium, and Mercury. (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "Electronics and Power",
+    subtopic: "Current, voltage and resistance",
     question:
       "A wireless phone charger connected to a d.c. supply.",
     parts: [
@@ -281,7 +282,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Electrons flow in one direction only.",
         markingScheme:
           "\u2022 Electrons flow in one direction only. (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "7b",
@@ -290,7 +291,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$13500\\text{ C}$",
         markingScheme:
           "\u2022 $Q = It$ (1)\n\u2022 $Q = 2.5 \\times (1.5 \\times 3600)$ (1)\n\u2022 $Q = 13500\\text{ C}$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "7c",
@@ -299,7 +300,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Temp up, resistance down, transistor turns on.",
         markingScheme:
           "\u2022 Temp up $\\rightarrow$ thermistor resistance down (1)\n\u2022 Voltage across thermistor/transistor input increases (1)\n\u2022 Transistor switches on (above 0.7 V) (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "7d",
@@ -308,14 +309,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$156\\text{ }\\Omega$",
         markingScheme:
           "\u2022 $V_R = 5.0 - 2.2 = 2.8\\text{ V}$ (1)\n\u2022 $R = \\frac{V}{I}$ (1)\n\u2022 $R = \\frac{2.8}{0.018}$ (1)\n\u2022 $R = 156\\text{ }\\Omega$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "V-I Relationships",
+    subtopic: "Current, voltage and resistance",
     question:
       "A student investigates the current-voltage relationship for a lamp.",
     parts: [
@@ -326,7 +327,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Best-fit curve.",
         markingScheme:
           "\u2022 Scaled axes with labels/units (1)\n\u2022 Points plotted correctly (1)\n\u2022 Best-fit curve (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "8aii",
@@ -335,7 +336,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$6.6\\text{ V}$ (approx)",
         markingScheme:
           "\u2022 Correct reading from candidate's graph. (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "8aiii",
@@ -344,7 +345,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Adjusting the variable resistor.",
         markingScheme:
           "\u2022 By adjusting/changing the resistance of the variable resistor. (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
@@ -362,7 +363,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$28800\\text{ J}$",
         markingScheme:
           "\u2022 $E = Pt$ (1)\n\u2022 $E = 48 \\times 600$ (1)\n\u2022 $E = 28800\\text{ J}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "9b",
@@ -371,7 +372,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$600\\text{ J kg}^{-1\\text{ }\\circ}\\text{C}^{-1}$",
         markingScheme:
           "\u2022 $c = \\frac{E}{m\\Delta T}$ (1)\n\u2022 $c = \\frac{28800}{2.0 \\times 24}$ (1)\n\u2022 $c = 600\\text{ J kg}^{-1\\text{ }\\circ}\\text{C}^{-1}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "9c",
@@ -380,14 +381,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Insulate the block.",
         markingScheme:
           "\u2022 Insulate the block / oil in thermometer hole. (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
     ],
   },
   {
     type: "paper",
     topic: "Properties of Matter",
-    subtopic: "Gas Laws",
+    subtopic: "Pressure, Kinetic Theory and Gas Laws",
     question:
       "Pressure of a gas at 20\u00b0C is 120 kPa. Volume is constant.",
     parts: [
@@ -398,7 +399,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Directly proportional.",
         markingScheme:
           "\u2022 Pressure is directly proportional to temperature in Kelvin. (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "10b",
@@ -407,7 +408,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$136\\text{ kPa}$",
         markingScheme:
           "\u2022 $\\frac{P_1}{T_1} = \\frac{P_2}{T_2}$ (1)\n\u2022 $\\frac{120}{293} = \\frac{P_2}{333}$ (1)\n\u2022 $P_2 = 136\\text{ kPa}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "10c",
@@ -416,14 +417,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Particles move faster, hit walls harder/more often.",
         markingScheme:
           "\u2022 Particles gain kinetic energy/move faster (1)\n\u2022 Particles hit walls more frequently/harder (1)\n\u2022 Total force on walls increases (so pressure up) (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Refraction",
+    subtopic: "Refraction of light",
     question:
       "Light ray enters a glass block from air.",
     parts: [
@@ -434,7 +435,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1.53$",
         markingScheme:
           "\u2022 $n = \\frac{\\sin i}{\\sin r}$ (1)\n\u2022 $n = \\frac{\\sin 50}{\\sin 30}$ (1)\n\u2022 $n = 1.53$ (1)",
-        topicTag: "Waves",
+        topicTag: "Refraction of light",
       },
       {
         id: "11b",
@@ -443,7 +444,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Speed down, wavelength down, frequency same.",
         markingScheme:
           "\u2022 Speed decreases (1), wavelength decreases (1), frequency same (1).",
-        topicTag: "Waves",
+        topicTag: "Refraction of light",
       },
     ],
   },
@@ -461,7 +462,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Gamma rays.",
         markingScheme:
           "\u2022 Gamma rays. (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
       {
         id: "12b",
@@ -470,14 +471,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Detecting broken bones.",
         markingScheme:
           "\u2022 Detecting broken bones / dental scans / CT scans. (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Dosimetry",
+    subtopic: "Nuclear Radiation",
     question:
       "A worker is exposed to alpha and beta radiation.",
     parts: [
@@ -488,7 +489,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Measure of biological effect.",
         markingScheme:
           "\u2022 Measure of the biological effect/harm of radiation. (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "13b",
@@ -497,14 +498,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Calculated total.",
         markingScheme:
           "\u2022 $H = Dw_r$ for each (2)\n\u2022 $H_{total} = H_1 + H_2$ (1)\n\u2022 Final answer with unit (Sv) (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Nuclear Fission",
+    subtopic: "Nuclear Radiation",
     question:
       "Nuclear power generation using Uranium-235.",
     parts: [
@@ -515,7 +516,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Neutrons hit nuclei, release more neutrons.",
         markingScheme:
           "\u2022 One fission releases neutrons (1)\n\u2022 These go on to cause further fissions (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "14b",
@@ -524,7 +525,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "High temperature / containment.",
         markingScheme:
           "\u2022 Challenge like: plasma containment / high temperature requirement. (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },

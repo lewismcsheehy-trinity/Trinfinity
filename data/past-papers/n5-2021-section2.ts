@@ -27,7 +27,7 @@ export const questions: RawPaperQuestion[] = [
   {
     type: "paper",
     topic: "Dynamics",
-    subtopic: "Vectors and Velocity",
+    subtopic: "Vectors and Scalars",
     question:
       "An aeroplane flies from Aberdeen to Glasgow. The aeroplane flies 140 km due south (180) from Aberdeen, then 130 km due west (270) to Glasgow.",
     parts: [
@@ -38,7 +38,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "191 km",
         markingScheme:
           "\u2022 $s^2 = 140^2 + 130^2$ (1)\n\u2022 $s = 191\\text{ km}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "1aii",
@@ -47,7 +47,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "223 (or 43\u00b0 South of West / 47\u00b0 West of South)",
         markingScheme:
           "\u2022 $\\tan \\theta = \\frac{130}{140}$ (1)\n\u2022 Bearing = 223 (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "1bi",
@@ -56,7 +56,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "540 km/h (or $150\\text{ m s}^{-1}$)",
         markingScheme:
           "\u2022 $v = \\frac{d}{t}$ (1)\n\u2022 $v = \\frac{270}{0.50}$ (1)\n\u2022 $v = 540\\text{ km h}^{-1}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "1bii",
@@ -65,14 +65,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "382 km/h at bearing 043",
         markingScheme:
           "\u2022 Magnitude: $382\\text{ km h}^{-1}$ (1)\n\u2022 Direction: 043 (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
     ],
   },
   {
     type: "paper",
     topic: "Dynamics",
-    subtopic: "Experimental Skills",
+    subtopic: "Projectile Motion",
     question:
       "A student investigating factors that affect the horizontal range of a marble.",
     parts: [
@@ -83,7 +83,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Best-fit line/curve based on data points.",
         markingScheme:
           "\u2022 Axes labeled with units (1)\n\u2022 Points plotted accurately (1)\n\u2022 Best-fit line or smooth curve (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
       {
         id: "2aii",
@@ -92,7 +92,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "0.57 m (\u00b1 0.01 m based on graph)",
         markingScheme:
           "\u2022 Correct value from candidate's graph. (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
       {
         id: "2aiii",
@@ -101,7 +101,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Use sand / damp paper / carbon paper.",
         markingScheme:
           "\u2022 Use of a medium to mark the landing spot (e.g., sand). (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
       {
         id: "2bi",
@@ -110,7 +110,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Mass of marble / surface of ramp / angle of ramp.",
         markingScheme:
           "\u2022 Any valid variable identified. (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
       {
         id: "2bii",
@@ -119,14 +119,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Vary identified variable, keep others constant, measure range.",
         markingScheme:
           "\u2022 Statement to change variable and measure range (1)\n\u2022 Statement to keep release height (or other variables) constant (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
     ],
   },
   {
     type: "paper",
     topic: "Space",
-    subtopic: "Newton's Laws and Weight",
+    subtopic: "Newton's Laws",
     question:
       "A spaceship on Mars (mass $1.3 \\times 10^6\\text{ kg}$) produce a constant upward thrust of $1.2 \\times 10^7\\text{ N}$.",
     parts: [
@@ -137,7 +137,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$4.8 \\times 10^6\\text{ N}$",
         markingScheme:
           "\u2022 $W = mg$ (1)\n\u2022 $W = 1.3 \\times 10^6 \\times 3.7$ (1)\n\u2022 $W = 4.8 \\times 10^6\\text{ N}$ (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
       {
         id: "3aii",
@@ -146,7 +146,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Thrust (up) and Weight (down).",
         markingScheme:
           "\u2022 Thrust/engine force arrow up (1)\n\u2022 Weight/gravity arrow down (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
       {
         id: "3aiii",
@@ -155,7 +155,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$5.5\\text{ m s}^{-2}$",
         markingScheme:
           "\u2022 $F_{un} = \\text{Thrust} - \\text{Weight}$ (1)\n\u2022 $F_{un} = 1.2 \\times 10^7 - 4.81 \\times 10^6 = 7.19 \\times 10^6\\text{ N}$ (1)\n\u2022 $a = \\frac{F}{m}$ (1)\n\u2022 $a = 5.5\\text{ m s}^{-2}$ (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
       {
         id: "3b",
@@ -164,14 +164,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Acceleration increases.",
         markingScheme:
           "\u2022 Acceleration increases (1)\n\u2022 Fuel is used up (mass decreases) OR weight decreases (value of g decreases) (1)",
-        topicTag: "Space",
+        topicTag: "Newton's Laws",
       },
     ],
   },
   {
     type: "paper",
     topic: "Space",
-    subtopic: "Exploration",
+    subtopic: "Space Exploration",
     question:
       "Using your knowledge of physics, comment on the similarities and/or differences between space exploration and underwater exploration.",
     parts: [
@@ -182,14 +182,15 @@ export const questions: RawPaperQuestion[] = [
         answer: "Open response.",
         markingScheme:
           "\u2022 Award for breadth/depth: e.g., pressure differences (vacuum vs high pressure), communication challenges, life support systems. (Max 3)",
-        topicTag: "Space",
+        featureTag: "open-ended",
+        topicTag: "Space Exploration",
       },
     ],
   },
   {
     type: "paper",
     topic: "Space",
-    subtopic: "Cosmology and Light Years",
+    subtopic: "Cosmology",
     question:
       "Rigel is a blue supergiant 860 light-years from Earth.",
     parts: [
@@ -200,7 +201,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$8.1 \\times 10^{18}\\text{ m}$",
         markingScheme:
           "\u2022 $d = vt$ (1)\n\u2022 $d = 3 \\times 10^8 \\times (860 \\times 365.25 \\times 24 \\times 3600)$ (1)\n\u2022 $d = 8.1 \\times 10^{18}\\text{ m}$ (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "5aii",
@@ -209,7 +210,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1.5 \\times 10^7\\text{ m s}^{-1}$",
         markingScheme:
           "\u2022 $0.05 \\times 3 \\times 10^8 = 1.5 \\times 10^7\\text{ m s}^{-1}$ (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "5aiii",
@@ -218,7 +219,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$5.4 \\times 10^{11}\\text{ s}$ (approx 17,200 years)",
         markingScheme:
           "\u2022 $t = \\frac{d}{v}$ (1)\n\u2022 $t = \\frac{8.1 \\times 10^{18}}{1.5 \\times 10^7}$ (1)\n\u2022 $t = 5.4 \\times 10^{11}\\text{ s}$ (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "5b",
@@ -227,7 +228,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Light takes 860 years to reach Earth.",
         markingScheme:
           "\u2022 Light takes time (860 years) to travel from Rigel to Earth. (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "5ci",
@@ -236,7 +237,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Line (absorption) spectrum.",
         markingScheme:
           "\u2022 Absorption / Line (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
       {
         id: "5cii",
@@ -245,14 +246,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Each element has a unique pattern of lines.",
         markingScheme:
           "\u2022 Every element has its own unique/characteristic pattern of lines. (1)",
-        topicTag: "Space",
+        topicTag: "Cosmology",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "Ohm's Law",
+    subtopic: "Current, voltage and resistance",
     question:
       "A student investigates the resistance of a motor.",
     parts: [
@@ -263,7 +264,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Series circuit with motor, ammeter, and variable resistor; Voltmeter in parallel with motor.",
         markingScheme:
           "\u2022 Ammeter, variable resistor and motor in series (1)\n\u2022 Voltmeter in parallel with motor (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "6b",
@@ -272,14 +273,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$30\\text{ }\\Omega$",
         markingScheme:
           "\u2022 $R = \\frac{V}{I}$ (1)\n\u2022 $R = \\frac{4.5}{0.15}$ (1)\n\u2022 $R = 30\\text{ }\\Omega$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "Electronics and Transistors",
+    subtopic: "Current, voltage and resistance",
     question:
       "A greenhouse moisture sensor circuit using an NPN transistor.",
     parts: [
@@ -290,7 +291,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Off",
         markingScheme:
           "\u2022 Off (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "7b",
@@ -299,7 +300,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Resistance up, voltage up, transistor on.",
         markingScheme:
           "\u2022 Resistance of moisture sensor increases (when dry) (1)\n\u2022 Voltage across sensor/X increases (1)\n\u2022 Transistor switches on (above 0.7 V) (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "7c",
@@ -308,7 +309,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "MOSFET symbol.",
         markingScheme:
           "\u2022 Correct symbol for n-channel enhancement MOSFET. (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
@@ -326,7 +327,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$142,000\\text{ J}$",
         markingScheme:
           "\u2022 $E_h = mc\\Delta T$ (1)\n\u2022 $E_h = 0.40 \\times 4180 \\times (100 - 15)$ (1)\n\u2022 $E_h = 142,120\\text{ J}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "8b",
@@ -335,14 +336,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "0.22 kg",
         markingScheme:
           "\u2022 $E_h = ml_v$ (1)\n\u2022 $5.0 \\times 10^5 = m \\times 22.6 \\times 10^5$ (1)\n\u2022 $m = 0.22\\text{ kg}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Latent Heat",
       },
     ],
   },
   {
     type: "paper",
     topic: "Properties of Matter",
-    subtopic: "Pressure and Gas Laws",
+    subtopic: "Pressure, Kinetic Theory and Gas Laws",
     question:
       "A student uses a pump to inflate a bicycle tyre.",
     parts: [
@@ -353,7 +354,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$2.0 \\times 10^5\\text{ Pa}$",
         markingScheme:
           "\u2022 $P = \\frac{F}{A}$ (1)\n\u2022 $P = \\frac{110}{5.4 \\times 10^{-4}}$ (1)\n\u2022 $P = 2.04 \\times 10^5\\text{ Pa}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "9b",
@@ -362,7 +363,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$2.5 \\times 10^5\\text{ Pa}$",
         markingScheme:
           "\u2022 $P_1V_1 = P_2V_2$ (1)\n\u2022 $1.0 \\times 10^5 \\times 4.0 \\times 10^{-4} = P_2 \\times 1.6 \\times 10^{-4}$ (1)\n\u2022 $P_2 = 2.5 \\times 10^5\\text{ Pa}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "9c",
@@ -371,14 +372,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Pressure increases further.",
         markingScheme:
           "\u2022 Pressure increases (1)\n\u2022 Particles hit walls harder / with more kinetic energy / more frequently (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Diffraction",
+    subtopic: "Wave properties",
     question:
       "A ripple tank shows water waves meeting a gap in a barrier.",
     parts: [
@@ -389,7 +390,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Diffraction",
         markingScheme:
           "\u2022 Diffraction (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
       {
         id: "10b",
@@ -398,14 +399,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Less diffraction (less spreading).",
         markingScheme:
           "\u2022 Less spreading / less curved / less diffraction. (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Refraction",
+    subtopic: "Refraction of light",
     question:
       "Light passing through a glass block.",
     parts: [
@@ -416,7 +417,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "1.52",
         markingScheme:
           "\u2022 $n = \\frac{\\sin i}{\\sin r}$ (1)\n\u2022 $n = \\frac{\\sin 40}{\\sin 25}$ (1)\n\u2022 $n = 1.52$ (1)",
-        topicTag: "Waves",
+        topicTag: "Refraction of light",
       },
       {
         id: "11aii",
@@ -425,14 +426,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Path refracted more (closer to normal).",
         markingScheme:
           "\u2022 Ray refracted more (towards normal) than red light. (1)",
-        topicTag: "Waves",
+        topicTag: "Refraction of light",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Infrared Radiation",
+    subtopic: "EM Spectrum",
     question:
       "An investigation into the effect of surface color on infrared radiation.",
     parts: [
@@ -443,7 +444,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Matt black",
         markingScheme:
           "\u2022 Matt black (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
       {
         id: "12aii",
@@ -452,14 +453,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "2.4 mV (\u00b1 0.1 mV)",
         markingScheme:
           "\u2022 Correct reading from graph. (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Detectors and Half-life",
+    subtopic: "Nuclear Radiation",
     question:
       "A smoke detector uses Americium-241, an alpha emitter.",
     parts: [
@@ -470,7 +471,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Alpha is easily absorbed by smoke; high ionisation.",
         markingScheme:
           "\u2022 Alpha is absorbed by air/smoke (1)\n\u2022 Alpha is highly ionising (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "13bi",
@@ -479,7 +480,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Source Z (longest half-life).",
         markingScheme:
           "\u2022 Z (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "13bii",
@@ -488,7 +489,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Activity drops too fast.",
         markingScheme:
           "\u2022 Half-life is too short (1)\n\u2022 Detector would need replacing / stop working quickly (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "13c",
@@ -497,14 +498,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$7.2 \\times 10^{-4}\\text{ Gy}$",
         markingScheme:
           "\u2022 $D = \\frac{E}{m}$ (1)\n\u2022 $D = \\frac{8.64 \\times 10^{-4}}{1.2}$ (1)\n\u2022 $D = 7.2 \\times 10^{-4}\\text{ Gy}$ (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Nuclear Fission",
+    subtopic: "Nuclear Radiation",
     question:
       "Nuclear power generation.",
     parts: [
@@ -515,7 +516,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "A large nucleus splitting into smaller nuclei.",
         markingScheme:
           "\u2022 A large nucleus splitting into two (or more) smaller nuclei. (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "14b",
@@ -524,7 +525,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1.9 \\times 10^{19}$",
         markingScheme:
           "\u2022 Number = $\\frac{\\text{Total Energy}}{\\text{Energy per fission}}$ (1)\n\u2022 $n = \\frac{600 \\times 10^6}{3.2 \\times 10^{-11}}$ (1)\n\u2022 $n = 1.875 \\times 10^{19}$ (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },

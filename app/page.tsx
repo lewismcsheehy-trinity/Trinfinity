@@ -5168,19 +5168,7 @@ function SetupView({
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const subtopics = QA_SUBTOPICS[selectedLevel] || []
   const isPracticeOrMC = appMode === "mc" || appMode === "practice"
-  const isPastPaper = questionSource !== "ai"
-
-  // Compute unique subtopics from the selected past paper
-  const pastPaperSubtopics = isPastPaper
-    ? Array.from(
-        new Set(
-          (availablePastPapers.find((p) => p.id === questionSource)?.questions ?? []).map(
-            (q) => q.subtopic
-          )
-        )
-      )
-    : []
-  const topicsToShow = isPastPaper ? pastPaperSubtopics : subtopics
+  const topicsToShow = subtopics
 
   // Auto-select topics from coverage for retrieval mode
   useEffect(() => {
@@ -5222,105 +5210,6 @@ function SetupView({
 
       <div className="grid lg:grid-cols-3 gap-8 pb-32">
         <div className="lg:col-span-2 space-y-8">
-          {appMode === "mc" && availablePastPapers.length > 0 && (
-            <section
-              className={`p-8 rounded-3xl shadow-sm border ${
-                isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-              }`}
-            >
-              <h3 className="text-lg font-black mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-500" />
-                Question Source
-              </h3>
-              <div className="space-y-3">
-                <label
-                  className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors border ${
-                    questionSource === "ai"
-                      ? "border-[#800000] bg-red-50 dark:bg-red-950/20"
-                      : isDarkMode
-                        ? "border-slate-700 bg-slate-900 hover:border-slate-600"
-                        : "border-slate-100 bg-slate-50 hover:border-slate-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="questionSource"
-                    value="ai"
-                    checked={questionSource === "ai"}
-                    onChange={() => setQuestionSource("ai")}
-                    className="accent-[#800000]"
-                  />
-                  <div>
-                    <p className="font-black text-sm text-slate-800 dark:text-white">AI Generated</p>
-                    <p className="text-xs text-slate-500">Fresh questions created by AI for your selected topics</p>
-                  </div>
-                </label>
-                {availablePastPapers.map((paper) => (
-                  <label
-                    key={paper.id}
-                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors border ${
-                      questionSource === paper.id
-                        ? "border-[#800000] bg-red-50 dark:bg-red-950/20"
-                        : isDarkMode
-                          ? "border-slate-700 bg-slate-900 hover:border-slate-600"
-                          : "border-slate-100 bg-slate-50 hover:border-slate-200"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="questionSource"
-                      value={paper.id}
-                      checked={questionSource === paper.id}
-                      onChange={() => setQuestionSource(paper.id)}
-                      className="accent-[#800000]"
-                    />
-                    <div>
-                      <p className="font-black text-sm text-slate-800 dark:text-white">{paper.label}</p>
-                      <p className="text-xs text-slate-500">{paper.source}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </section>
-          )}
-          {appMode === "paper" && availablePastPapers.length > 1 && (
-            <section
-              className={`p-8 rounded-3xl shadow-sm border ${
-                isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-              }`}
-            >
-              <h3 className="text-lg font-black mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-500" />
-                Past Paper
-              </h3>
-              <div className="space-y-3">
-                {availablePastPapers.map((paper) => (
-                  <label
-                    key={paper.id}
-                    className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-colors border ${
-                      questionSource === paper.id
-                        ? "border-[#800000] bg-red-50 dark:bg-red-950/20"
-                        : isDarkMode
-                          ? "border-slate-700 bg-slate-900 hover:border-slate-600"
-                          : "border-slate-100 bg-slate-50 hover:border-slate-200"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="questionSource"
-                      value={paper.id}
-                      checked={questionSource === paper.id}
-                      onChange={() => { setQuestionSource(paper.id) }}
-                      className="accent-[#800000]"
-                    />
-                    <div>
-                      <p className="font-black text-sm text-slate-800 dark:text-white">{paper.label}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </section>
-          )}
           {appMode !== "retrieval" && appMode !== "practice" && (
             <section
               className={`p-8 rounded-3xl shadow-sm border ${
@@ -5338,11 +5227,6 @@ function SetupView({
                   </span>
                 )}
               </h3>
-              {isPastPaper && (
-                <p className="text-xs text-slate-500 mb-4">
-                  Select topics from this past paper to include in your assessment.
-                </p>
-              )}
               <div className="flex flex-wrap gap-2">
                 {topicsToShow.map((topic) => {
                   const isSelected = selectedTopics.includes(topic)
@@ -5415,74 +5299,6 @@ function SetupView({
               </div>
             </section>
           )}
-          {isPastPaper && (appMode === "mc" || appMode === "paper") && (
-            <section className={`p-8 rounded-3xl shadow-sm border ${
-              isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-            }`}>
-              <h3 className="text-lg font-black mb-2 flex items-center gap-2">
-                <Settings2 className="w-5 h-5 text-slate-400" />
-                Assessment Options
-              </h3>
-              <div className="space-y-4 mt-4">
-                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
-                  isDarkMode
-                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
-                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
-                }`}>
-                  <div>
-                    <p className="font-black text-slate-800 dark:text-white">Mixed Questions</p>
-                    <p className="text-xs text-slate-500">
-                      Include parts from other topics covered in your syllabus
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={includeMultiTopic}
-                    onChange={(e) => setIncludeMultiTopic(e.target.checked)}
-                    className="w-6 h-6 rounded-lg accent-[#800000]"
-                  />
-                </label>
-                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
-                  isDarkMode
-                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
-                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
-                }`}>
-                  <div>
-                    <p className="font-black text-slate-800 dark:text-white">A-Level Challenge</p>
-                    <p className="text-xs text-slate-500">
-                      Include parts tagged as A-level challenge questions
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={includeALevel}
-                    onChange={(e) => setIncludeALevel(e.target.checked)}
-                    className="w-6 h-6 rounded-lg accent-[#800000]"
-                  />
-                </label>
-                <label className={`group flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-colors border border-transparent ${
-                  isDarkMode
-                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
-                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
-                }`}>
-                  <div>
-                    <p className="font-black text-slate-800 dark:text-white">Open Ended</p>
-                    <p className="text-xs text-slate-500">
-                      Include open-ended &ldquo;using your knowledge&rdquo; questions
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={includeOpenEnded}
-                    onChange={(e) => setIncludeOpenEnded(e.target.checked)}
-                    className="w-6 h-6 rounded-lg accent-[#800000]"
-                  />
-                </label>
-              </div>
-            </section>
-          )}
-
-          {!isPastPaper && (
           <section
             className={`p-8 rounded-3xl shadow-sm border ${
               isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -5572,7 +5388,6 @@ function SetupView({
               </label>
             </div>
           </section>
-          )}
 
           <section
             className={`p-8 rounded-3xl shadow-sm border ${
@@ -5720,10 +5535,10 @@ function SetupView({
 
       <div className="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-50">
         <button
-          disabled={selectedTopics.length === 0 && !(isPastPaper && includeMultiTopic)}
+          disabled={selectedTopics.length === 0}
           onClick={() => onGenerate(selectedTopics.join(","))}
           className={`pointer-events-auto px-12 py-5 rounded-full font-black text-xl shadow-2xl transition-all flex items-center gap-3 border-4 ${
-            selectedTopics.length > 0 || (isPastPaper && includeMultiTopic)
+            selectedTopics.length > 0
               ? "bg-[#800000] text-white border-amber-500 hover:scale-105 active:scale-95"
               : "bg-slate-200 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50"
           }`}
@@ -7625,12 +7440,7 @@ export default function App() {
 
   const handleModeSelect = (mode: AppMode) => {
     setAppMode(mode)
-    const papers = PAST_PAPER_BANKS[selectedLevel] || []
-    if (mode === "paper" && papers.length > 0) {
-      setQuestionSource(papers[0].id)
-    } else {
-      setQuestionSource("ai")
-    }
+    setQuestionSource("ai")
     if (mode === "mc" || mode === "practice") {
       setIncludeALevel(false)
       setIncludeOpenEnded(false)
@@ -7698,11 +7508,11 @@ export default function App() {
   }
 
   const generateQuestions = async (topicString: string) => {
-    // Load from past paper bank if a past paper source is selected
-    if (questionSource !== "ai") {
+    // Load from all past paper banks when in paper mode
+    if (appMode === "paper") {
       const banks = PAST_PAPER_BANKS[selectedLevel] || []
-      const bank = banks.find((b) => b.id === questionSource)
-      if (bank) {
+      const allPaperQuestions = banks.flatMap(bank => bank.questions)
+      if (allPaperQuestions.length > 0) {
         const selectedTopicsList = topicString.split(",").filter(Boolean)
         const topicsSet = new Set(selectedTopicsList)
         const hasCoverage = Object.values(userCoverage).some(Boolean)
@@ -7755,7 +7565,7 @@ export default function App() {
           return pq.parts.some((p) => p.topicTag && topicsSet.has(p.topicTag))
         }
 
-        const filteredQuestions: Question[] = bank.questions
+        const filteredQuestions: Question[] = allPaperQuestions
           .filter((q) => {
             if (q.type !== "paper") return false
             return isQuestionCandidate(q as PaperQuestion)

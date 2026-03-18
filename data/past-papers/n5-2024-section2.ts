@@ -38,7 +38,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Constant acceleration (or uniform acceleration)",
         markingScheme:
           "\u2022 Constant acceleration (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
       {
         id: "aii",
@@ -47,7 +47,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Constant velocity (or uniform velocity)",
         markingScheme:
           "\u2022 Constant velocity (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
       {
         id: "b",
@@ -56,7 +56,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$-0.45\\text{ m s}^{-2}$",
         markingScheme:
           "\u2022 $a = \\frac{v-u}{t}$ (1)\n\u2022 $a = \\frac{0 - 9.0}{20}$ (1)\n\u2022 $a = -0.45\\text{ m s}^{-2}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Acceleration",
       },
       {
         id: "c",
@@ -65,7 +65,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$540\\text{ m}$",
         markingScheme:
           "\u2022 area under graph (1)\n\u2022 $d = (\\frac{1}{2} \\times 20 \\times 9) + (40 \\times 9) + (\\frac{1}{2} \\times 20 \\times 9)$ (1)\n\u2022 $d = 540\\text{ m}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Velocity-time graphs",
       },
     ],
   },
@@ -83,7 +83,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$27.7\\text{ N}$",
         markingScheme:
           "\u2022 $R^2 = 25^2 + 12^2$ (1)\n\u2022 $R = 27.7\\text{ N}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "aiB",
@@ -92,7 +92,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Bearing 116 (or $26^\\circ$ South of East)",
         markingScheme:
           "\u2022 $\\tan\\theta = \\frac{12}{25}$ (1)\n\u2022 direction = bearing 116 (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "aii",
@@ -101,7 +101,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0.37\\text{ m s}^{-2}$",
         markingScheme:
           "\u2022 $F = ma$ (1)\n\u2022 $27.7 = 75 \\times a$ (1)\n\u2022 $a = 0.37\\text{ m s}^{-2}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "b",
@@ -110,7 +110,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Streamlined position / streamlined helmet / thinner tyres / lubricate chain.",
         markingScheme:
           "\u2022 Any valid suggestion related to reducing friction (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "ci",
@@ -119,7 +119,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$4.4\\text{ m s}^{-1}$",
         markingScheme:
           "\u2022 $v = \\frac{d}{t}$ (1)\n\u2022 $v = \\frac{10000}{2280}$ (1)\n\u2022 $v = 4.4\\text{ m s}^{-1}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
       {
         id: "cii",
@@ -128,14 +128,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0\\text{ m s}^{-1}$",
         markingScheme:
           "\u2022 $0\\text{ m s}^{-1}$ (because displacement is zero) (1)",
-        topicTag: "Dynamics",
+        topicTag: "Vectors and Scalars",
       },
     ],
   },
   {
     type: "paper",
     topic: "Properties of Matter",
-    subtopic: "Kinetic Energy and Work",
+    subtopic: "Newton's Laws",
     question:
       "A skateboarder and board have a combined mass of 65 kg. They slide along a 2.0 m horizontal rail.",
     parts: [
@@ -146,7 +146,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1300\\text{ J}$",
         markingScheme:
           "\u2022 $E_k = \\frac{1}{2}mv^2$ (1)\n\u2022 $\\Delta E_k = (\\frac{1}{2} \\times 65 \\times 7^2) - (\\frac{1}{2} \\times 65 \\times 3^2)$ (2)\n\u2022 $\\Delta E_k = 1300\\text{ J}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Newton's Laws",
       },
       {
         id: "aii",
@@ -155,7 +155,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$650\\text{ N}$",
         markingScheme:
           "\u2022 $E_w = Fd$ (1)\n\u2022 $1300 = F \\times 2.0$ (1)\n\u2022 $F = 650\\text{ N}$ (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
       {
         id: "b",
@@ -164,14 +164,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Curved path downwards (projectile motion).",
         markingScheme:
           "\u2022 Curved path from end of rail to ground (1)",
-        topicTag: "Dynamics",
+        topicTag: "Projectile Motion",
       },
     ],
   },
   {
     type: "paper",
     topic: "Space Exploration",
-    subtopic: "Weight and Gravity",
+    subtopic: "Newton's Laws",
     question:
       "NASA is planning a crewed mission to the Moon.",
     parts: [
@@ -182,7 +182,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$93.8\\text{ N}$",
         markingScheme:
           "\u2022 $W = mg$ (1)\n\u2022 $W = 67 \\times 1.4$ (1)\n\u2022 $W = 93.8\\text{ N}$ (1)",
-        topicTag: "Space Exploration",
+        topicTag: "Newton's Laws",
       },
       {
         id: "b",
@@ -200,7 +200,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Acceleration increases.",
         markingScheme:
           "\u2022 Acceleration increases (1)\n\u2022 Mass decreases as fuel is used (1)\n\u2022 $a = F/m$ so as $m$ decreases, $a$ increases (1)",
-        topicTag: "Dynamics",
+        topicTag: "Newton's Laws",
       },
     ],
   },
@@ -219,7 +219,7 @@ export const questions: RawPaperQuestion[] = [
         markingScheme:
           "Marks based on breadth and depth of physics knowledge (e.g., Sun orbits Galaxy, stars are not fixed, expansion of universe). (3)",
         featureTag: "open-ended",
-        topicTag: "Space Exploration",
+        topicTag: "Cosmology",
       },
     ],
   },
@@ -255,7 +255,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$3.88 \\times 10^{17}\\text{ m}$",
         markingScheme:
           "\u2022 $d = vt$ (1)\n\u2022 $d = 3 \\times 10^8 \\times (41 \\times 365.25 \\times 24 \\times 3600)$ (1)\n\u2022 $d = 3.88 \\times 10^{17}\\text{ m}$ (1)",
-        topicTag: "Space Exploration",
+        topicTag: "Cosmology",
       },
       {
         id: "c",
@@ -264,14 +264,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Hydrogen and Helium",
         markingScheme:
           "\u2022 Hydrogen and Helium (1)",
-        topicTag: "Space Exploration",
+        topicTag: "Cosmology",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "Current and Charge",
+    subtopic: "Current, voltage and resistance",
     question:
       "A wireless charger uses radio waves to charge the battery of a mobile phone.",
     parts: [
@@ -282,7 +282,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Electrons flow in only one direction.",
         markingScheme:
           "\u2022 Flow of electrons in one direction only (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "b",
@@ -291,7 +291,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$13500\\text{ C}$",
         markingScheme:
           "\u2022 $Q = It$ (1)\n\u2022 $Q = 2.5 \\times (1.5 \\times 3600)$ (1)\n\u2022 $Q = 13500\\text{ C}$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "c",
@@ -300,7 +300,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "",
         markingScheme:
           "\u2022 Temperature increases, thermistor resistance decreases (1)\n\u2022 Voltage across thermistor decreases / voltage across variable resistor increases (1)\n\u2022 Transistor switches on, activating fan (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "d",
@@ -309,14 +309,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$156\\text{ }\\Omega$",
         markingScheme:
           "\u2022 $V_R = 5.0 - 2.2 = 2.8\\text{ V}$ (1)\n\u2022 $V = IR$ (1)\n\u2022 $2.8 = 0.018 \\times R$ (1)\n\u2022 $R = 156\\text{ }\\Omega$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
     topic: "Electricity",
-    subtopic: "Ohm's Law",
+    subtopic: "Current, voltage and resistance",
     question:
       "A student investigates the relationship between current and voltage for a lamp.",
     parts: [
@@ -327,7 +327,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "",
         markingScheme:
           "\u2022 Axes labeled and scaled (1), points plotted (1), curve of best fit (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "aii",
@@ -336,7 +336,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Consistent with graph (approx 6.6 V).",
         markingScheme:
           "\u2022 Value from graph (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "aiii",
@@ -345,7 +345,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Adjusted the variable resistor.",
         markingScheme:
           "\u2022 Adjusting variable resistor (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
       {
         id: "b",
@@ -354,14 +354,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Straight line through the origin.",
         markingScheme:
           "\u2022 Straight line through origin (1)",
-        topicTag: "Electricity",
+        topicTag: "Current, voltage and resistance",
       },
     ],
   },
   {
     type: "paper",
     topic: "Properties of Matter",
-    subtopic: "Specific Heat and Latent Heat",
+    subtopic: "Specific Heat Capacity",
     question:
       "A microwave oven is used to heat 0.020 kg of water to sterilise a baby bottle.",
     parts: [
@@ -372,7 +372,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$7836\\text{ J}$",
         markingScheme:
           "\u2022 $E_h = cm\\Delta T$ (1)\n\u2022 $E_h = 4180 \\times 0.020 \\times (100 - 6.3)$ (1)\n\u2022 $E_h = 7836\\text{ J}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
       {
         id: "aii",
@@ -381,7 +381,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$31640\\text{ J}$",
         markingScheme:
           "\u2022 $E_h = mL_v$ (1)\n\u2022 $E_h = 0.014 \\times 2.26 \\times 10^6$ (1)\n\u2022 $E_h = 31640\\text{ J}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Latent Heat",
       },
       {
         id: "aiii",
@@ -390,7 +390,8 @@ export const questions: RawPaperQuestion[] = [
         answer: "$39476\\text{ J}$",
         markingScheme:
           "\u2022 Sum of energy from (ai) and (aii) (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Latent Heat",
+        dependsOn: ["ai", "aii"],
       },
       {
         id: "bi",
@@ -399,7 +400,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$135000\\text{ J}$",
         markingScheme:
           "\u2022 $E = Pt$ (1)\n\u2022 $E = 750 \\times 180$ (1)\n\u2022 $E = 135000\\text{ J}$ (1)",
-        topicTag: "Electricity",
+        topicTag: "Electrical Power",
       },
       {
         id: "bii",
@@ -408,14 +409,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Energy is lost to the surroundings / heating the bottle.",
         markingScheme:
           "\u2022 Heat lost to surroundings (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Specific Heat Capacity",
       },
     ],
   },
   {
     type: "paper",
     topic: "Properties of Matter",
-    subtopic: "Gas Laws",
+    subtopic: "Pressure, Kinetic Theory and Gas Laws",
     question:
       "A cyclist inflates bike tyres.",
     parts: [
@@ -426,7 +427,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$639\\text{ kPa}$",
         markingScheme:
           "\u2022 $P_1/T_1 = P_2/T_2$ (1)\n\u2022 $655/294 = P_2/287$ (1)\n\u2022 $P_2 = 639\\text{ kPa}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "aii",
@@ -435,7 +436,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "",
         markingScheme:
           "\u2022 Speed/kinetic energy of particles decreases (1)\n\u2022 Particles hit walls less frequently / with less force (1)\n\u2022 Total force on walls decreases (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
       {
         id: "b",
@@ -444,14 +445,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$78\\text{ kg}$",
         markingScheme:
           "\u2022 $F = PA$ (1)\n\u2022 $F = 1.02 \\times 10^6 \\times 7.5 \\times 10^{-4} = 765\\text{ N}$ (1)\n\u2022 $m = W/g = 765/9.8$ (1)\n\u2022 $m = 78\\text{ kg}$ (1)",
-        topicTag: "Properties of Matter",
+        topicTag: "Pressure, Kinetic Theory and Gas Laws",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Wave Properties",
+    subtopic: "Wave properties",
     question:
       "A wave energy converter anchored to the seabed.",
     parts: [
@@ -462,7 +463,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Oscillations are at right angles to the direction of energy transfer.",
         markingScheme:
           "\u2022 Vibration at right angles to energy direction (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
       {
         id: "bi",
@@ -471,7 +472,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0.14\\text{ Hz}$",
         markingScheme:
           "\u2022 $f = 1/T$ (1)\n\u2022 $f = 1/7.4$ (1)\n\u2022 $f = 0.14\\text{ Hz}$ (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
       {
         id: "bii",
@@ -480,14 +481,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "Measure time for multiple waves and divide.",
         markingScheme:
           "\u2022 Measure many waves and average (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
     ],
   },
   {
     type: "paper",
     topic: "Waves",
-    subtopic: "Diffraction",
+    subtopic: "Wave properties",
     question:
       "Water waves approaching a gap in a harbour wall. [Diagram: Waves entering a gap.]",
     parts: [
@@ -498,7 +499,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Diffraction",
         markingScheme:
           "\u2022 Diffraction (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
       {
         id: "b",
@@ -507,7 +508,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "More diffraction (greater spreading).",
         markingScheme:
           "\u2022 More diffraction / greater spreading (1)",
-        topicTag: "Waves",
+        topicTag: "Wave properties",
       },
     ],
   },
@@ -525,7 +526,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Detecting broken bones / dental scans.",
         markingScheme:
           "\u2022 Any valid medical use (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
       {
         id: "aii",
@@ -534,7 +535,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$1.2 \\times 10^{-9}\\text{ m}$",
         markingScheme:
           "\u2022 $v = f\\lambda$ (1)\n\u2022 $3 \\times 10^8 = 2.5 \\times 10^{17} \\times \\lambda$ (1)\n\u2022 $\\lambda = 1.2 \\times 10^{-9}\\text{ m}$ (1)",
-        topicTag: "Waves",
+        topicTag: "EM Spectrum",
       },
       {
         id: "b",
@@ -544,14 +545,14 @@ export const questions: RawPaperQuestion[] = [
         markingScheme:
           "Open-ended; credit for identifying misconceptions (energy conversion vs electron conversion). (3)",
         featureTag: "open-ended",
-        topicTag: "Electricity",
+        topicTag: "EM Spectrum",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Dosimetry",
+    subtopic: "Nuclear Radiation",
     question:
       "A worker in a nuclear power station is exposed to radiation.",
     parts: [
@@ -562,7 +563,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "$10\\text{ mSv}$",
         markingScheme:
           "\u2022 $H = D w_r$ (1)\n\u2022 $H = 0.50 \\times 20$ (1)\n\u2022 $H = 10\\text{ mSv}$ (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "b",
@@ -571,14 +572,14 @@ export const questions: RawPaperQuestion[] = [
         answer: "$0.04\\text{ J}$",
         markingScheme:
           "\u2022 $D = E/m$ (1)\n\u2022 $0.50 \\times 10^{-3} = E/80$ (1)\n\u2022 $E = 0.04\\text{ J}$ (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
   {
     type: "paper",
     topic: "Radiation",
-    subtopic: "Fission and Fusion",
+    subtopic: "Nuclear Radiation",
     question:
       "Nuclear reactors use fission to generate electricity.",
     parts: [
@@ -589,7 +590,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "A large nucleus splitting into smaller nuclei, releasing energy and neutrons.",
         markingScheme:
           "\u2022 Splitting of a large nucleus (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
       {
         id: "b",
@@ -598,7 +599,7 @@ export const questions: RawPaperQuestion[] = [
         answer: "Neutrons released in one fission hit other nuclei, causing more fission.",
         markingScheme:
           "\u2022 Neutrons cause further fission (1) \u2022 Chain reaction continues (1)",
-        topicTag: "Radiation",
+        topicTag: "Nuclear Radiation",
       },
     ],
   },
