@@ -1,0 +1,406 @@
+[
+  {
+    "type": "paper",
+    "topic": "Vectors and Scalars",
+    "subtopic": "Vectors and Scalars",
+    "question": "A student is on a walk. The student travels 1.8 km North and then 3.5 km East. [Diagram: A map showing a path starting at X, going North, then turning East to point Y.]",
+    "parts": [
+      {
+        "id": "ai",
+        "text": "By scale diagram or otherwise, determine the magnitude of the displacement from point X to point Y.",
+        "marks": 2,
+        "answer": "$3.9\\text{ km}$",
+        "markingScheme": "• $s^2 = 1.8^2 + 3.5^2$ (1)\n• $s = 3.9\\text{ km}$ (1)",
+        "topicTag": "Vectors and Scalars"
+      },
+      {
+        "id": "aii",
+        "text": "By scale diagram or otherwise, determine the direction of the displacement from point X to point Y.",
+        "marks": 2,
+        "answer": "$063$ (or bearing $063$)",
+        "markingScheme": "• $\\tan\\theta = \\frac{3.5}{1.8}$ (1)\n• $\\theta = 63^\\circ$ (1)",
+        "topicTag": "Vectors and Scalars"
+      },
+      {
+        "id": "b",
+        "text": "The student takes 1 hour and 15 minutes to walk from point X to point Y. Calculate the average velocity of the student in $\\text{km h}^{-1}$.",
+        "marks": 3,
+        "answer": "$3.1\\text{ km h}^{-1}$ at $063$",
+        "markingScheme": "• $v = \\frac{s}{t}$ (1)\n• $v = \\frac{3.9}{1.25}$ (1)\n• $v = 3.1\\text{ km h}^{-1}$ at $063$ (1)",
+        "dependsOn": [
+          "ai",
+          "aii"
+        ],
+        "topicTag": "Vectors and Scalars"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Velocity-time graphs",
+    "subtopic": "Velocity-time graphs",
+    "question": "An athlete is training for a race. The graph shows how the velocity of the athlete varies with time. [Diagram: A $v-t$ graph showing a constant acceleration from 0 to $8.0\\text{ m s}^{-1}$ in 2.0 s, then constant velocity for 4.0 s, then constant deceleration to 0 in 3.0 s.]",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Using the graph, determine the time at which the athlete reached a velocity of $8.0\\text{ m s}^{-1}$.",
+        "marks": 1,
+        "answer": "$2.0\\text{ s}$",
+        "markingScheme": "• $2.0\\text{ s}$ (1)",
+        "topicTag": "Velocity-time graphs"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the acceleration of the athlete during the first 2.0 s of the run.",
+        "marks": 3,
+        "answer": "$4.0\\text{ m s}^{-2}$",
+        "markingScheme": "• $a = \\frac{v-u}{t}$ (1)\n• $a = \\frac{8.0 - 0}{2.0}$ (1)\n• $a = 4.0\\text{ m s}^{-2}$ (1)",
+        "topicTag": "Acceleration"
+      },
+      {
+        "id": "c",
+        "text": "Determine the total distance traveled by the athlete.",
+        "marks": 3,
+        "answer": "$52\\text{ m}$",
+        "markingScheme": "• distance = area under graph (1)\n• $d = (0.5 \\times 2.0 \\times 8.0) + (4.0 \\times 8.0) + (0.5 \\times 3.0 \\times 8.0)$ (1)\n• $d = 52\\text{ m}$ (1)",
+        "topicTag": "Velocity-time graphs"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Newton's Laws",
+    "subtopic": "Newton's Laws",
+    "question": "A small aircraft of mass 1400 kg is flying at a constant altitude. [Diagram: An aircraft in flight with arrows representing Lift, Weight, Thrust, and Drag.]",
+    "parts": [
+      {
+        "id": "a",
+        "text": "The aircraft is flying at a constant speed. State the relationship between the thrust and the drag.",
+        "marks": 1,
+        "answer": "They are equal (and opposite).",
+        "markingScheme": "• (Thrust and drag are) equal/balanced (1)",
+        "topicTag": "Newton's Laws"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the weight of the aircraft.",
+        "marks": 3,
+        "answer": "$13720\\text{ N}$",
+        "markingScheme": "• $W = mg$ (1)\n• $W = 1400 \\times 9.8$ (1)\n• $W = 13720\\text{ N}$ (1)",
+        "topicTag": "Newton's Laws"
+      },
+      {
+        "id": "c",
+        "text": "The pilot increases the thrust to $4200\\text{ N}$. The drag is $3600\\text{ N}$. Calculate the acceleration of the aircraft.",
+        "marks": 4,
+        "answer": "$0.43\\text{ m s}^{-2}$",
+        "markingScheme": "• $F = 4200 - 3600 = 600\\text{ N}$ (1)\n• $F = ma$ (1)\n• $600 = 1400 \\times a$ (1)\n• $a = 0.43\\text{ m s}^{-2}$ (1)",
+        "topicTag": "Newton's Laws"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Projectile Motion",
+    "subtopic": "Projectile Motion",
+    "question": "A ball is kicked from the ground with a horizontal velocity of $15\\text{ m s}^{-1}$. It lands 25 m away.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Calculate the time the ball is in the air.",
+        "marks": 3,
+        "answer": "$1.67\\text{ s}$",
+        "markingScheme": "• $d_h = v_h t$ (1)\n• $25 = 15 \\times t$ (1)\n• $t = 1.67\\text{ s}$ (1)",
+        "topicTag": "Projectile Motion"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the vertical velocity of the ball just before it hits the ground.",
+        "marks": 3,
+        "answer": "$16.4\\text{ m s}^{-1}$",
+        "markingScheme": "• $v_v = u_v + at$ (1)\n• $v_v = 0 + 9.8 \\times 1.67$ (1)\n• $v_v = 16.4\\text{ m s}^{-1}$ (1)",
+        "dependsOn": [
+          "a"
+        ],
+        "topicTag": "Projectile Motion"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Space Exploration",
+    "subtopic": "Space Exploration",
+    "question": "A space probe is sent to orbit Venus. [Diagram: A probe in orbit around a planet.]",
+    "parts": [
+      {
+        "id": "a",
+        "text": "The probe orbits at an altitude where the gravitational field strength is $8.1\\text{ N kg}^{-1}$. Calculate the weight of the 450 kg probe at this altitude.",
+        "marks": 3,
+        "answer": "$3645\\text{ N}$",
+        "markingScheme": "• $W = mg$ (1)\n• $W = 450 \\times 8.1$ (1)\n• $W = 3645\\text{ N}$ (1)",
+        "topicTag": "Space Exploration"
+      },
+      {
+        "id": "b",
+        "text": "Using your knowledge of physics, comment on the benefits of space exploration and the risks associated with it.",
+        "marks": 3,
+        "answer": "",
+        "markingScheme": "The candidate will gain credit for the breadth and/or depth of their conceptual understanding (marked out of 3).",
+        "featureTag": "open-ended",
+        "topicTag": "Space Exploration"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Cosmology",
+    "subtopic": "Cosmology",
+    "question": "The Big Bang Theory explains the origin of the universe.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "State two pieces of evidence that support the Big Bang Theory.",
+        "marks": 2,
+        "answer": "Redshift of galaxies and Cosmic Microwave Background Radiation (CMBR).",
+        "markingScheme": "• Redshift (1)\n• CMBR (1)",
+        "topicTag": "Cosmology"
+      },
+      {
+        "id": "b",
+        "text": "Determine the age of the universe according to the Big Bang Theory.",
+        "marks": 1,
+        "answer": "$13.8$ billion years",
+        "markingScheme": "• $13.8$ billion years (1)",
+        "topicTag": "Cosmology"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Specific Heat Capacity",
+    "subtopic": "Specific Heat Capacity",
+    "question": "A block of copper of mass 2.0 kg is heated from $20^\\circ\\text{C}$ to $80^\\circ\\text{C}$ using a 500 W heater.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Calculate the heat energy required to increase the temperature of the block.",
+        "marks": 3,
+        "answer": "$46320\\text{ J}$",
+        "markingScheme": "• $E_h = cm\\Delta T$ (1)\n• $E_h = 386 \\times 2.0 \\times 60$ (1)\n• $E_h = 46320\\text{ J}$ (1)",
+        "topicTag": "Specific Heat Capacity"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the minimum time the heater must be switched on to provide this energy.",
+        "marks": 3,
+        "answer": "$92.6\\text{ s}$",
+        "markingScheme": "• $P = \\frac{E}{t}$ (1)\n• $500 = \\frac{46320}{t}$ (1)\n• $t = 92.6\\text{ s}$ (1)",
+        "dependsOn": [
+          "a"
+        ],
+        "topicTag": "Electrical Power"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Pressure, Kinetic Theory and Gas Laws",
+    "subtopic": "Pressure, Kinetic Theory and Gas Laws",
+    "question": "A weather balloon contains $12\\text{ m}^3$ of helium gas at a pressure of $101\\text{ kPa}$ at ground level.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "As the balloon rises, the pressure of the helium decreases to $45\\text{ kPa}$. Calculate the new volume of the helium, assuming the temperature remains constant.",
+        "marks": 3,
+        "answer": "$26.9\\text{ m}^3$",
+        "markingScheme": "• $P_1 V_1 = P_2 V_2$ (1)\n• $101 \\times 12 = 45 \\times V_2$ (1)\n• $V_2 = 26.9\\text{ m}^3$ (1)",
+        "topicTag": "Pressure, Kinetic Theory and Gas Laws"
+      },
+      {
+        "id": "b",
+        "text": "Explain, using the kinetic model, why the pressure of the gas decreases as the volume increases at constant temperature.",
+        "marks": 3,
+        "answer": "",
+        "markingScheme": "• Volume increases so particles hit the walls less often (1)\n• Total force on the walls decreases (1)\n• $P = \\frac{F}{A}$ so pressure decreases (1)",
+        "topicTag": "Pressure, Kinetic Theory and Gas Laws"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Current, voltage and resistance",
+    "subtopic": "Current, voltage and resistance",
+    "question": "A student sets up the circuit shown to investigate the resistance of a resistor. [Diagram: A circuit with a battery, an ammeter, a resistor, and a voltmeter across the resistor.]",
+    "parts": [
+      {
+        "id": "a",
+        "text": "The reading on the ammeter is $0.40\\text{ A}$ and the reading on the voltmeter is $6.0\\text{ V}$. Calculate the resistance of the resistor.",
+        "marks": 3,
+        "answer": "$15\\text{ }\\Omega$",
+        "markingScheme": "• $V = IR$ (1)\n• $6.0 = 0.40 \\times R$ (1)\n• $R = 15\\text{ }\\Omega$ (1)",
+        "topicTag": "Current, voltage and resistance"
+      },
+      {
+        "id": "b",
+        "text": "The student adds another identical resistor in parallel with the first one. State what happens to the reading on the ammeter.",
+        "marks": 1,
+        "answer": "It increases.",
+        "markingScheme": "• (Current) increases (1)",
+        "topicTag": "Current, voltage and resistance"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Electrical Power",
+    "subtopic": "Electrical Power",
+    "question": "An electric kettle is rated at $2.2\\text{ kW}, 230\\text{ V}$.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Calculate the current in the kettle when it is operating at its rated power.",
+        "marks": 3,
+        "answer": "$9.6\\text{ A}$",
+        "markingScheme": "• $P = IV$ (1)\n• $2200 = I \\times 230$ (1)\n• $I = 9.6\\text{ A}$ (1)",
+        "topicTag": "Electrical Power"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the resistance of the heating element in the kettle.",
+        "marks": 3,
+        "answer": "$24\\text{ }\\Omega$",
+        "markingScheme": "• $V = IR$ (1)\n• $230 = 9.6 \\times R$ (1)\n• $R = 24\\text{ }\\Omega$ (1)",
+        "dependsOn": [
+          "a"
+        ],
+        "topicTag": "Electrical Power"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Nuclear Radiation",
+    "subtopic": "Nuclear Radiation",
+    "question": "A patient is treated with radiation. A mass of $0.50\\text{ kg}$ of tissue receives $4.0\\text{ mJ}$ of energy from alpha particles.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Calculate the absorbed dose received by the tissue.",
+        "marks": 3,
+        "answer": "$8.0\\text{ mGy}$",
+        "markingScheme": "• $D = \\frac{E}{m}$ (1)\n• $D = \\frac{4.0 \\times 10^{-3}}{0.50}$ (1)\n• $D = 8.0 \\times 10^{-3}\\text{ Gy}$ (1)",
+        "topicTag": "Nuclear Radiation"
+      },
+      {
+        "id": "b",
+        "text": "The radiation weighting factor for alpha particles is 20. Calculate the equivalent dose received by the tissue.",
+        "marks": 3,
+        "answer": "$160\\text{ mSv}$",
+        "markingScheme": "• $H = D w_r$ (1)\n• $H = 8.0 \\times 10^{-3} \\times 20$ (1)\n• $H = 160 \\times 10^{-3}\\text{ Sv}$ (1)",
+        "dependsOn": [
+          "a"
+        ],
+        "topicTag": "Nuclear Radiation"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Wave properties",
+    "subtopic": "Wave properties",
+    "question": "A sound wave travels through air at $340\\text{ m s}^{-1}$. The frequency of the wave is $250\\text{ Hz}$.",
+    "parts": [
+      {
+        "id": "a",
+        "text": "Calculate the wavelength of the sound wave.",
+        "marks": 3,
+        "answer": "$1.36\\text{ m}$",
+        "markingScheme": "• $v = f\\lambda$ (1)\n• $340 = 250 \\times \\lambda$ (1)\n• $\\lambda = 1.36\\text{ m}$ (1)",
+        "topicTag": "Wave properties"
+      },
+      {
+        "id": "b",
+        "text": "Sound waves are longitudinal. State what is meant by the term longitudinal wave.",
+        "marks": 1,
+        "answer": "The particles vibrate in the same direction as the wave travels.",
+        "markingScheme": "• Particles vibrate parallel to/in the same direction as the energy travel (1)",
+        "topicTag": "Wave properties"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Refraction of light",
+    "subtopic": "Refraction of light",
+    "question": "A ray of light enters a glass block as shown. [Diagram: A ray of light entering a glass block at an angle to the normal.]",
+    "parts": [
+      {
+        "id": "a",
+        "text": "State what happens to the speed of the light as it enters the glass block.",
+        "marks": 1,
+        "answer": "It decreases.",
+        "markingScheme": "• (Speed) decreases (1)",
+        "topicTag": "Refraction of light"
+      },
+      {
+        "id": "b",
+        "text": "Calculate the angle of refraction if the angle of incidence is $40^\\circ$ and the refractive index of glass is 1.50.",
+        "marks": 3,
+        "answer": "$25.4^\\circ$",
+        "markingScheme": "• $n = \\frac{\\sin i}{\\sin r}$ (1)\n• $1.50 = \\frac{\\sin 40}{\\sin r}$ (1)\n• $r = 25.4^\\circ$ (1)",
+        "topicTag": "Refraction of light"
+      }
+    ]
+  },
+  {
+    "type": "paper",
+    "topic": "Nuclear Radiation",
+    "subtopic": "Nuclear Radiation",
+    "question": "A radioactive source is used in a hospital. The graph shows the activity of the source over time. [Diagram: An activity vs time graph showing activity decreasing from $800\\text{ kBq}$ to $100\\text{ kBq}$ over 180 days.]",
+    "parts": [
+      {
+        "id": "ai",
+        "text": "State what is meant by the term background count rate.",
+        "marks": 1,
+        "answer": "The radiation that is present from natural or artificial sources all the time.",
+        "markingScheme": "• Radiation present from natural/artificial sources (1)",
+        "topicTag": "Nuclear Radiation"
+      },
+      {
+        "id": "aii",
+        "text": "Using the graph, determine the half-life of the source.",
+        "marks": 1,
+        "answer": "$60\\text{ days}$",
+        "markingScheme": "• $60\\text{ days}$ (1)",
+        "topicTag": "Nuclear Radiation"
+      },
+      {
+        "id": "aiii",
+        "text": "Determine the time it takes for the corrected count rate to reduce to one eighth of its initial value.",
+        "marks": 2,
+        "answer": "$180\\text{ days}$",
+        "markingScheme": "• 3 half-lives identified (1)\n• $3 \\times 60 = 180\\text{ days}$ (1)",
+        "dependsOn": [
+          "aii"
+        ],
+        "topicTag": "Nuclear Radiation"
+      },
+      {
+        "id": "aiv",
+        "text": "Determine the initial corrected count rate of the source at the time it was implanted.",
+        "marks": 1,
+        "answer": "$4000\\text{ counts per minute}$",
+        "markingScheme": "• $4000\\text{ cpm}$ (1)",
+        "topicTag": "Nuclear Radiation"
+      },
+      {
+        "id": "b",
+        "text": "State one other use of nuclear radiation.",
+        "marks": 1,
+        "answer": "Tracers / sterilization / smoke detectors.",
+        "markingScheme": "• Any valid use (1)",
+        "topicTag": "Nuclear Radiation"
+      }
+    ]
+  }
+]
