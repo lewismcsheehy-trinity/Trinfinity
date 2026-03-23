@@ -6,6 +6,7 @@ import * as n5_2022_s2 from "@/data/past-papers/n5-2022-section2"
 import * as n5_2023_s2 from "@/data/past-papers/n5-2023-section2"
 import * as n5_2024_s2 from "@/data/past-papers/n5-2024-section2"
 import * as n5_2025_s2 from "@/data/past-papers/n5-2025-section2"
+import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
 import {
   ChevronLeft,
   ChevronRight,
@@ -58,6 +59,7 @@ import {
   BookMarked,
   RefreshCw,
   Keyboard,
+  Target,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -144,6 +146,14 @@ const SUBJECTS: Subject[] = [
   { id: "Chemistry", label: "Chemistry", desc: "Bonding, Reactions, Analysis & more", dept: "Chemistry Dept" },
   { id: "Practical Electronics", label: "Practical Electronics", desc: "Circuits, Components & Electronics", dept: "Physics Dept" },
 ]
+
+// Exam dates for each subject (all exams at the same date regardless of level)
+const EXAM_DATES: Partial<Record<SubjectId, string>> = {
+  Physics: "2026-05-21",
+  Chemistry: "2026-05-12",
+  "Practical Electronics": "2026-05-07",
+  Biology: "2026-04-28",
+}
 
 interface MCQuestion {
   type: "mc"
@@ -850,6 +860,25 @@ function saveUserCalcProgress(userId: string, level: string, progress: CalcProgr
   try {
     if (typeof window === "undefined") return
     localStorage.setItem(`trinfinity_calc_progress_${userId}_${level}`, JSON.stringify(progress))
+  } catch {}
+}
+
+// 0 = not rated, 1 = needs work, 2 = getting there, 3 = confident, 4 = mastered
+type OutcomeRating = 0 | 1 | 2 | 3 | 4
+type OutcomeRatings = Record<string, OutcomeRating>
+
+function loadOutcomeRatings(userId: string, subject: string, level: string): OutcomeRatings {
+  try {
+    if (typeof window === "undefined") return {}
+    const raw = localStorage.getItem(`trinfinity_outcome_ratings_${userId}_${subject}_${level}`)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function saveOutcomeRatings(userId: string, subject: string, level: string, ratings: OutcomeRatings): void {
+  try {
+    if (typeof window === "undefined") return
+    localStorage.setItem(`trinfinity_outcome_ratings_${userId}_${subject}_${level}`, JSON.stringify(ratings))
   } catch {}
 }
 
@@ -4907,6 +4936,21 @@ function Navbar({
   onClassesClick: () => void
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [daysToExam, setDaysToExam] = useState<number | null>(null)
+
+  useEffect(() => {
+    const examDate = EXAM_DATES[selectedSubject]
+    if (!examDate) { setDaysToExam(null); return }
+    const compute = () => {
+      const now = new Date()
+      const exam = new Date(examDate + "T00:00:00")
+      const diffMs = exam.getTime() - now.getTime()
+      setDaysToExam(diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : null)
+    }
+    compute()
+    const id = setInterval(compute, 60_000)
+    return () => clearInterval(id)
+  }, [selectedSubject])
 
   return (
     <nav
@@ -4957,6 +5001,17 @@ function Navbar({
                             : appMode === "practice"
                               ? "Practice"
                               : "Paper Questions"}
+                </span>
+              </div>
+            </>
+          )}
+          {daysToExam !== null && (
+            <>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-[#800000]" />
+                <span className="text-sm font-bold text-[#800000]">
+                  {daysToExam}d to exam
                 </span>
               </div>
             </>
@@ -7640,6 +7695,8 @@ const [isOpen, setIsOpen] = useState(false)
   const showSyllabus = view === "mode" || view === "setup"
   const showProgress = view !== "landing"
   const isTeacher = currentUser?.accountType === "teacher"
+  const isPupil = !isTeacher
+  const showOutcomes = isPupil && view !== "landing" && view !== "subject-select"
   const isQuiz = view === "quiz"
   
   return (
@@ -7662,6 +7719,20 @@ const [isOpen, setIsOpen] = useState(false)
   </div>
   <span className="text-sm font-black uppercase tracking-widest">Progress</span>
   </button>
+  )}
+  {showOutcomes && (
+    <button
+      onClick={() => {
+        openModal("outcomes")
+        setIsOpen(false)
+      }}
+      className="bg-white dark:bg-slate-800 shadow-xl border-2 border-violet-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+    >
+      <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
+        <Target className="w-5 h-5 text-violet-600" />
+      </div>
+      <span className="text-sm font-black uppercase tracking-widest">Outcomes</span>
+    </button>
   )}
   {showSyllabus && (
             <button
@@ -7750,6 +7821,7 @@ function GenericModal({
   userCoverage,
   onToggleTopic,
   selectedLevel,
+  selectedSubject,
   isDarkMode,
   topicPerformance,
   currentUser,
@@ -7759,6 +7831,7 @@ function GenericModal({
   userCoverage: Record<string, boolean>
   onToggleTopic: (topic: string) => void
   selectedLevel: string
+  selectedSubject: SubjectId
   isDarkMode: boolean
   topicPerformance: Record<string, { correct: number; total: number }>
   currentUser: UserAccount | null
@@ -7771,6 +7844,17 @@ function GenericModal({
   const [sheetLevel, setSheetLevel] = useState<string>("National 5")
   const [sheetUploadStatus, setSheetUploadStatus] = useState<Record<string, "uploading" | "done" | "error" | undefined>>({})
   const [sheetRefresh, setSheetRefresh] = useState(0)
+  const [outcomeRatings, setOutcomeRatings] = useState<OutcomeRatings>(() =>
+    currentUser ? loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel) : {}
+  )
+  const [expandedOutcomeId, setExpandedOutcomeId] = useState<string | null>(null)
+
+  // Reload ratings when the modal opens or subject/level changes
+  useEffect(() => {
+    if (!currentUser) return
+    setOutcomeRatings(loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModal, currentUser?.id, selectedSubject, selectedLevel])
 
   if (!activeModal) return null
 
@@ -7913,7 +7997,9 @@ function GenericModal({
                   ? "Question Banks"
                   : activeModal === "assessment-sheets"
                     ? "Assessment Sheets"
-                    : activeModal}
+                    : activeModal === "outcomes"
+                      ? "My Outcomes"
+                      : activeModal}
             </h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
@@ -8788,6 +8874,215 @@ function GenericModal({
               </div>
             </div>
           )}
+
+          {/* ── Outcomes view (pupil only) ──────────────────────────────────── */}
+          {activeModal === "outcomes" && !isTeacher && (() => {
+            const outcomes: Outcome[] = SUBJECT_LEVEL_OUTCOMES[selectedSubject]?.[selectedLevel] ?? []
+            const ratingLabels: [string, string][] = [
+              ["", "Not rated"],
+              ["🔴", "Needs work"],
+              ["🟡", "Getting there"],
+              ["🟢", "Confident"],
+              ["⭐", "Mastered"],
+            ]
+
+            function setRating(outcomeId: string, rating: OutcomeRating) {
+              const updated = { ...outcomeRatings, [outcomeId]: rating }
+              setOutcomeRatings(updated)
+              if (currentUser) {
+                saveOutcomeRatings(currentUser.id, selectedSubject, selectedLevel, updated)
+              }
+            }
+
+            // Calculate outcome progress from topicPerformance (linked topics)
+            function outcomeProgress(outcome: Outcome): { correct: number; total: number } | null {
+              let correct = 0; let total = 0
+              outcome.linkedTopics.forEach((t) => {
+                const p = topicPerformance[t]
+                if (p && p.total > 0) { correct += p.correct; total += p.total }
+              })
+              return total > 0 ? { correct, total } : null
+            }
+
+            const rated = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) > 0).length
+            const mastered = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) === 4).length
+            const confident = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) === 3).length
+            const getting = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) === 2).length
+            const needsWork = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) === 1).length
+
+            if (outcomes.length === 0) {
+              return (
+                <div className="text-center py-12">
+                  <Target className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                  <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    No outcomes defined yet for {selectedSubject} — {selectedLevel}.
+                  </p>
+                </div>
+              )
+            }
+
+            return (
+              <div className="space-y-5">
+                {/* Summary row */}
+                <div className={`p-4 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"} grid grid-cols-4 gap-3 text-center`}>
+                  {[
+                    { label: "Needs Work", value: needsWork, color: "text-red-500" },
+                    { label: "Getting There", value: getting, color: "text-amber-500" },
+                    { label: "Confident", value: confident, color: "text-emerald-500" },
+                    { label: "Mastered", value: mastered, color: "text-violet-500" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label}>
+                      <p className={`text-2xl font-black ${color}`}>{value}</p>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  {selectedSubject} — {selectedLevel} ({rated}/{outcomes.length} rated)
+                </p>
+
+                <div className="space-y-3 max-h-[48vh] overflow-y-auto pr-1">
+                  {outcomes.map((outcome) => {
+                    const rating = (outcomeRatings[outcome.id] ?? 0) as OutcomeRating
+                    const prog = outcomeProgress(outcome)
+                    const pct = prog ? Math.round((prog.correct / prog.total) * 100) : null
+                    const isExpanded = expandedOutcomeId === outcome.id
+
+                    const ratingColors: string[] = [
+                      isDarkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200",
+                      "bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700",
+                      "bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700",
+                      "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700",
+                      "bg-violet-50 border-violet-300 dark:bg-violet-900/20 dark:border-violet-700",
+                    ]
+
+                    return (
+                      <div
+                        key={outcome.id}
+                        className={`rounded-2xl border-2 transition-all ${ratingColors[rating]}`}
+                      >
+                        {/* Outcome header row */}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                  isDarkMode ? "bg-slate-600 text-slate-300" : "bg-slate-200 text-slate-600"
+                                }`}>
+                                  {outcome.code}
+                                </span>
+                              </div>
+                              <p className="font-black text-sm leading-snug">{outcome.title}</p>
+                            </div>
+                            {/* Rating selector */}
+                            <div className="flex gap-1 flex-shrink-0">
+                              {ratingLabels.slice(1).map(([emoji, label], idx) => {
+                                const val = (idx + 1) as OutcomeRating
+                                return (
+                                  <button
+                                    key={val}
+                                    title={label}
+                                    onClick={() => setRating(outcome.id, rating === val ? 0 : val)}
+                                    className={`w-7 h-7 rounded-full text-base flex items-center justify-center transition-all hover:scale-110 ${
+                                      rating === val
+                                        ? "ring-2 ring-offset-1 ring-violet-400 scale-110"
+                                        : "opacity-40 hover:opacity-100"
+                                    }`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Progress bar (from topic performance) */}
+                          {pct !== null && (
+                            <div className="mt-2">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-[10px] font-bold uppercase ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                                  Practice Score
+                                </span>
+                                <span className={`text-xs font-black ${pct >= 70 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                                  {pct}% ({prog!.correct}/{prog!.total})
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Expand/collapse button */}
+                          <button
+                            onClick={() => setExpandedOutcomeId(isExpanded ? null : outcome.id)}
+                            className={`mt-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                              isDarkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"
+                            }`}
+                          >
+                            <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            {isExpanded ? "Hide detail" : "Show detail"}
+                          </button>
+                        </div>
+
+                        {/* Expanded detail */}
+                        {isExpanded && (
+                          <div className={`px-4 pb-4 border-t ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
+                            <p className={`text-xs leading-relaxed mt-3 mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                              {outcome.description}
+                            </p>
+                            <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                              Linked Topics
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {outcome.linkedTopics.map((t) => {
+                                const tp = topicPerformance[t]
+                                const tPct = tp && tp.total > 0 ? Math.round((tp.correct / tp.total) * 100) : null
+                                return (
+                                  <span
+                                    key={t}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                                      tPct !== null
+                                        ? tPct >= 70
+                                          ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-400"
+                                          : tPct >= 50
+                                            ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400"
+                                            : "bg-red-100 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400"
+                                        : isDarkMode
+                                          ? "bg-slate-700 border-slate-600 text-slate-300"
+                                          : "bg-slate-100 border-slate-300 text-slate-600"
+                                    }`}
+                                  >
+                                    {t}
+                                    {tPct !== null && <span className="font-black">{tPct}%</span>}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                            {!currentUser && (
+                              <p className={`mt-3 text-xs italic ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                                Sign in to save your outcome ratings across sessions.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {!currentUser && (
+                  <p className={`text-xs text-center italic ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                    Sign in to save your ratings across sessions.
+                  </p>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>
@@ -9252,6 +9547,7 @@ export default function App() {
         userCoverage={userCoverage}
         onToggleTopic={(t) => setUserCoverage((p) => ({ ...p, [t]: !p[t] }))}
         selectedLevel={selectedLevel}
+        selectedSubject={selectedSubject}
         isDarkMode={isDarkMode}
         topicPerformance={topicPerformance}
         currentUser={currentUser}
