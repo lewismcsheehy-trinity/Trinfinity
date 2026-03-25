@@ -60,6 +60,12 @@ import {
   RefreshCw,
   Keyboard,
   Target,
+  LayoutGrid,
+  Workflow,
+  GitFork,
+  FlaskConical,
+  Sigma,
+  PoundSterling,
 } from "lucide-react"
 
 // Trinity High School Maroon: #800000
@@ -127,9 +133,9 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | "exam-paper" | null
+type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper"
+type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool"
 
 type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
 
@@ -6064,18 +6070,89 @@ function ExamPaperMode({
   return null
 }
 
+// ─── ElectronicsToolMode ──────────────────────────────────────────────────────
+
+type ElectronicsToolAppMode = "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing"
+
+const ELECTRONICS_TOOL_MODES: { id: ElectronicsToolAppMode; icon: React.ElementType; title: string; desc: string }[] = [
+  { id: "stripboarding", icon: LayoutGrid, title: "Stripboarding", desc: "Plan and lay out stripboard circuits" },
+  { id: "block-diagrams", icon: Workflow, title: "Block Diagrams", desc: "System block diagram practice" },
+  { id: "logic-gates", icon: GitFork, title: "Logic Gates", desc: "Boolean logic and gate circuits" },
+  { id: "testing", icon: FlaskConical, title: "Testing", desc: "Circuit testing and fault finding" },
+  { id: "symbols", icon: Sigma, title: "Symbols", desc: "Electronic component symbols" },
+  { id: "costing", icon: PoundSterling, title: "Costing", desc: "Component costing and budgeting" },
+]
+
+function ElectronicsToolMode({
+  appMode,
+  onBack,
+  isDarkMode,
+}: {
+  appMode: AppMode
+  onBack: () => void
+  isDarkMode: boolean
+}) {
+  const info = ELECTRONICS_TOOL_MODES.find((m) => m.id === appMode) ?? null
+
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center animate-in fade-in slide-in-from-right-4">
+      <div className="max-w-2xl w-full">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 mx-auto font-bold uppercase text-xs tracking-widest"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back to Modes
+        </button>
+        {info && (
+          <div
+            className={`p-16 rounded-3xl border-2 ${
+              isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
+            }`}
+          >
+            <div
+              className={`inline-flex p-6 rounded-2xl mb-8 ${
+                isDarkMode ? "bg-slate-700 text-amber-500" : "bg-red-50 text-[#800000]"
+              }`}
+            >
+              <info.icon className="w-16 h-16" />
+            </div>
+            <h2 className="text-4xl font-black mb-4">{info.title}</h2>
+            <p className={`text-lg mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{info.desc}</p>
+            <div
+              className={`inline-block px-6 py-3 rounded-full text-sm font-black uppercase tracking-widest border-2 ${
+                isDarkMode
+                  ? "bg-amber-900/20 border-amber-700 text-amber-400"
+                  : "bg-amber-50 border-amber-300 text-amber-700"
+              }`}
+            >
+              Coming Soon
+            </div>
+            <p className={`mt-4 text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+              This section is under development and will be available shortly.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 function ModeSelection({
   onSelectMode,
   onBack,
   selectedLevel,
+  selectedSubject,
   isDarkMode,
 }: {
   onSelectMode: (mode: AppMode) => void
   onBack: () => void
   selectedLevel: string
+  selectedSubject: SubjectId
   isDarkMode: boolean
 }) {
-  const modes = [
+  const allModes = [
     { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing" },
     { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems" },
     { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice" },
@@ -6085,6 +6162,15 @@ function ModeSelection({
     { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice" },
     { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions" },
   ]
+
+  const electronicsModes = [
+    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing" },
+    { id: "exam-paper" as const, icon: Award, title: "Past Papers", desc: "Full past paper under timed conditions" },
+    { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving" },
+    ...ELECTRONICS_TOOL_MODES,
+  ]
+
+  const modes = selectedSubject === "Practical Electronics" ? electronicsModes : allModes
 
   return (
     <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center animate-in fade-in slide-in-from-right-4">
@@ -9177,6 +9263,15 @@ export default function App() {
       setView("assignment")
     } else if (mode === "exam-paper") {
       setView("exam-paper")
+    } else if (
+      mode === "stripboarding" ||
+      mode === "block-diagrams" ||
+      mode === "logic-gates" ||
+      mode === "testing" ||
+      mode === "symbols" ||
+      mode === "costing"
+    ) {
+      setView("electronics-tool")
     } else {
       setView("setup")
     }
@@ -9446,6 +9541,7 @@ export default function App() {
         {view === "mode" && (
           <ModeSelection
             selectedLevel={selectedLevel}
+            selectedSubject={selectedSubject}
             onSelectMode={handleModeSelect}
             onBack={() => setView("landing")}
             isDarkMode={isDarkMode}
@@ -9537,6 +9633,13 @@ export default function App() {
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
             currentUserId={currentUser?.id}
+          />
+        )}
+        {view === "electronics-tool" && (
+          <ElectronicsToolMode
+            appMode={appMode}
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
           />
         )}
       </main>
