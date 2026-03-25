@@ -249,6 +249,9 @@ interface UserAccount {
   accountType: AccountType
   password?: string
   isTestAccount?: boolean
+  subjectLevels?: Partial<Record<SubjectId, string>>  // "National 5" | "Higher" | "Advanced Higher" | "not sitting"
+  lastLogin?: number  // timestamp in ms
+  totalSessions?: number  // number of times signed in
 }
 
 // Hardcoded test accounts — always available regardless of localStorage state.
@@ -262,6 +265,7 @@ const TEST_ACCOUNTS: UserAccount[] = [
     accountType: "pupil",
     password: `test:${TEST_ACCOUNT_PASSWORD}`,
     isTestAccount: true,
+    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "not sitting", "Practical Electronics": "not sitting" },
   },
   {
     id: "test-pupil-2",
@@ -270,6 +274,7 @@ const TEST_ACCOUNTS: UserAccount[] = [
     accountType: "pupil",
     password: `test:${TEST_ACCOUNT_PASSWORD}`,
     isTestAccount: true,
+    subjectLevels: { Physics: "Higher", Biology: "not sitting", Chemistry: "Higher", "Practical Electronics": "National 5" },
   },
   {
     id: "test-teacher-1",
@@ -3169,6 +3174,11 @@ function CalculationsMode({
     const diffColor = difficulty === "easy" ? "text-green-600" : difficulty === "medium" ? "text-blue-600" : "text-[#800000]"
     const tabs: ("N5" | "Higher" | "AH")[] = ["N5", "Higher", "AH"]
     const tabLabels: Record<string, string> = { N5: "National 5", Higher: "Higher", AH: "Advanced Higher" }
+    // Determine which tabs are allowed based on the user's selected level
+    const levelOrder: Record<string, number> = { "National 5": 0, "Higher": 1, "Advanced Higher": 2 }
+    const sqaTabOrder: Record<string, number> = { "N5": 0, "Higher": 1, "AH": 2 }
+    const userLevelIdx = levelOrder[selectedLevel] ?? 2
+    const isTabLocked = (tab: "N5" | "Higher" | "AH") => sqaTabOrder[tab] > userLevelIdx
     const filteredEqs = SQA_EQUATIONS.filter((e) => e.sqaLevel === equationSqaTab)
     const topics = [...new Set(filteredEqs.map((e) => e.topic))]
 
@@ -3193,21 +3203,30 @@ function CalculationsMode({
           </div>
           {/* SQA level tabs */}
           <div className="flex gap-2 mb-6">
-            {tabs.map((tab) => (
+            {tabs.map((tab) => {
+              const locked = isTabLocked(tab)
+              return (
               <button
                 key={tab}
-                onClick={() => setEquationSqaTab(tab)}
+                onClick={() => { if (!locked) setEquationSqaTab(tab) }}
+                title={locked ? `Not available at ${selectedLevel}` : undefined}
                 className={`px-4 py-2 rounded-xl font-black text-sm transition-all border-2 ${
-                  equationSqaTab === tab
-                    ? "bg-[#800000] text-white border-[#800000]"
-                    : isDarkMode
-                      ? "border-slate-600 text-slate-300 hover:border-slate-400"
-                      : "border-slate-200 text-slate-600 hover:border-slate-400"
+                  locked
+                    ? isDarkMode
+                      ? "border-slate-700 text-slate-600 cursor-not-allowed opacity-40"
+                      : "border-slate-200 text-slate-300 cursor-not-allowed opacity-40"
+                    : equationSqaTab === tab
+                      ? "bg-[#800000] text-white border-[#800000]"
+                      : isDarkMode
+                        ? "border-slate-600 text-slate-300 hover:border-slate-400"
+                        : "border-slate-200 text-slate-600 hover:border-slate-400"
                 }`}
               >
                 {tabLabels[tab]}
+                {locked && <span className="ml-1 text-[10px]">🔒</span>}
               </button>
-            ))}
+              )
+            })}
           </div>
           {/* Equations grouped by topic */}
           <div className="space-y-6 pb-8">
@@ -4289,7 +4308,7 @@ function AuthModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onSignIn: (user: UserAccount) => void
+  onSignIn: (user: UserAccount, isNewAccount?: boolean) => void
   isDarkMode: boolean
 }) {
   const [tab, setTab] = useState<"signin" | "signup">("signin")
@@ -4302,6 +4321,11 @@ function AuthModal({
   const [accountType, setAccountType] = useState<AccountType>("pupil")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  // Level selection step (for pupils after signup)
+  const [signupStep, setSignupStep] = useState<"details" | "levels">("details")
+  const [pendingUser, setPendingUser] = useState<UserAccount | null>(null)
+  const LEVEL_OPTIONS = ["not sitting", "National 5", "Higher", "Advanced Higher"] as const
+  const [subjectLevels, setSubjectLevels] = useState<Partial<Record<SubjectId, string>>>({})
 
   // Reset form state each time the modal opens
   useEffect(() => {
@@ -4316,6 +4340,9 @@ function AuthModal({
       setAccountType("pupil")
       setError("")
       setSuccess("")
+      setSignupStep("details")
+      setPendingUser(null)
+      setSubjectLevels({})
     }
   }, [isOpen])
 
@@ -4383,16 +4410,112 @@ function AuthModal({
         accountType,
         password: hashedPassword,
       }
-      saveAccounts([...accounts, newUser])
-      saveCurrentUser(newUser)
-      setSuccess("Account created!")
-      setTimeout(() => {
-        onSignIn(newUser)
-        onClose()
-      }, 800)
+      if (accountType === "pupil") {
+        // For pupils: go to level selection step before finalising
+        setPendingUser(newUser)
+        setSignupStep("levels")
+      } else {
+        // Teachers: create account immediately
+        saveAccounts([...accounts, newUser])
+        saveCurrentUser(newUser)
+        setSuccess("Account created!")
+        setTimeout(() => {
+          onSignIn(newUser, true)
+          onClose()
+        }, 800)
+      }
     } catch {
       setError("An error occurred during account creation. Please try again.")
     }
+  }
+
+  function handleLevelSelectionDone() {
+    if (!pendingUser) return
+    const finalUser: UserAccount = { ...pendingUser, subjectLevels }
+    const accounts = loadAccounts()
+    saveAccounts([...accounts, finalUser])
+    saveCurrentUser(finalUser)
+    setSuccess("Account created!")
+    setTimeout(() => {
+      onSignIn(finalUser, true)
+      onClose()
+    }, 800)
+  }
+
+  // ── Level Selection Step (pupils only) ──────────────────────────────────
+  if (signupStep === "levels") {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div
+          className={`relative w-full max-w-md rounded-2xl shadow-2xl p-8 ${
+            isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
+              <Atom className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-[#800000]">Select Your Levels</h2>
+              <p className="text-xs text-slate-500">Tell us what you&apos;re sitting this year</p>
+            </div>
+          </div>
+          <p className={`text-sm mb-5 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            For each subject, select the level you&apos;re sitting. Choose <strong>&quot;Not Sitting&quot;</strong> if you&apos;re not studying that subject.
+          </p>
+          <div className="space-y-4 mb-6">
+            {SUBJECTS.map((subject) => {
+              const availableLevels = subject.id === "Practical Electronics"
+                ? (["not sitting", "National 5"] as const)
+                : LEVEL_OPTIONS
+              const current = subjectLevels[subject.id] ?? "not sitting"
+              return (
+                <div key={subject.id}>
+                  <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
+                    {subject.label}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableLevels.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setSubjectLevels((prev) => ({ ...prev, [subject.id]: lvl }))}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
+                          current === lvl
+                            ? lvl === "not sitting"
+                              ? "bg-slate-500 text-white border-slate-500"
+                              : "bg-[#800000] text-white border-[#800000]"
+                            : isDarkMode
+                              ? "border-slate-600 text-slate-300 hover:border-slate-400"
+                              : "border-slate-200 text-slate-600 hover:border-slate-400"
+                        }`}
+                      >
+                        {lvl === "not sitting" ? "Not Sitting" : lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {success && <p className="text-green-500 text-sm font-semibold mb-3">{success}</p>}
+          <button
+            onClick={handleLevelSelectionDone}
+            className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Create Account
+          </button>
+          <button
+            onClick={() => setSignupStep("details")}
+            className={`mt-3 w-full py-2 text-xs font-semibold transition-colors ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}`}
+          >
+            ← Back to details
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -4929,6 +5052,7 @@ function Navbar({
   onSignInClick,
   onSignOut,
   onClassesClick,
+  onProfileClick,
 }: {
   view: ViewType
   appMode: AppMode
@@ -4940,6 +5064,7 @@ function Navbar({
   onSignInClick: () => void
   onSignOut: () => void
   onClassesClick: () => void
+  onProfileClick: () => void
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [daysToExam, setDaysToExam] = useState<number | null>(null)
@@ -5066,6 +5191,15 @@ function Navbar({
                   <p className="text-sm font-bold truncate">{currentUser.name}</p>
                   <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
                 </div>
+                <button
+                  onClick={() => { onProfileClick(); setUserMenuOpen(false) }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${
+                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
+                  }`}
+                >
+                  <UserCircle className="w-4 h-4 text-[#800000]" />
+                  My Profile
+                </button>
                 <button
                   onClick={() => { onClassesClick(); setUserMenuOpen(false) }}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${
@@ -7656,6 +7790,7 @@ function Results({
 const CHAR_CATEGORIES: Record<string, string[]> = {
   Greek: ["α", "β", "γ", "δ", "ε", "ζ", "η", "θ", "ι", "κ", "λ", "μ", "ν", "ξ", "π", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "Γ", "Δ", "Θ", "Λ", "Ξ", "Π", "Σ", "Φ", "Ψ", "Ω"],
   Math: ["×", "÷", "±", "≈", "≠", "≤", "≥", "√", "∞", "∝", "∴", "∵", "²", "³", "⁻¹", "⁻²", "°", "½", "¼", "¾", "∫", "∂", "∇", "∑", "∏", "∈", "∉", "⊂", "∪", "∩"],
+  "Super/Sub": ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁺", "⁻", "ⁿ", "₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₊", "₋", "ₙ", "ₐ", "ₑ", "ₒ", "ᵢ", "ⱼ", "ₓ"],
   Units: ["m", "kg", "s", "A", "K", "mol", "cd", "N", "J", "W", "Pa", "Hz", "C", "V", "Ω", "F", "H", "T", "Wb", "Bq", "Gy", "Sv", "lm", "lx", "rad"],
   Prefixes: ["T", "G", "M", "k", "h", "d", "c", "m", "μ", "n", "p", "f", "a"],
 }
@@ -7783,7 +7918,7 @@ const [isOpen, setIsOpen] = useState(false)
   const isTeacher = currentUser?.accountType === "teacher"
   const isPupil = !isTeacher
   const showOutcomes = isPupil && view !== "landing" && view !== "subject-select"
-  const isQuiz = view === "quiz"
+  const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool"
   
   return (
   <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
@@ -7862,7 +7997,7 @@ const [isOpen, setIsOpen] = useState(false)
               <span className="text-sm font-black uppercase tracking-widest">Assessment Sheets</span>
             </button>
           )}
-          {isQuiz && (
+          {showCharKeyboard && (
             <button
               onClick={() => {
                 setShowKeyboard((prev) => !prev)
@@ -9175,6 +9310,318 @@ function GenericModal({
   )
 }
 
+// ─── ProfileModal ─────────────────────────────────────────────────────────────
+
+function ProfileModal({
+  currentUser,
+  isDarkMode,
+  onClose,
+  onUpdateUser,
+}: {
+  currentUser: UserAccount
+  isDarkMode: boolean
+  onClose: () => void
+  onUpdateUser: (user: UserAccount) => void
+}) {
+  const [activeTab, setActiveTab] = useState<"subjects" | "achievements" | "stats">("subjects")
+  const [subjectLevels, setSubjectLevels] = useState<Partial<Record<SubjectId, string>>>(
+    currentUser.subjectLevels ?? {}
+  )
+  const [saved, setSaved] = useState(false)
+  const LEVEL_OPTIONS = ["not sitting", "National 5", "Higher", "Advanced Higher"] as const
+
+  const isPupil = currentUser.accountType === "pupil"
+
+  // Compute total stats from stored progress
+  const totalQuestionsAnswered = useMemo(() => {
+    let total = 0
+    for (const level of ["National 5", "Higher", "Advanced Higher"]) {
+      const exam = loadUserExamProgress(currentUser.id, level)
+      total += Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
+      total += Object.values(exam.paper).reduce((s, p) => s + p.total, 0)
+      const calc = loadUserCalcProgress(currentUser.id, level)
+      total += Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0)
+      total += calc.examLevel.total + calc.correctMe.total
+    }
+    return total
+  }, [currentUser.id])
+
+  const totalCorrect = useMemo(() => {
+    let correct = 0
+    for (const level of ["National 5", "Higher", "Advanced Higher"]) {
+      const exam = loadUserExamProgress(currentUser.id, level)
+      correct += Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
+      correct += Object.values(exam.paper).reduce((s, p) => s + p.correct, 0)
+      const calc = loadUserCalcProgress(currentUser.id, level)
+      correct += Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0)
+      correct += calc.examLevel.correct + calc.correctMe.correct
+    }
+    return correct
+  }, [currentUser.id])
+
+  // Cross-subject master progress for selected subjects
+  const studiedSubjects = SUBJECTS.filter((s) => {
+    const lvl = subjectLevels[s.id]
+    return lvl && lvl !== "not sitting"
+  })
+
+  // Achievements definitions
+  const achievements: { id: string; emoji: string; title: string; desc: string; unlocked: boolean }[] = [
+    { id: "first-steps", emoji: "🎯", title: "First Steps", desc: "Answer your first question", unlocked: totalQuestionsAnswered >= 1 },
+    { id: "ten-questions", emoji: "📚", title: "Getting Started", desc: "Answer 10 questions", unlocked: totalQuestionsAnswered >= 10 },
+    { id: "fifty-questions", emoji: "🔥", title: "On Fire", desc: "Answer 50 questions", unlocked: totalQuestionsAnswered >= 50 },
+    { id: "hundred-questions", emoji: "💯", title: "Century", desc: "Answer 100 questions", unlocked: totalQuestionsAnswered >= 100 },
+    { id: "five-hundred", emoji: "🏆", title: "Study Champion", desc: "Answer 500 questions", unlocked: totalQuestionsAnswered >= 500 },
+    { id: "good-accuracy", emoji: "⭐", title: "Sharp Mind", desc: "Achieve 70%+ overall accuracy", unlocked: totalQuestionsAnswered >= 10 && totalCorrect / Math.max(totalQuestionsAnswered, 1) >= 0.7 },
+    { id: "multi-subject", emoji: "🌟", title: "All-Rounder", desc: "Study 2 or more subjects", unlocked: studiedSubjects.length >= 2 },
+    { id: "full-house", emoji: "🎓", title: "Full House", desc: "Study all 4 subjects", unlocked: studiedSubjects.length >= 4 },
+    { id: "logged-in", emoji: "👋", title: "Welcome Back", desc: "Sign in to your account", unlocked: true },
+    { id: "profile-set", emoji: "📋", title: "Prepared", desc: "Set your subject levels", unlocked: Object.keys(subjectLevels).length > 0 },
+  ]
+
+  const unlockedCount = achievements.filter((a) => a.unlocked).length
+
+  function handleSaveLevels() {
+    const updated: UserAccount = { ...currentUser, subjectLevels }
+    const accounts = loadAccounts()
+    saveAccounts(accounts.map((a) => (a.id === updated.id ? updated : a)))
+    saveCurrentUser(updated)
+    onUpdateUser(updated)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className={`w-full max-w-lg rounded-[2.5rem] shadow-2xl border-4 border-[#800000] flex flex-col max-h-[90vh] ${isDarkMode ? "bg-slate-900" : "bg-white"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black ${currentUser.accountType === "teacher" ? "bg-amber-600" : "bg-[#800000]"}`}>
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-black text-lg">{currentUser.name}</p>
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{currentUser.email}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><X /></button>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex gap-1 mx-6 mb-4 p-1 rounded-xl flex-shrink-0 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+          {(isPupil ? (["subjects", "achievements", "stats"] as const) : (["stats"] as const)).map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t as typeof activeTab)}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                activeTab === t ? "bg-[#800000] text-white shadow" : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              {t === "subjects" ? "My Subjects" : t === "achievements" ? "Achievements" : "Stats"}
+            </button>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-6 pb-6">
+
+          {/* ── Subjects Tab ── */}
+          {activeTab === "subjects" && isPupil && (
+            <div className="space-y-4">
+              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Set the level you&apos;re sitting for each subject. Choose <strong>Not Sitting</strong> if you&apos;re not studying it.
+              </p>
+              {SUBJECTS.map((subject) => {
+                const availableLevels = subject.id === "Practical Electronics"
+                  ? (["not sitting", "National 5"] as const)
+                  : (["not sitting", "National 5", "Higher", "Advanced Higher"] as const)
+                const current = subjectLevels[subject.id] ?? "not sitting"
+                return (
+                  <div key={subject.id} className={`p-4 rounded-2xl border ${cardBg}`}>
+                    <p className="font-black text-sm mb-3">{subject.label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {availableLevels.map((lvl) => (
+                        <button
+                          key={lvl}
+                          onClick={() => setSubjectLevels((prev) => ({ ...prev, [subject.id]: lvl }))}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
+                            current === lvl
+                              ? lvl === "not sitting"
+                                ? "bg-slate-500 text-white border-slate-500"
+                                : "bg-[#800000] text-white border-[#800000]"
+                              : isDarkMode
+                                ? "border-slate-600 text-slate-300 hover:border-slate-400"
+                                : "border-slate-200 text-slate-600 hover:border-slate-400"
+                          }`}
+                        >
+                          {lvl === "not sitting" ? "Not Sitting" : lvl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* Master Progress Tracker */}
+              {studiedSubjects.length > 0 && (
+                <div className={`p-4 rounded-2xl border ${cardBg}`}>
+                  <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    📊 Master Progress Tracker
+                  </p>
+                  <div className="space-y-3">
+                    {studiedSubjects.map((subject) => {
+                      const lvl = subjectLevels[subject.id] ?? ""
+                      if (!lvl) return null
+                      const exam = loadUserExamProgress(currentUser.id, lvl)
+                      const mcTotal = Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
+                      const mcCorrect = Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
+                      const calc = loadUserCalcProgress(currentUser.id, lvl)
+                      const calcTotal = Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0) + calc.examLevel.total
+                      const calcCorrect = Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0) + calc.examLevel.correct
+                      const total = mcTotal + calcTotal
+                      const correct = mcCorrect + calcCorrect
+                      const pct = total > 0 ? Math.round((correct / total) * 100) : null
+                      return (
+                        <div key={subject.id}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{subject.label}</span>
+                            <span className={`text-xs font-black ${pct !== null ? (pct >= 70 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-500") : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                              {pct !== null ? `${pct}% (${correct}/${total})` : "No data yet"} · {lvl}
+                            </span>
+                          </div>
+                          {pct !== null && (
+                            <div className={`h-2 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                              <div className={`h-full rounded-full transition-all ${pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSaveLevels}
+                  className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors"
+                >
+                  {saved ? "✓ Saved!" : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Achievements Tab ── */}
+          {activeTab === "achievements" && isPupil && (
+            <div className="space-y-4">
+              <div className={`p-4 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-amber-50"} text-center`}>
+                <p className="text-3xl font-black text-amber-500">{unlockedCount} / {achievements.length}</p>
+                <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Achievements Unlocked</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {achievements.map((a) => (
+                  <div
+                    key={a.id}
+                    className={`p-4 rounded-2xl border-2 transition-all ${
+                      a.unlocked
+                        ? isDarkMode ? "border-amber-500 bg-amber-900/20" : "border-amber-400 bg-amber-50"
+                        : isDarkMode ? "border-slate-700 bg-slate-800 opacity-50" : "border-slate-200 bg-slate-50 opacity-50"
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">{a.unlocked ? a.emoji : "🔒"}</div>
+                    <p className={`text-xs font-black ${a.unlocked ? isDarkMode ? "text-amber-300" : "text-amber-700" : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                      {a.title}
+                    </p>
+                    <p className={`text-[10px] mt-0.5 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{a.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Stats Tab ── */}
+          {activeTab === "stats" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Questions Answered", value: totalQuestionsAnswered.toString(), icon: "❓" },
+                  { label: "Correct Answers", value: totalCorrect.toString(), icon: "✅" },
+                  {
+                    label: "Overall Accuracy",
+                    value: totalQuestionsAnswered > 0 ? `${Math.round((totalCorrect / totalQuestionsAnswered) * 100)}%` : "—",
+                    icon: "🎯",
+                  },
+                  {
+                    label: "Last Login",
+                    value: currentUser.lastLogin ? new Date(currentUser.lastLogin).toLocaleDateString() : "—",
+                    icon: "🕐",
+                  },
+                  { label: "Account Type", value: currentUser.accountType === "teacher" ? "Teacher" : "Pupil", icon: "👤" },
+                  {
+                    label: "Sessions",
+                    value: (currentUser.totalSessions ?? 1).toString(),
+                    icon: "📅",
+                  },
+                ].map(({ label, value, icon }) => (
+                  <div key={label} className={`p-4 rounded-2xl border ${cardBg}`}>
+                    <div className="text-xl mb-1">{icon}</div>
+                    <p className="text-lg font-black">{value}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
+                  </div>
+                ))}
+              </div>
+              {isPupil && studiedSubjects.length > 0 && (
+                <div className={`p-4 rounded-2xl border ${cardBg}`}>
+                  <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    📊 Master Progress Tracker
+                  </p>
+                  <div className="space-y-3">
+                    {studiedSubjects.map((subject) => {
+                      const lvl = subjectLevels[subject.id] ?? ""
+                      if (!lvl) return null
+                      const exam = loadUserExamProgress(currentUser.id, lvl)
+                      const mcTotal = Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
+                      const mcCorrect = Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
+                      const calc = loadUserCalcProgress(currentUser.id, lvl)
+                      const calcTotal = Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0) + calc.examLevel.total
+                      const calcCorrect = Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0) + calc.examLevel.correct
+                      const total = mcTotal + calcTotal
+                      const correct = mcCorrect + calcCorrect
+                      const pct = total > 0 ? Math.round((correct / total) * 100) : null
+                      return (
+                        <div key={subject.id}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={`text-xs font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{subject.label} ({lvl})</span>
+                            <span className={`text-xs font-black ${pct !== null ? (pct >= 70 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-500") : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+                              {pct !== null ? `${pct}%` : "—"}
+                            </span>
+                          </div>
+                          {pct !== null && (
+                            <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+                              <div className={`h-full rounded-full ${pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [view, setView] = useState<ViewType>("subject-select")
   const [selectedLevel, setSelectedLevel] = useState("National 5")
@@ -9197,14 +9644,28 @@ export default function App() {
   const [timingMode, setTimingMode] = useState<TimingMode>("none")
   const [numberOfQuestions, setNumberOfQuestions] = useState(5)
   const [questionSource, setQuestionSource] = useState<string>("ai")
+  // "Wrong place" popup for "not sitting" subjects
+  const [wrongPlaceSubject, setWrongPlaceSubject] = useState<SubjectId | null>(null)
 
   // Auth state
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => loadCurrentUser())
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [classesModalOpen, setClassesModalOpen] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
 
-  function handleSignIn(user: UserAccount) {
-    setCurrentUser(user)
+  function handleSignIn(user: UserAccount, isNewAccount = false) {
+    // Record last login; only increment session count for returning logins (not new account creation)
+    const updated: UserAccount = {
+      ...user,
+      lastLogin: Date.now(),
+      totalSessions: isNewAccount ? 1 : (user.totalSessions ?? 0) + 1,
+    }
+    const accounts = loadAccounts()
+    if (!updated.isTestAccount) {
+      saveAccounts(accounts.map((a) => (a.id === updated.id ? updated : a)))
+    }
+    saveCurrentUser(updated)
+    setCurrentUser(updated)
   }
 
   function handleSignOut() {
@@ -9238,6 +9699,22 @@ export default function App() {
 
   const handleSubjectSelect = (subject: SubjectId) => {
     setSelectedSubject(subject)
+    // If pupil has subject levels configured, use them
+    if (currentUser?.accountType === "pupil" && currentUser.subjectLevels) {
+      const level = currentUser.subjectLevels[subject]
+      if (level === "not sitting") {
+        // Show "wrong place" popup and return to subject selection
+        setWrongPlaceSubject(subject)
+        return
+      }
+      if (level) {
+        // Skip landing page - go directly to mode selection with pre-set level
+        setSelectedLevel(level)
+        setQuestionSource("ai")
+        setView("mode")
+        return
+      }
+    }
     setView("landing")
   }
 
@@ -9527,6 +10004,7 @@ export default function App() {
         onSignInClick={() => setAuthModalOpen(true)}
         onSignOut={handleSignOut}
         onClassesClick={() => setClassesModalOpen(true)}
+        onProfileClick={() => setProfileModalOpen(true)}
       />
       <main className="pb-20">
         {view === "subject-select" && <SubjectSelection onSelectSubject={handleSubjectSelect} isDarkMode={isDarkMode} />}
@@ -9543,7 +10021,14 @@ export default function App() {
             selectedLevel={selectedLevel}
             selectedSubject={selectedSubject}
             onSelectMode={handleModeSelect}
-            onBack={() => setView("landing")}
+            onBack={() => {
+              // If user has a pre-selected level for this subject, go back to subject select
+              if (currentUser?.accountType === "pupil" && currentUser.subjectLevels?.[selectedSubject] && currentUser.subjectLevels[selectedSubject] !== "not sitting") {
+                setView("subject-select")
+              } else {
+                setView("landing")
+              }
+            }}
             isDarkMode={isDarkMode}
           />
         )}
@@ -9667,6 +10152,40 @@ export default function App() {
           isDarkMode={isDarkMode}
           onClose={() => setClassesModalOpen(false)}
         />
+      )}
+      {profileModalOpen && currentUser && (
+        <ProfileModal
+          currentUser={currentUser}
+          isDarkMode={isDarkMode}
+          onClose={() => setProfileModalOpen(false)}
+          onUpdateUser={(updated) => setCurrentUser(updated)}
+        />
+      )}
+      {/* "Wrong place" popup for "not sitting" subjects */}
+      {wrongPlaceSubject && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-[#800000] p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
+            <div className="text-5xl mb-4">🤔</div>
+            <h2 className="text-2xl font-black mb-3">I think you&apos;re in the wrong place!</h2>
+            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              You&apos;ve set <strong>{wrongPlaceSubject}</strong> as <strong>&quot;Not Sitting&quot;</strong> in your profile. Head back and choose a subject you&apos;re studying, or update your profile to change your levels.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => { setWrongPlaceSubject(null); setView("subject-select") }}
+                className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors"
+              >
+                ← Back to Subjects
+              </button>
+              <button
+                onClick={() => { setWrongPlaceSubject(null); setProfileModalOpen(true) }}
+                className={`w-full py-3 rounded-xl font-bold text-sm transition-colors border-2 ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-slate-400" : "border-slate-200 text-slate-600 hover:border-slate-400"}`}
+              >
+                Update My Profile
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
