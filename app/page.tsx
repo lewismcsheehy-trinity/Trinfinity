@@ -131,6 +131,21 @@ const QA_SUBTOPICS: Record<string, string[]> = {
     "Capacitance and Inductance",
     "Uncertainties",
   ],
+  "Chemistry-National 5": [
+    "Rates of Reaction",
+    "Atomic Structure",
+    "Bonding and Structure",
+    "Formulae and Reacting Quantities",
+    "Acids and Bases",
+    "Homologous Series & Hydrocarbons",
+    "Everyday Consumer Products",
+    "Energy from Fuels",
+    "Metals",
+    "Plastics",
+    "Fertilisers",
+    "Nuclear Chemistry",
+    "Chemical Analysis",
+  ],
 }
 
 type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | null
@@ -138,6 +153,16 @@ type TimingMode = "relaxed" | "exam" | "none"
 type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool"
 
 type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
+
+/** Returns the subject-qualified level key used as a lookup key in QA_SUBTOPICS and DEF_UNIT_TOPICS/DEFINITIONS_BANK. */
+function getDefLevelKey(subject: SubjectId | string | undefined, level: string): string {
+  return subject === "Chemistry" ? `${subject}-${level}` : level
+}
+
+/** Returns the subtopic list for the given subject and level, falling back to the level-only list. */
+function getSubtopics(subject: SubjectId | string | undefined, level: string): string[] {
+  return QA_SUBTOPICS[`${subject}-${level}`] || QA_SUBTOPICS[level] || []
+}
 
 interface Subject {
   id: SubjectId
@@ -733,6 +758,112 @@ const DEFINITIONS_BANK: DefinitionEntry[] = [
   { term: "Percentage uncertainty", definition: "The absolute uncertainty expressed as a percentage of the measured value", topic: "Uncertainties", level: "Advanced Higher", keywords: ["absolute", "percentage"] },
   { term: "Random error", definition: "An unpredictable variation in measurements that causes readings to scatter around the true value", topic: "Uncertainties", level: "Advanced Higher", keywords: ["unpredictable", "scatter"] },
   { term: "Systematic error", definition: "A consistent error in the same direction that affects every measurement by the same amount", topic: "Uncertainties", level: "Advanced Higher", keywords: ["consistent", "direction"] },
+
+  // Chemistry National 5 — Rates of Reaction
+  { term: "Average Rate", definition: "The change in a measurable quantity (like mass or volume) divided by the time taken for that change to occur", topic: "Rates of Reaction", level: "Chemistry-National 5", keywords: ["change", "quantity", "time"] },
+  { term: "Catalyst", definition: "A substance that increases the rate of a chemical reaction without being used up itself", topic: "Rates of Reaction", level: "Chemistry-National 5", keywords: ["increases", "rate", "reaction"] },
+  { term: "Collision Theory", definition: "The theory that for a reaction to occur, particles must collide with enough energy (activation energy) and in the correct orientation", topic: "Rates of Reaction", level: "Chemistry-National 5", keywords: ["collide", "energy", "activation energy"] },
+  { term: "End-point", definition: "The moment a reaction is finished, often shown on a graph when the curve flattens out", topic: "Rates of Reaction", level: "Chemistry-National 5", keywords: ["finished", "reaction", "graph"] },
+
+  // Chemistry National 5 — Atomic Structure
+  { term: "Atom", definition: "The smallest particle of an element that can exist", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["smallest", "particle", "element"] },
+  { term: "Proton", definition: "A positively charged particle found in the nucleus (mass = 1 amu)", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["positive", "nucleus", "mass"] },
+  { term: "Neutron", definition: "A neutral particle found in the nucleus (mass = 1 amu)", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["neutral", "nucleus", "mass"] },
+  { term: "Electron", definition: "A negatively charged particle found in energy levels orbiting the nucleus (mass is negligible)", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["negative", "energy levels", "nucleus"] },
+  { term: "Atomic Number", definition: "The number of protons in the nucleus of an atom", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["protons", "nucleus"] },
+  { term: "Mass Number", definition: "The total number of protons and neutrons in the nucleus", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["protons", "neutrons", "nucleus"] },
+  { term: "Isotopes", definition: "Atoms of the same element with the same number of protons but a different number of neutrons", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["same element", "protons", "neutrons"] },
+  { term: "Nuclide Notation", definition: "A way of writing an atom showing its mass number (top) and atomic number (bottom) next to the element symbol", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["mass number", "atomic number", "symbol"] },
+  { term: "Ion", definition: "An atom (or group of atoms) that has gained or lost electrons, resulting in a positive or negative charge", topic: "Atomic Structure", level: "Chemistry-National 5", keywords: ["gained", "lost", "electrons", "charge"] },
+
+  // Chemistry National 5 — Bonding and Structure
+  { term: "Periodic Table", definition: "A table of elements arranged by increasing atomic number", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["elements", "atomic number"] },
+  { term: "Group", definition: "A vertical column in the periodic table; elements in the same group have the same number of outer electrons and similar chemical properties", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["vertical", "outer electrons", "properties"] },
+  { term: "Period", definition: "A horizontal row in the periodic table", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["horizontal", "row"] },
+  { term: "Covalent Bond", definition: "A bond formed between non-metal atoms by the sharing of a pair of electrons", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["sharing", "electrons", "non-metal"] },
+  { term: "Diatomic", definition: "A molecule consisting of only two atoms", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["two atoms", "molecule"] },
+  { term: "Covalent Molecular", definition: "Substances with strong covalent bonds inside molecules but weak forces between molecules; they have low melting/boiling points and do not conduct electricity", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["covalent bonds", "weak forces", "low melting points"] },
+  { term: "Covalent Network", definition: "A giant structure of atoms held together by strong covalent bonds; they have very high melting points and do not conduct electricity (except graphite)", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["giant structure", "strong bonds", "high melting points"] },
+  { term: "Ionic Bond", definition: "The strong electrostatic attraction between positive and negative ions", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["electrostatic", "attraction", "ions"] },
+  { term: "Ionic Lattice", definition: "A repeating 3D structure of oppositely charged ions; they have high melting points and conduct electricity only when molten or in solution", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["3D structure", "oppositely charged", "conduct electricity"] },
+  { term: "Valency", definition: "The combining power of an element or group of atoms, related to the number of electrons an atom needs to gain or lose to reach a stable shell", topic: "Bonding and Structure", level: "Chemistry-National 5", keywords: ["combining power", "electrons", "stable shell"] },
+
+  // Chemistry National 5 — Formulae and Reacting Quantities
+  { term: "Chemical Formula", definition: "Represents the ratio of atoms or ions in a substance", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["ratio", "atoms", "ions"] },
+  { term: "Balanced Equation", definition: "An equation where the number of each type of atom is the same on both the reactant and product sides", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["atoms", "reactant", "product"] },
+  { term: "Mole", definition: "The unit used to measure the amount of a substance", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["unit", "amount", "substance"] },
+  { term: "Gram Formula Mass (GFM)", definition: "The mass of one mole of a substance in grams", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["mass", "mole", "grams"] },
+  { term: "State Symbols", definition: "Letters used in equations to show the state of matter: (s) solid, (l) liquid, (g) gas, (aq) aqueous (dissolved in water)", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["solid", "liquid", "gas", "aqueous"] },
+  { term: "Concentration", definition: "The amount of solute (in moles) dissolved in a given volume of solvent, usually in mol per litre", topic: "Formulae and Reacting Quantities", level: "Chemistry-National 5", keywords: ["solute", "moles", "volume", "solvent"] },
+
+  // Chemistry National 5 — Acids and Bases
+  { term: "Acid", definition: "A substance with a pH less than 7; it contains a higher concentration of H+ ions than OH- ions", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["pH", "H+ ions", "OH- ions"] },
+  { term: "Alkali", definition: "A soluble base with a pH greater than 7; it contains a higher concentration of OH- ions than H+ ions", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["pH", "OH- ions", "H+ ions", "soluble"] },
+  { term: "Neutral Solution", definition: "A solution with a pH of 7; the concentration of H+ ions equals the concentration of OH- ions", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["pH 7", "H+ ions", "OH- ions"] },
+  { term: "Neutralisation", definition: "A reaction where an acid reacts with a base to form salt and water", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["acid", "base", "salt", "water"] },
+  { term: "Spectator Ions", definition: "Ions that are present during a reaction but do not take part in the actual chemical change", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["ions", "reaction", "chemical change"] },
+  { term: "Titration", definition: "A technique used to determine the exact volume of acid or alkali required to reach the end-point of a neutralisation reaction", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["volume", "acid", "alkali", "neutralisation"] },
+  { term: "Indicator", definition: "A substance that changes colour to show the end-point of a titration", topic: "Acids and Bases", level: "Chemistry-National 5", keywords: ["colour", "end-point", "titration"] },
+
+  // Chemistry National 5 — Homologous Series & Hydrocarbons
+  { term: "Homologous Series", definition: "A family of compounds with the same general formula, similar chemical properties, and a trend in physical properties", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["general formula", "similar properties", "trend"] },
+  { term: "Hydrocarbon", definition: "A compound containing only carbon and hydrogen atoms", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["carbon", "hydrogen"] },
+  { term: "Saturated", definition: "Compounds containing only carbon-carbon single bonds", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["single bonds", "carbon"] },
+  { term: "Unsaturated", definition: "Compounds containing at least one carbon-carbon double bond", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["double bond", "carbon"] },
+  { term: "Alkanes", definition: "A saturated homologous series with the general formula CnH2n+2", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["saturated", "CnH2n+2"] },
+  { term: "Alkenes", definition: "An unsaturated homologous series with the general formula CnH2n", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["unsaturated", "CnH2n"] },
+  { term: "Cycloalkanes", definition: "A saturated, ring-shaped homologous series with the general formula CnH2n", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["saturated", "ring", "CnH2n"] },
+  { term: "Isomers", definition: "Compounds with the same molecular formula but different structural formulae", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["molecular formula", "structural formulae"] },
+  { term: "Bromine Water Test", definition: "Used to distinguish between saturated and unsaturated compounds; unsaturated compounds (alkenes) quickly turn bromine water from orange/brown to colourless", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["saturated", "unsaturated", "colourless"] },
+  { term: "Addition Reaction", definition: "A reaction where a molecule adds across the double bond of an unsaturated compound, breaking the double bond", topic: "Homologous Series & Hydrocarbons", level: "Chemistry-National 5", keywords: ["double bond", "unsaturated", "adds across"] },
+
+  // Chemistry National 5 — Everyday Consumer Products
+  { term: "Alcohol", definition: "A homologous series containing a hydroxyl group (-OH); general formula CnH2n+1OH", topic: "Everyday Consumer Products", level: "Chemistry-National 5", keywords: ["hydroxyl group", "-OH", "CnH2n+1OH"] },
+  { term: "Carboxylic Acid", definition: "A homologous series containing a carboxyl group (-COOH); general formula CnH2n+1COOH", topic: "Everyday Consumer Products", level: "Chemistry-National 5", keywords: ["carboxyl group", "-COOH", "CnH2n+1COOH"] },
+
+  // Chemistry National 5 — Energy from Fuels
+  { term: "Combustion", definition: "The burning of a substance in oxygen; it is an exothermic reaction", topic: "Energy from Fuels", level: "Chemistry-National 5", keywords: ["burning", "oxygen", "exothermic"] },
+  { term: "Exothermic Reaction", definition: "A reaction that releases energy to the surroundings, causing the temperature of the surroundings to increase", topic: "Energy from Fuels", level: "Chemistry-National 5", keywords: ["releases energy", "temperature increases"] },
+  { term: "Endothermic Reaction", definition: "A reaction that absorbs energy from the surroundings, causing the temperature of the surroundings to decrease", topic: "Energy from Fuels", level: "Chemistry-National 5", keywords: ["absorbs energy", "temperature decreases"] },
+  { term: "Fuel", definition: "A substance that burns to release energy", topic: "Energy from Fuels", level: "Chemistry-National 5", keywords: ["burns", "energy"] },
+
+  // Chemistry National 5 — Metals
+  { term: "Metallic Bonding", definition: "The electrostatic attraction between positively charged metal ions and delocalised electrons", topic: "Metals", level: "Chemistry-National 5", keywords: ["electrostatic", "metal ions", "delocalised electrons"] },
+  { term: "Delocalised Electrons", definition: "Electrons that are not bound to a specific atom and are free to move throughout the metallic structure, which is why metals conduct electricity", topic: "Metals", level: "Chemistry-National 5", keywords: ["free to move", "metallic structure", "conduct electricity"] },
+  { term: "Reactivity Series", definition: "A list of metals arranged in order of how vigorously they react with substances like oxygen, water, or acids", topic: "Metals", level: "Chemistry-National 5", keywords: ["metals", "order", "reactivity"] },
+  { term: "Redox Reaction", definition: "A reaction where both reduction (gain of electrons) and oxidation (loss of electrons) occur simultaneously", topic: "Metals", level: "Chemistry-National 5", keywords: ["reduction", "oxidation", "electrons"] },
+  { term: "Reduction", definition: "The gain of electrons; in metal extraction, metal ions are reduced to metal atoms", topic: "Metals", level: "Chemistry-National 5", keywords: ["gain", "electrons", "metal ions"] },
+  { term: "Oxidation", definition: "The loss of electrons", topic: "Metals", level: "Chemistry-National 5", keywords: ["loss", "electrons"] },
+  { term: "Ion-Electron Equation", definition: "An equation showing the oxidation or reduction process, including the movement of electrons", topic: "Metals", level: "Chemistry-National 5", keywords: ["oxidation", "reduction", "electrons"] },
+  { term: "Ore", definition: "A naturally occurring rock from which a metal can be extracted", topic: "Metals", level: "Chemistry-National 5", keywords: ["rock", "metal", "extracted"] },
+  { term: "Electrolyte", definition: "An ionic solution that conducts electricity", topic: "Metals", level: "Chemistry-National 5", keywords: ["ionic", "conducts", "electricity"] },
+  { term: "Electrochemical Cell", definition: "A setup that produces electricity using two different metals and an electrolyte", topic: "Metals", level: "Chemistry-National 5", keywords: ["electricity", "two metals", "electrolyte"] },
+  { term: "Ion Bridge", definition: "A connection between two half-cells that allows ions to flow and completes the electrical circuit", topic: "Metals", level: "Chemistry-National 5", keywords: ["half-cells", "ions", "circuit"] },
+  { term: "Electrolysis", definition: "Breaking up an ionic compound using electricity to separate the products", topic: "Metals", level: "Chemistry-National 5", keywords: ["ionic compound", "electricity", "separate"] },
+
+  // Chemistry National 5 — Plastics
+  { term: "Polymer", definition: "A long-chain molecule formed by joining together many small units called monomers", topic: "Plastics", level: "Chemistry-National 5", keywords: ["long-chain", "monomers"] },
+  { term: "Monomer", definition: "A small, unsaturated molecule that reacts to form a polymer", topic: "Plastics", level: "Chemistry-National 5", keywords: ["small", "unsaturated", "polymer"] },
+  { term: "Addition Polymerisation", definition: "The reaction where small, unsaturated monomers join together to form a polymer, with no other product formed", topic: "Plastics", level: "Chemistry-National 5", keywords: ["monomers", "polymer", "no other product"] },
+
+  // Chemistry National 5 — Fertilisers
+  { term: "Essential Elements", definition: "The three primary nutrients required for plant growth: Nitrogen (N), Phosphorus (P), and Potassium (K)", topic: "Fertilisers", level: "Chemistry-National 5", keywords: ["nitrogen", "phosphorus", "potassium", "plant growth"] },
+  { term: "Haber Process", definition: "The industrial process used to produce ammonia (NH3) from nitrogen and hydrogen gases using an iron catalyst, at approximately 500°C and 250 atmospheres", topic: "Fertilisers", level: "Chemistry-National 5", keywords: ["ammonia", "nitrogen", "hydrogen", "iron catalyst"] },
+  { term: "Ostwald Process", definition: "The industrial process used to produce nitric acid from ammonia, water and oxygen using a platinum catalyst", topic: "Fertilisers", level: "Chemistry-National 5", keywords: ["nitric acid", "ammonia", "platinum catalyst"] },
+
+  // Chemistry National 5 — Nuclear Chemistry
+  { term: "Radioisotope", definition: "An unstable isotope that emits radiation to become more stable", topic: "Nuclear Chemistry", level: "Chemistry-National 5", keywords: ["unstable", "isotope", "radiation"] },
+  { term: "Alpha Particle", definition: "A helium nucleus with a positive charge; it is heavy, slow-moving, and easily stopped by paper", topic: "Nuclear Chemistry", level: "Chemistry-National 5", keywords: ["helium nucleus", "positive charge", "paper"] },
+  { term: "Beta Particle", definition: "A high-speed electron ejected from the nucleus; lighter and more penetrating than alpha particles, stopped by thin aluminium", topic: "Nuclear Chemistry", level: "Chemistry-National 5", keywords: ["electron", "nucleus", "aluminium"] },
+  { term: "Gamma Ray", definition: "High-energy electromagnetic radiation with no mass or charge; highly penetrating and requires thick lead or concrete to stop", topic: "Nuclear Chemistry", level: "Chemistry-National 5", keywords: ["electromagnetic", "no mass", "lead"] },
+  { term: "Half-life", definition: "The time taken for the activity or mass of a radioisotope to decrease by half", topic: "Nuclear Chemistry", level: "Chemistry-National 5", keywords: ["time", "radioisotope", "decrease"] },
+
+  // Chemistry National 5 — Chemical Analysis
+  { term: "Qualitative Analysis", definition: "Identifies what substances are present (e.g., flame tests to identify metal ions)", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["identifies", "substances", "flame tests"] },
+  { term: "Quantitative Analysis", definition: "Determines how much of a substance is present (e.g., titrations)", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["how much", "substance", "titrations"] },
+  { term: "Titration (Analysis)", definition: "A technique used to accurately measure the volume of a substance required to react with another, often used to determine concentration", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["volume", "react", "concentration"] },
+  { term: "Concordant", definition: "Titration results that are within 0.2 cm3 of each other", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["titration", "0.2 cm3", "results"] },
+  { term: "Precipitation", definition: "The formation of an insoluble solid when two solutions are mixed", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["insoluble", "solid", "solutions"] },
 ]
 
 const VALID_LEVELS = ["National 5", "Higher", "Advanced Higher"]
@@ -766,6 +897,11 @@ const DEF_UNIT_TOPICS: Record<string, Record<string, string[]>> = {
     Electricity: ["Electrostatics", "Electromagnetism", "Capacitance and Inductance"],
     Waves: ["Simple Harmonic Motion", "Waves", "Interference", "Polarisation"],
     Other: ["Uncertainties"],
+  },
+  "Chemistry-National 5": {
+    "Unit 1": ["Rates of Reaction", "Atomic Structure", "Bonding and Structure", "Formulae and Reacting Quantities", "Acids and Bases"],
+    "Unit 2": ["Homologous Series & Hydrocarbons", "Everyday Consumer Products", "Energy from Fuels"],
+    "Unit 3": ["Metals", "Plastics", "Fertilisers", "Nuclear Chemistry", "Chemical Analysis"],
   },
 }
 
@@ -1281,17 +1417,22 @@ const DEF_DIFF_ORDER: DifficultyLevel[] = ["easy", "medium", "hard"]
 
 function DefinitionsMode({
   selectedLevel,
+  selectedSubject,
   onBack,
   isDarkMode,
   currentUserId,
 }: {
   selectedLevel: string
+  selectedSubject?: SubjectId
   onBack: () => void
   isDarkMode: boolean
   currentUserId?: string
 }) {
   type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
+
+  // Compute a subject-qualified level key so chemistry entries are kept separate from physics
+  const levelKey = getDefLevelKey(selectedSubject, selectedLevel)
 
   const [phase, setPhase] = useState<DefPhase>("unit-select")
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
@@ -1350,8 +1491,8 @@ function DefinitionsMode({
     return selectedTopics.every((topic) => Boolean(completion[`${topic}::${qt}::${diff}`]))
   }
 
-  const unitTopicsForLevel = DEF_UNIT_TOPICS[selectedLevel] ?? {}
-  const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
+  const unitTopicsForLevel = DEF_UNIT_TOPICS[levelKey] ?? {}
+  const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === levelKey)
   // When a unit is selected, only expose topics that belong to that unit AND have entries in the bank
   const topicsInUnit = selectedUnit
     ? (unitTopicsForLevel[selectedUnit] ?? []).filter((t) => levelEntries.some((e) => e.topic === t))
@@ -1379,10 +1520,10 @@ function DefinitionsMode({
     if (filtered.length === 0) return
     const ordered = prioritisedEntries(filtered)
     let qs: DefQuestion[]
-    if (quizType === "mc") qs = generateMCDefQuestions(ordered, DEFINITIONS_BANK, 8, difficulty)
+    if (quizType === "mc") qs = generateMCDefQuestions(ordered, levelEntries, 8, difficulty)
     else if (quizType === "cloze") qs = generateClozeDefQuestions(ordered, 8, difficulty)
     else if (quizType === "match") qs = generateMatchDefQuestions(ordered, difficulty === "easy" ? 5 : difficulty === "medium" ? 10 : 10, difficulty)
-    else if (quizType === "spot-mistake") qs = generateSpotMistakeQuestions(ordered, DEFINITIONS_BANK, 6, difficulty)
+    else if (quizType === "spot-mistake") qs = generateSpotMistakeQuestions(ordered, levelEntries, 6, difficulty)
     else if (quizType === "swapped") qs = generateSwappedQuestions(ordered, difficulty)
     else qs = generateKeywordBuilderQuestions(ordered, 6)
     setQuestions(qs)
@@ -6669,7 +6810,7 @@ function SetupView({
   availablePastPapers: PastPaperMeta[]
 }) {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
-  const subtopics = QA_SUBTOPICS[selectedLevel] || []
+  const subtopics = getSubtopics(selectedSubject, selectedLevel)
   const isPracticeOrMC = appMode === "mc" || appMode === "practice"
   const topicsToShow = subtopics
 
@@ -8345,7 +8486,7 @@ function GenericModal({
   if (!activeModal) return null
 
   const isTeacher = currentUser?.accountType === "teacher"
-  const subtopics = QA_SUBTOPICS[selectedLevel] || []
+  const subtopics = getSubtopics(selectedSubject, selectedLevel)
 
   // ── Pupil progress view ──────────────────────────────────────────────────
   const totalQuestions = Object.values(topicPerformance).reduce((sum, p) => sum + p.total, 0)
@@ -8686,8 +8827,9 @@ function GenericModal({
               {/* Definitions */}
               {(() => {
                 const prog = loadUserDefProgress(selectedPupil, selectedLevel)
-                const unitTopics = DEF_UNIT_TOPICS[selectedLevel] ?? {}
-                const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === selectedLevel)
+                const defLevelKey = getDefLevelKey(selectedSubject, selectedLevel)
+                const unitTopics = DEF_UNIT_TOPICS[defLevelKey] ?? {}
+                const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === defLevelKey)
                 const byTopic = Object.entries(unitTopics)
                   .flatMap(([unit, topics]) => (topics as string[]).map((t) => ({ unit, t })))
                   .filter(({ t }) => levelEntries.some((e) => e.topic === t))
@@ -9940,7 +10082,7 @@ export default function App() {
 
   // Calculate weak topics based on performance data
   const weakTopics = useMemo(() => {
-    const subtopics = QA_SUBTOPICS[selectedLevel] || []
+    const subtopics = getSubtopics(selectedSubject, selectedLevel)
     const performanceList: WeakTopic[] = []
     
     subtopics.forEach(topic => {
@@ -9955,7 +10097,7 @@ export default function App() {
     
     // Sort by lowest score first and take top 3
     return performanceList.sort((a, b) => a.score - b.score).slice(0, 3)
-  }, [selectedLevel, topicPerformance])
+  }, [selectedSubject, selectedLevel, topicPerformance])
 
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add("dark")
@@ -10357,6 +10499,7 @@ export default function App() {
         {view === "definitions" && (
           <DefinitionsMode
             selectedLevel={selectedLevel}
+            selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
             currentUserId={currentUser?.id}
