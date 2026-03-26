@@ -133,7 +133,7 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | null
+type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | null
 type TimingMode = "relaxed" | "exam" | "none"
 type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool"
 
@@ -4937,6 +4937,9 @@ function AuthModal({
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
             {success && <p className="text-green-500 text-sm font-semibold">{success}</p>}
+            <p className={`text-[11px] rounded-xl p-3 border ${isDarkMode ? "text-slate-400 bg-slate-800 border-slate-700" : "text-slate-500 bg-slate-50 border-slate-200"}`}>
+              🔒 <strong>Data Protection:</strong> Your name and email are stored securely on this device and are only used within Trinity Boost. Your progress data is visible to your teacher within your class. We do not share your information with third parties.
+            </p>
             <button
               type="submit"
               className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
@@ -5478,6 +5481,8 @@ function Landing({
   selectedSubject: SubjectId
   isDarkMode: boolean
 }) {
+  const [comingSoonLevel, setComingSoonLevel] = React.useState<string | null>(null)
+
   const allLevels = [
     { id: "National 5", desc: "SCQF Level 5 Fundamentals" },
     {
@@ -5490,6 +5495,14 @@ function Landing({
   const levels = selectedSubject === "Practical Electronics" ? allLevels.slice(0, 1) : allLevels
 
   const subjectInfo = SUBJECTS.find((s) => s.id === selectedSubject)!
+
+  function handleLevelClick(level: { id: string; displayId?: string; desc: string }) {
+    if (level.id !== "National 5") {
+      setComingSoonLevel(level.displayId ?? level.id)
+    } else {
+      onSelectLevel(level.id)
+    }
+  }
 
   return (
     <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
@@ -5510,7 +5523,7 @@ function Landing({
           {levels.map((level) => (
             <button
               key={level.id}
-              onClick={() => onSelectLevel(level.id)}
+              onClick={() => handleLevelClick(level)}
               className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
                 isDarkMode
                   ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
@@ -5525,7 +5538,12 @@ function Landing({
                 {level.displayId ?? level.id}
               </div>
               <p className="text-sm text-slate-500">{level.desc}</p>
-              <div className="mt-6 flex justify-center">
+              {level.id !== "National 5" && (
+                <div className="mt-3 inline-block px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-700">
+                  Coming Soon
+                </div>
+              )}
+              <div className="mt-4 flex justify-center">
                 <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
               </div>
             </button>
@@ -5539,6 +5557,25 @@ function Landing({
           ← Back to Subjects
         </button>
       </div>
+
+      {/* Coming Soon popup for Higher / Advanced Higher */}
+      {comingSoonLevel && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
+            <div className="text-5xl mb-4">🚧</div>
+            <h2 className="text-2xl font-black mb-3">{comingSoonLevel} — Coming Soon!</h2>
+            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              Content for <strong>{comingSoonLevel}</strong> is currently under development and will be available shortly. Stay tuned!
+            </p>
+            <button
+              onClick={() => setComingSoonLevel(null)}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-colors"
+            >
+              OK, got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -6461,25 +6498,52 @@ function ModeSelection({
   selectedSubject: SubjectId
   isDarkMode: boolean
 }) {
+  const [comingSoonMode, setComingSoonMode] = React.useState<string | null>(null)
+
   const allModes = [
-    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing" },
-    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems" },
-    { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice" },
-    { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts" },
-    { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving" },
-    { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice" },
-    { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice" },
-    { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions" },
+    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
+    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems", comingSoon: false },
+    { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice", comingSoon: false },
+    { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
+    { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
+    { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
+    { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
+    { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions", comingSoon: false },
+  ]
+
+  const biologyModes = [
+    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
+    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems", comingSoon: false },
+    { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice", comingSoon: false },
+    { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
+    { id: "problem-solving" as const, icon: FlaskConical, title: "Problem Solving", desc: "Guided biology problem solving practice", comingSoon: true },
+    { id: "essay" as const, icon: Pencil, title: "Essay Questions", desc: "Structured essay writing practice", comingSoon: true },
+    { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
+    { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
+    { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions", comingSoon: false },
   ]
 
   const electronicsModes = [
-    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing" },
-    { id: "exam-paper" as const, icon: Award, title: "Past Papers", desc: "Full past paper under timed conditions" },
-    { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving" },
-    ...ELECTRONICS_TOOL_MODES,
+    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
+    { id: "exam-paper" as const, icon: Award, title: "Past Papers", desc: "Full past paper under timed conditions", comingSoon: false },
+    { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
+    ...ELECTRONICS_TOOL_MODES.map((m) => ({ ...m, comingSoon: false })),
   ]
 
-  const modes = selectedSubject === "Practical Electronics" ? electronicsModes : allModes
+  const modes =
+    selectedSubject === "Biology"
+      ? biologyModes
+      : selectedSubject === "Practical Electronics"
+      ? electronicsModes
+      : allModes
+
+  function handleModeClick(mode: { id: AppMode; title: string; comingSoon: boolean }) {
+    if (mode.comingSoon) {
+      setComingSoonMode(mode.title)
+    } else {
+      onSelectMode(mode.id)
+    }
+  }
 
   return (
     <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center animate-in fade-in slide-in-from-right-4">
@@ -6499,7 +6563,7 @@ function ModeSelection({
           {modes.map((mode) => (
             <button
               key={mode.id}
-              onClick={() => onSelectMode(mode.id)}
+              onClick={() => handleModeClick(mode)}
               className={`group flex flex-col items-center p-10 rounded-3xl transition-all text-center relative overflow-hidden border-2 ${
                 isDarkMode
                   ? "bg-slate-800 border-slate-700 hover:border-amber-500"
@@ -6515,6 +6579,11 @@ function ModeSelection({
               </div>
               <h3 className="text-2xl font-black mb-2">{mode.title}</h3>
               <p className="text-sm opacity-70 font-medium">{mode.desc}</p>
+              {mode.comingSoon && (
+                <div className="mt-3 inline-block px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-700">
+                  Coming Soon
+                </div>
+              )}
               <div className="absolute top-0 right-0 p-4 transition-opacity opacity-5 group-hover:opacity-10">
                 <mode.icon className="w-24 h-24" />
               </div>
@@ -6522,6 +6591,25 @@ function ModeSelection({
           ))}
         </div>
       </div>
+
+      {/* Coming Soon popup for modes under development */}
+      {comingSoonMode && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
+            <div className="text-5xl mb-4">🚧</div>
+            <h2 className="text-2xl font-black mb-3">{comingSoonMode} — Coming Soon!</h2>
+            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              <strong>{comingSoonMode}</strong> is currently under development and will be available shortly. Stay tuned!
+            </p>
+            <button
+              onClick={() => setComingSoonMode(null)}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-colors"
+            >
+              OK, got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -6767,6 +6855,7 @@ function SetupView({
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
+              {selectedSubject !== "Biology" && (
               <label
                 className={`group flex items-center justify-between p-5 rounded-2xl ${
                   isPracticeOrMC ? "cursor-not-allowed opacity-50" : "cursor-pointer"
@@ -6792,6 +6881,7 @@ function SetupView({
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
+              )}
               <label
                 className={`group flex items-center justify-between p-5 rounded-2xl ${
                   appMode === "retrieval" || isPracticeOrMC ? "cursor-not-allowed opacity-50" : "cursor-pointer"
