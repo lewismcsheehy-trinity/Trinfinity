@@ -7,6 +7,7 @@ import * as n5_2023_s2 from "@/data/past-papers/n5-2023-section2"
 import * as n5_2024_s2 from "@/data/past-papers/n5-2024-section2"
 import * as n5_2025_s2 from "@/data/past-papers/n5-2025-section2"
 import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
+import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_Elements_1_20.json"
 import {
   ChevronLeft,
   ChevronRight,
@@ -70,6 +71,25 @@ import {
 
 // Trinity High School Maroon: #800000
 // Trinity High School Gold: #D4AF37
+
+// ── Chemistry Elements Data Booklet ─────────────────────────────────────────
+interface ChemElement {
+  atomic_number: number
+  name: string
+  symbol: string
+  group: number
+  period: number
+  block: string
+  relative_atomic_mass: number
+  density_gcm3: number | null
+  discovery_date: string
+  electron_arrangement: string
+  melting_point_c: number | null
+  boiling_point_c: number | null
+}
+
+const N5_ELEMENTS: ChemElement[] = Object.values(N5_ELEMENTS_RAW as Record<string, ChemElement>)
+  .sort((a, b) => a.atomic_number - b.atomic_number)
 
 const QA_SUBTOPICS: Record<string, string[]> = {
   "National 5": [
@@ -8573,12 +8593,14 @@ function FloatingMenu({
   openModal,
   view,
   currentUser,
+  selectedSubject,
 }: {
   isDarkMode: boolean
   toggleDarkMode: () => void
   openModal: (modal: string) => void
   view: ViewType
   currentUser: UserAccount | null
+  selectedSubject: SubjectId
 }) {
 const [isOpen, setIsOpen] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(false)
@@ -8588,6 +8610,7 @@ const [isOpen, setIsOpen] = useState(false)
   const isPupil = !isTeacher
   const showOutcomes = isPupil && view !== "landing" && view !== "subject-select"
   const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool"
+  const showDataBooklet = selectedSubject === "Chemistry" && view !== "landing" && view !== "subject-select"
   
   return (
   <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
@@ -8622,6 +8645,20 @@ const [isOpen, setIsOpen] = useState(false)
         <Target className="w-5 h-5 text-violet-600" />
       </div>
       <span className="text-sm font-black uppercase tracking-widest">Outcomes</span>
+    </button>
+  )}
+  {showDataBooklet && (
+    <button
+      onClick={() => {
+        openModal("data-booklet")
+        setIsOpen(false)
+      }}
+      className="bg-white dark:bg-slate-800 shadow-xl border-2 border-teal-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+    >
+      <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+        <FlaskConical className="w-5 h-5 text-teal-600" />
+      </div>
+      <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
     </button>
   )}
   {showSyllabus && (
@@ -8701,6 +8738,129 @@ const [isOpen, setIsOpen] = useState(false)
       >
         {isOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
       </button>
+    </div>
+  )
+}
+
+// ─── ChemDataBooklet ──────────────────────────────────────────────────────────
+
+function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
+  const [selectedElement, setSelectedElement] = useState<ChemElement | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const blockColours: Record<string, { bg: string; text: string; border: string }> = {
+    s: { bg: isDarkMode ? "bg-emerald-900/40" : "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-400" },
+    p: { bg: isDarkMode ? "bg-sky-900/40" : "bg-sky-100",     text: "text-sky-700",     border: "border-sky-400"     },
+  }
+
+  const filtered = searchQuery.trim()
+    ? N5_ELEMENTS.filter(el =>
+        el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        el.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(el.atomic_number).includes(searchQuery)
+      )
+    : N5_ELEMENTS
+
+  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+
+  return (
+    <div className="space-y-4">
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-emerald-900/40 border border-emerald-400" : "bg-emerald-100 border border-emerald-400"}`} />
+          <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>s-block</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-sky-900/40 border border-sky-400" : "bg-sky-100 border border-sky-400"}`} />
+          <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>p-block</span>
+        </div>
+        <span className={`text-xs ml-auto ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an element for details</span>
+      </div>
+
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search by name, symbol or number…"
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+        className={`w-full px-4 py-2 rounded-xl border text-sm ${
+          isDarkMode
+            ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
+            : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
+        }`}
+      />
+
+      {/* Element grid */}
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+        {filtered.map(el => {
+          const colours = blockColours[el.block] ?? blockColours.p
+          const isSelected = selectedElement?.symbol === el.symbol
+          return (
+            <button
+              key={el.symbol}
+              onClick={() => setSelectedElement(isSelected ? null : el)}
+              className={`relative p-2 rounded-xl border-2 text-left transition-all hover:scale-105 active:scale-95 ${
+                isSelected
+                  ? `${colours.border} ring-2 ring-offset-1 ${isDarkMode ? "ring-white/30" : "ring-slate-400"}`
+                  : colours.border
+              } ${colours.bg}`}
+            >
+              <span className={`absolute top-1 left-1.5 text-[10px] font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                {el.atomic_number}
+              </span>
+              <div className="mt-3 text-center">
+                <span className={`block text-lg font-black ${colours.text}`}>{el.symbol}</span>
+                <span className={`block text-[10px] font-semibold leading-tight truncate ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{el.name}</span>
+                <span className={`block text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{el.relative_atomic_mass}</span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Detail panel */}
+      {selectedElement && (
+        <div className={`rounded-2xl border-2 p-4 space-y-3 ${
+          blockColours[selectedElement.block]?.border ?? "border-slate-300"
+        } ${cardBg}`}>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <span className={`text-3xl font-black ${blockColours[selectedElement.block]?.text ?? "text-slate-700"}`}>
+                {selectedElement.symbol}
+              </span>
+              <span className={`ml-2 text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
+                {selectedElement.name}
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedElement(null)}
+              className={`p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "Atomic Number",        value: selectedElement.atomic_number },
+              { label: "Relative Atomic Mass",  value: selectedElement.relative_atomic_mass },
+              { label: "Electron Arrangement",  value: selectedElement.electron_arrangement },
+              { label: "Group",                 value: selectedElement.group },
+              { label: "Period",                value: selectedElement.period },
+              { label: "Block",                 value: `${selectedElement.block}-block` },
+              { label: "Melting Point",         value: selectedElement.melting_point_c != null ? `${selectedElement.melting_point_c} °C` : "—" },
+              { label: "Boiling Point",         value: selectedElement.boiling_point_c != null ? `${selectedElement.boiling_point_c} °C` : "—" },
+              { label: "Density (g/cm³)",       value: selectedElement.density_gcm3 != null ? selectedElement.density_gcm3 : "—" },
+              { label: "Discovery",             value: selectedElement.discovery_date },
+            ].map(({ label, value }) => (
+              <div key={label} className={`p-2 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
+                <p className={`text-sm font-bold mt-0.5 ${isDarkMode ? "text-white" : "text-slate-800"}`}>{String(value)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -8889,7 +9049,9 @@ function GenericModal({
                     ? "Assessment Sheets"
                     : activeModal === "outcomes"
                       ? "My Outcomes"
-                      : activeModal}
+                      : activeModal === "data-booklet"
+                        ? "Data Booklet"
+                        : activeModal}
             </h3>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
@@ -9974,6 +10136,11 @@ function GenericModal({
               </div>
             )
           })()}
+
+          {/* ── Data Booklet (Chemistry Elements 1–20) ────────────────────── */}
+          {activeModal === "data-booklet" && (
+            <ChemDataBooklet isDarkMode={isDarkMode} />
+          )}
         </div>
       </div>
     </div>
@@ -10893,7 +11060,7 @@ export default function App() {
           />
         )}
       </main>
-      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} currentUser={currentUser} />
+      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} currentUser={currentUser} selectedSubject={selectedSubject} />
       <GenericModal
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
