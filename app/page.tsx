@@ -277,6 +277,7 @@ interface UserAccount {
   subjectLevels?: Partial<Record<SubjectId, string>>  // "National 5" | "Higher" | "Advanced Higher" | "not sitting"
   lastLogin?: number  // timestamp in ms
   totalSessions?: number  // number of times signed in
+  disableModeLocking?: boolean  // pupils only: opt-out of progressive mode locking
 }
 
 // Hardcoded test accounts — always available regardless of localStorage state.
@@ -1208,21 +1209,27 @@ function generateMCDefQuestions(
   entries: DefinitionEntry[],
   allEntries: DefinitionEntry[],
   count: number = 5,
-  difficulty: DifficultyLevel = "medium"
+  difficulty: DifficultyLevel = "medium",
+  // unitEntries: entries from the same unit as the question topic (for medium)
+  unitEntriesMap?: Record<string, DefinitionEntry[]>,
+  // selectedTopicEntries: entries from only the selected topics (for hard)
+  selectedTopicEntries?: DefinitionEntry[]
 ): DefMCQuestion[] {
   const shuffled = shuffleArray(entries).slice(0, Math.min(count, entries.length))
   return shuffled.map((entry) => {
     let wrongPool: DefinitionEntry[]
     if (difficulty === "easy") {
-      wrongPool = allEntries.filter((e) => e.term !== entry.term && e.topic !== entry.topic)
+      // Easy: distractors from any entry across all units (whole level bank)
+      wrongPool = allEntries.filter((e) => e.term !== entry.term)
     } else if (difficulty === "medium") {
-      wrongPool = allEntries.filter((e) => e.term !== entry.term && e.level === entry.level)
+      // Medium: distractors from the same unit as the question's topic
+      const sameUnitEntries = unitEntriesMap?.[entry.topic] ?? allEntries
+      wrongPool = sameUnitEntries.filter((e) => e.term !== entry.term)
+      if (wrongPool.length < 3) wrongPool = allEntries.filter((e) => e.term !== entry.term)
     } else {
-      const entryKws = new Set(entry.keywords)
-      const withSharedKws = allEntries.filter(
-        (e) => e.term !== entry.term && e.keywords.some((k) => entryKws.has(k))
-      )
-      wrongPool = withSharedKws.length >= 3 ? withSharedKws : allEntries.filter((e) => e.term !== entry.term && e.level === entry.level)
+      // Hard: distractors from the same selected topics
+      const sameTopicPool = (selectedTopicEntries ?? allEntries).filter((e) => e.term !== entry.term)
+      wrongPool = sameTopicPool.length >= 3 ? sameTopicPool : allEntries.filter((e) => e.term !== entry.term)
     }
     if (wrongPool.length < 3) wrongPool = allEntries.filter((e) => e.term !== entry.term)
     const wrong = shuffleArray(wrongPool).slice(0, 3)
@@ -1420,16 +1427,21 @@ function DefinitionsMode({
   selectedSubject,
   onBack,
   isDarkMode,
-  currentUserId,
+  currentUser,
 }: {
   selectedLevel: string
   selectedSubject?: SubjectId
   onBack: () => void
   isDarkMode: boolean
-  currentUserId?: string
+  currentUser?: UserAccount | null
 }) {
   type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
+
+  const currentUserId = currentUser?.id
+
+  // Locking applies only to pupils who haven't opted out
+  const lockingEnabled = currentUser?.accountType === "pupil" && !currentUser?.disableModeLocking
 
   // Compute a subject-qualified level key so chemistry entries are kept separate from physics
   const levelKey = getDefLevelKey(selectedSubject, selectedLevel)
@@ -1460,6 +1472,7 @@ function DefinitionsMode({
 
   // Check if a specific quizType+difficulty combo is unlocked for a given topic
   const isUnlockedForTopic = (topic: string, qt: QuizType, diff: DifficultyLevel): boolean => {
+    if (!lockingEnabled) return true
     const qtIdx = DEF_QUIZ_ORDER.indexOf(qt)
     const diffIdx = DEF_DIFF_ORDER.indexOf(diff)
     // First quiz type + first difficulty is always unlocked
@@ -1481,6 +1494,7 @@ function DefinitionsMode({
 
   // Check if a combo is unlocked for ALL selected topics (or uses fresh-start defaults if no topics selected)
   const isUnlocked = (qt: QuizType, diff: DifficultyLevel): boolean => {
+    if (!lockingEnabled) return true
     if (selectedTopics.length === 0) return qt === "mc" && diff === "easy"
     return selectedTopics.every((topic) => isUnlockedForTopic(topic, qt, diff))
   }
@@ -1519,8 +1533,18 @@ function DefinitionsMode({
     const filtered = levelEntries.filter((e) => selectedTopics.includes(e.topic))
     if (filtered.length === 0) return
     const ordered = prioritisedEntries(filtered)
+
+    // Build unit→entries map for MC medium distractor pool (same unit)
+    const unitEntriesMap: Record<string, DefinitionEntry[]> = {}
+    Object.entries(unitTopicsForLevel).forEach(([, topicsList]) => {
+      const unitPool = levelEntries.filter((e) => topicsList.includes(e.topic))
+      topicsList.forEach((t) => { unitEntriesMap[t] = unitPool })
+    })
+    // Selected topic entries for MC hard distractor pool (same selected topics)
+    const selectedTopicEntries = levelEntries.filter((e) => selectedTopics.includes(e.topic))
+
     let qs: DefQuestion[]
-    if (quizType === "mc") qs = generateMCDefQuestions(ordered, levelEntries, 8, difficulty)
+    if (quizType === "mc") qs = generateMCDefQuestions(ordered, levelEntries, 8, difficulty, unitEntriesMap, selectedTopicEntries)
     else if (quizType === "cloze") qs = generateClozeDefQuestions(ordered, 8, difficulty)
     else if (quizType === "match") qs = generateMatchDefQuestions(ordered, difficulty === "easy" ? 5 : difficulty === "medium" ? 10 : 10, difficulty)
     else if (quizType === "spot-mistake") qs = generateSpotMistakeQuestions(ordered, levelEntries, 6, difficulty)
@@ -1617,10 +1641,53 @@ function DefinitionsMode({
     if (currentUserId) saveUserDefProgress(currentUserId, selectedLevel, updated)
     else saveDefProgress(selectedLevel, updated)
     setSubmitted(true)
-    // Mark this quizType+difficulty as completed for all selected topics
+    // For each selected topic, mark this quizType+difficulty as completed only if ALL
+    // definitions for that topic covered in this quiz were answered correctly.
     const updatedCompletion = { ...completion }
+    // Build a set of terms answered wrongly for quick lookup
+    const wrongTermSet = new Set(wrongTerms)
+    // Collect which terms from which topics were tested in this quiz
+    const topicTermsInQuiz: Record<string, string[]> = {}
+    questions.forEach((q) => {
+      const pairs: { term: string; topic: string }[] = []
+      if ("entry" in q) {
+        const entry = (q as DefMCQuestion | DefClozeQuestion | DefSpotMistakeQuestion | DefKeywordBuilderQuestion).entry
+        pairs.push({ term: entry.term, topic: entry.topic })
+      } else if (q.type === "def-match") {
+        q.pairs.forEach((p) => {
+          const entry = DEFINITIONS_BANK.find((e) => e.term === p.term)
+          if (entry) pairs.push({ term: entry.term, topic: entry.topic })
+        })
+      } else if (q.type === "def-swapped") {
+        q.pairs.forEach((p) => {
+          const entry = DEFINITIONS_BANK.find((e) => e.term === p.term)
+          if (entry) pairs.push({ term: entry.term, topic: entry.topic })
+        })
+      }
+      pairs.forEach(({ term, topic }) => {
+        if (!topicTermsInQuiz[topic]) topicTermsInQuiz[topic] = []
+        if (!topicTermsInQuiz[topic].includes(term)) topicTermsInQuiz[topic].push(term)
+      })
+    })
+    // Mark completion per topic: only if all terms for that topic were answered correctly
     selectedTopics.forEach((topic) => {
-      updatedCompletion[`${topic}::${quizType}::${difficulty}`] = true
+      const termsInQuiz = topicTermsInQuiz[topic] ?? []
+      const allTopicTerms = levelEntries.filter((e) => e.topic === topic).map((e) => e.term)
+      // All terms for this topic that appeared in the quiz must be answered correctly
+      const allTestedCorrect = termsInQuiz.length > 0 && termsInQuiz.every((t) => !wrongTermSet.has(t))
+      // Additionally, all terms in the subtopic must have been tested (full coverage) for locking-aware completion
+      const fullCoverage = allTopicTerms.length > 0 && allTopicTerms.every((t) => termsInQuiz.includes(t))
+      if (lockingEnabled) {
+        // Under strict locking: require all subtopic terms to be tested AND all correct
+        if (allTestedCorrect && fullCoverage) {
+          updatedCompletion[`${topic}::${quizType}::${difficulty}`] = true
+        }
+      } else {
+        // Without locking: mark complete if all tested terms were correct (partial coverage counts)
+        if (allTestedCorrect) {
+          updatedCompletion[`${topic}::${quizType}::${difficulty}`] = true
+        }
+      }
     })
     setCompletion(updatedCompletion)
     if (currentUserId) saveUserDefCompletion(currentUserId, selectedLevel, updatedCompletion)
@@ -1851,7 +1918,7 @@ function DefinitionsMode({
           <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-lg font-black">Quiz Format</h3>
-              <span className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete each format in order to unlock the next</span>
+              {lockingEnabled && <span className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete each format in order to unlock the next</span>}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
               {quizTypes.map((qt) => {
@@ -1890,7 +1957,7 @@ function DefinitionsMode({
           <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBase}`}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-lg font-black">Difficulty</h3>
-              <span className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete easy before medium, medium before hard</span>
+              {lockingEnabled && <span className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Complete easy before medium, medium before hard</span>}
             </div>
             <div className="grid grid-cols-3 gap-3 mt-4">
               {difficulties.map((d) => {
@@ -3248,16 +3315,20 @@ function CalculationsMode({
   selectedLevel,
   onBack,
   isDarkMode,
-  currentUserId,
+  currentUser,
 }: {
   selectedLevel: string
   onBack: () => void
   isDarkMode: boolean
-  currentUserId?: string
+  currentUser?: UserAccount | null
 }) {
   type CalcDifficulty = "easy" | "medium" | "hard"
   type CalcSubMode = CalcDifficulty | "exam-level" | "correct-me" | null
   type CalcPhase = "hub" | "equation-select" | "quiz" | "results"
+
+  const currentUserId = currentUser?.id
+  // Locking applies only to pupils who haven't opted out
+  const lockingEnabled = currentUser?.accountType === "pupil" && !currentUser?.disableModeLocking
 
   const [phase, setPhase] = useState<CalcPhase>("hub")
   const [subMode, setSubMode] = useState<CalcSubMode>(null)
@@ -3488,7 +3559,7 @@ function CalculationsMode({
             </h2>
             <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
               Based on the SQA Relationship Sheet. Choose which equation you want to practise.
-              {difficulty !== "easy" && <span className="ml-1 font-semibold">🔒 Equations are unlocked by completing the previous difficulty first.</span>}
+              {lockingEnabled && difficulty !== "easy" && <span className="ml-1 font-semibold">🔒 Equations are unlocked by completing the previous difficulty first.</span>}
             </p>
           </div>
           {/* SQA level tabs */}
@@ -3530,13 +3601,14 @@ function CalculationsMode({
                     .filter((e) => e.topic === topic)
                     .map((eq) => {
                       const hasBank = Boolean(EQUATION_QUESTION_BANKS[eq.id])
-                      // Lock logic: easy is always available; medium requires easy completion; hard requires medium completion
-                      const isEqLocked =
+                      // Lock logic applies only to pupils without disableModeLocking
+                      const isEqLocked = lockingEnabled && (
                         difficulty === "medium"
                           ? !(calcProgress.easyMode[eq.id]?.total > 0)
                           : difficulty === "hard"
                             ? !(calcProgress.mediumMode[eq.id]?.total > 0)
                             : false
+                      )
                       const lockReason =
                         difficulty === "medium"
                           ? "Complete Easy first"
@@ -9735,9 +9807,37 @@ function ProfileModal({
     currentUser.subjectLevels ?? {}
   )
   const [saved, setSaved] = useState(false)
+  const [disableModeLocking, setDisableModeLocking] = useState<boolean>(currentUser.disableModeLocking ?? false)
+  const [showLockingWarning, setShowLockingWarning] = useState(false)
   const LEVEL_OPTIONS = ["not sitting", "National 5", "Higher", "Advanced Higher"] as const
 
   const isPupil = currentUser.accountType === "pupil"
+
+  function handleToggleModeLocking() {
+    if (!disableModeLocking) {
+      // Trying to disable locking — show warning first
+      setShowLockingWarning(true)
+    } else {
+      // Re-enabling locking — just save immediately
+      const newValue = false
+      setDisableModeLocking(newValue)
+      const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking: newValue }
+      const accounts = loadAccounts()
+      saveAccounts(accounts.map((a) => (a.id === updated.id ? updated : a)))
+      saveCurrentUser(updated)
+      onUpdateUser(updated)
+    }
+  }
+
+  function confirmDisableLocking() {
+    setDisableModeLocking(true)
+    setShowLockingWarning(false)
+    const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking: true }
+    const accounts = loadAccounts()
+    saveAccounts(accounts.map((a) => (a.id === updated.id ? updated : a)))
+    saveCurrentUser(updated)
+    onUpdateUser(updated)
+  }
 
   // Compute total stats from stored progress
   const totalQuestionsAnswered = useMemo(() => {
@@ -9789,7 +9889,7 @@ function ProfileModal({
   const unlockedCount = achievements.filter((a) => a.unlocked).length
 
   function handleSaveLevels() {
-    const updated: UserAccount = { ...currentUser, subjectLevels }
+    const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking }
     const accounts = loadAccounts()
     saveAccounts(accounts.map((a) => (a.id === updated.id ? updated : a)))
     saveCurrentUser(updated)
@@ -9914,6 +10014,29 @@ function ProfileModal({
                 </div>
               )}
 
+              {/* Mode Locking Setting */}
+              <div className={`p-4 rounded-2xl border ${cardBg}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black text-sm mb-1">📐 Progressive Mode Locking</p>
+                    <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      {disableModeLocking
+                        ? "Locking is disabled — all quiz formats and difficulties are available freely."
+                        : "Locking is active — complete each format and difficulty in order to unlock the next."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleModeLocking}
+                    role="switch"
+                    aria-checked={!disableModeLocking}
+                    aria-label={disableModeLocking ? "Progressive locking disabled — click to re-enable" : "Progressive locking enabled — click to disable"}
+                    className={`shrink-0 w-12 h-6 rounded-full relative transition-colors ${disableModeLocking ? "bg-slate-400" : "bg-[#800000]"}`}
+                  >
+                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${disableModeLocking ? "left-0.5" : "left-6"}`} />
+                  </button>
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   onClick={handleSaveLevels}
@@ -9921,6 +10044,49 @@ function ProfileModal({
                 >
                   {saved ? "✓ Saved!" : "Save Changes"}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mode Locking Warning Popup */}
+          {showLockingWarning && (
+            <div
+              className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
+              onClick={() => setShowLockingWarning(false)}
+              onKeyDown={(e) => { if (e.key === "Escape") setShowLockingWarning(false) }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="locking-warning-title"
+            >
+              <div
+                className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-6 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-3xl mb-3 text-center">🔬</div>
+                <h3 id="locking-warning-title" className="text-lg font-black text-center mb-3">Why Progressive Locking Matters</h3>
+                <div className={`text-sm space-y-2 mb-5 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                  <p>Research on learning science consistently shows that <strong>spaced, linear progression</strong> leads to significantly better long-term retention than random access:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-xs">
+                    <li><strong>Mastery before advancement</strong> — completing easier formats first builds the mental scaffolding needed for harder ones.</li>
+                    <li><strong>Interleaving effect</strong> — moving through difficulty levels in order maximises the spacing between repetitions of the same material.</li>
+                    <li><strong>Reduced cognitive overload</strong> — tackling formats sequentially keeps working memory free for deeper processing.</li>
+                  </ul>
+                  <p className="text-xs mt-2">Students who follow the unlocking order consistently outperform those who skip ahead. We strongly recommend keeping locking enabled.</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setShowLockingWarning(false)}
+                    className="w-full py-3 rounded-xl font-black text-sm bg-[#800000] text-white hover:bg-[#600000] transition-colors"
+                  >
+                    Keep Progressive Locking ✓
+                  </button>
+                  <button
+                    onClick={confirmDisableLocking}
+                    className={`w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${isDarkMode ? "border-slate-600 text-slate-400 hover:border-slate-400" : "border-slate-300 text-slate-500 hover:border-slate-400"}`}
+                  >
+                    I understand, disable locking
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -10502,7 +10668,7 @@ export default function App() {
             selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUserId={currentUser?.id}
+            currentUser={currentUser}
           />
         )}
         {view === "calculations" && (
@@ -10510,7 +10676,7 @@ export default function App() {
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUserId={currentUser?.id}
+            currentUser={currentUser}
           />
         )}
         {view === "assignment" && (
