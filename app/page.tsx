@@ -156,7 +156,7 @@ type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
 
 /** Returns the subject-qualified level key used as a lookup key in QA_SUBTOPICS and DEF_UNIT_TOPICS/DEFINITIONS_BANK. */
 function getDefLevelKey(subject: SubjectId | string | undefined, level: string): string {
-  return subject === "Chemistry" ? `${subject}-${level}` : level
+  return (subject === "Chemistry" || subject === "Biology") ? `${subject}-${level}` : level
 }
 
 /** Returns the subtopic list for the given subject and level, falling back to the level-only list. */
@@ -865,6 +865,192 @@ const DEFINITIONS_BANK: DefinitionEntry[] = [
   { term: "Titration (Analysis)", definition: "A technique used to accurately measure the volume of a substance required to react with another, often used to determine concentration", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["volume", "react", "concentration"] },
   { term: "Concordant", definition: "Titration results that are within 0.2 cm3 of each other", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["titration", "0.2 cm3", "results"] },
   { term: "Precipitation", definition: "The formation of an insoluble solid when two solutions are mixed", topic: "Chemical Analysis", level: "Chemistry-National 5", keywords: ["insoluble", "solid", "solutions"] },
+
+  // Biology National 5 — Ecosystems & Interdependence
+  { term: "Habitat", definition: "The place where an animal, plant or micro-organism lives", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["place", "lives"] },
+  { term: "Community", definition: "All the different species living in an area", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["species", "area"] },
+  { term: "Population", definition: "The number of one species in an area", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["species", "area"] },
+  { term: "Ecosystem", definition: "All the organisms living in a habitat and the non-living components they interact with", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["organisms", "habitat", "non-living"] },
+  { term: "Niche", definition: "The role an organism plays in its ecosystem", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["role", "organism", "ecosystem"] },
+  { term: "Species", definition: "A group of organisms which can breed to produce fertile offspring", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["breed", "fertile", "offspring"] },
+  { term: "Herbivore", definition: "An organism which eats only plant material", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["plant", "eats"] },
+  { term: "Omnivore", definition: "An organism which eats both plant and animal material", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["plant", "animal", "eats"] },
+  { term: "Carnivore", definition: "An organism which eats only animal material", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["animal", "eats"] },
+  { term: "Producer", definition: "A green plant which produces its own food", topic: "Ecosystems & Interdependence", level: "Biology-National 5", keywords: ["green plant", "food"] },
+
+  // Biology National 5 — Competition & Environmental Factors
+  { term: "Biotic Factor", definition: "A living factor which can affect population size", topic: "Competition & Environmental Factors", level: "Biology-National 5", keywords: ["living", "population"] },
+  { term: "Abiotic Factor", definition: "A non-living factor which can affect population size", topic: "Competition & Environmental Factors", level: "Biology-National 5", keywords: ["non-living", "population"] },
+
+  // Biology National 5 — Sampling Techniques
+  { term: "Quadrat", definition: "A square frame used to estimate the number or distribution of plants or slow-moving animals in an area", topic: "Sampling Techniques", level: "Biology-National 5", keywords: ["frame", "estimate", "plants"] },
+  { term: "Pitfall Trap", definition: "A container sunk into the ground used to capture and estimate the number of invertebrates", topic: "Sampling Techniques", level: "Biology-National 5", keywords: ["invertebrates", "capture", "estimate"] },
+  { term: "Indicator Species", definition: "A species whose presence or absence indicates the quality of the environment", topic: "Sampling Techniques", level: "Biology-National 5", keywords: ["environmental quality", "presence", "absence"] },
+
+  // Biology National 5 — Photosynthesis
+  { term: "Photosynthesis", definition: "The process by which plants use light energy, carbon dioxide and water to produce glucose and oxygen", topic: "Photosynthesis", level: "Biology-National 5", keywords: ["light energy", "carbon dioxide", "water", "glucose"] },
+  { term: "Light Reactions", definition: "The stage of photosynthesis where light energy is used to split water, producing hydrogen, oxygen and ATP", topic: "Photosynthesis", level: "Biology-National 5", keywords: ["light energy", "water", "ATP", "oxygen"] },
+  { term: "Carbon Fixation", definition: "The stage of photosynthesis where hydrogen, carbon dioxide and ATP are used to produce sugar", topic: "Photosynthesis", level: "Biology-National 5", keywords: ["hydrogen", "carbon dioxide", "ATP", "sugar"] },
+  { term: "Chlorophyll", definition: "The green pigment found in chloroplasts that absorbs light energy for photosynthesis", topic: "Photosynthesis", level: "Biology-National 5", keywords: ["green pigment", "light energy", "chloroplast"] },
+
+  // Biology National 5 — Cell Structure
+  { term: "Cell Membrane", definition: "The selectively permeable barrier surrounding a cell that controls the entry and exit of materials", topic: "Cell Structure", level: "Biology-National 5", keywords: ["selectively permeable", "controls", "entry", "exit"] },
+  { term: "Cytoplasm", definition: "The jelly-like fluid inside a cell where many chemical reactions take place", topic: "Cell Structure", level: "Biology-National 5", keywords: ["chemical reactions", "fluid"] },
+  { term: "Ribosome", definition: "The organelle where proteins are synthesised", topic: "Cell Structure", level: "Biology-National 5", keywords: ["protein synthesis", "organelle"] },
+  { term: "Nucleus", definition: "The organelle that contains the genetic information and controls cell activities", topic: "Cell Structure", level: "Biology-National 5", keywords: ["genetic information", "controls"] },
+  { term: "Mitochondrion", definition: "The organelle that is the site of aerobic respiration, releasing energy for the cell", topic: "Cell Structure", level: "Biology-National 5", keywords: ["aerobic respiration", "energy"] },
+  { term: "Chloroplast", definition: "The organelle found in plant cells that is the site of photosynthesis", topic: "Cell Structure", level: "Biology-National 5", keywords: ["photosynthesis", "plant cells"] },
+  { term: "Vacuole", definition: "A membrane-bound space in plant cells that stores water, minerals and other substances", topic: "Cell Structure", level: "Biology-National 5", keywords: ["stores", "water", "minerals", "plant"] },
+  { term: "Plasmid", definition: "A small circular piece of DNA found in bacteria, separate from the main chromosome", topic: "Cell Structure", level: "Biology-National 5", keywords: ["circular DNA", "bacteria"] },
+
+  // Biology National 5 — Transport
+  { term: "Diffusion", definition: "The movement of molecules from an area of high concentration to an area of low concentration", topic: "Transport", level: "Biology-National 5", keywords: ["high concentration", "low concentration", "movement"] },
+  { term: "Osmosis", definition: "The movement of water molecules through a selectively permeable membrane from a region of high water concentration to a region of low water concentration", topic: "Transport", level: "Biology-National 5", keywords: ["water", "selectively permeable membrane", "concentration"] },
+  { term: "Active Transport", definition: "The movement of molecules against a concentration gradient using energy from respiration", topic: "Transport", level: "Biology-National 5", keywords: ["against concentration gradient", "energy", "respiration"] },
+
+  // Biology National 5 — DNA & Proteins
+  { term: "DNA", definition: "A double helix molecule made of two strands of nucleotides that carries the genetic code", topic: "DNA & Proteins", level: "Biology-National 5", keywords: ["double helix", "nucleotides", "genetic code"] },
+  { term: "Gene", definition: "A section of DNA that codes for the production of a specific protein", topic: "DNA & Proteins", level: "Biology-National 5", keywords: ["DNA", "codes", "protein"] },
+  { term: "mRNA", definition: "Messenger RNA that carries the genetic code from the nucleus to the ribosome for protein synthesis", topic: "DNA & Proteins", level: "Biology-National 5", keywords: ["messenger", "nucleus", "ribosome", "protein synthesis"] },
+  { term: "Protein", definition: "A molecule made of a chain of amino acids; proteins have many functions in the body including as enzymes and structural materials", topic: "DNA & Proteins", level: "Biology-National 5", keywords: ["amino acids", "chain", "functions"] },
+
+  // Biology National 5 — Enzymes
+  { term: "Enzyme", definition: "A biological catalyst made of protein that speeds up chemical reactions without being used up", topic: "Enzymes", level: "Biology-National 5", keywords: ["catalyst", "protein", "speeds up"] },
+  { term: "Substrate", definition: "The specific molecule that an enzyme acts upon", topic: "Enzymes", level: "Biology-National 5", keywords: ["molecule", "enzyme acts on"] },
+  { term: "Product", definition: "The substance produced as a result of an enzyme-catalysed reaction", topic: "Enzymes", level: "Biology-National 5", keywords: ["substance", "produced", "reaction"] },
+  { term: "Active Site", definition: "The specific region on an enzyme where the substrate binds", topic: "Enzymes", level: "Biology-National 5", keywords: ["region", "substrate", "binds"] },
+  { term: "Denatured", definition: "A change in the shape of an enzyme's active site caused by high temperature or extreme pH, making it permanently inactive", topic: "Enzymes", level: "Biology-National 5", keywords: ["shape change", "inactive", "temperature", "pH"] },
+
+  // Biology National 5 — Cell Division
+  { term: "Chromosome", definition: "A thread-like structure made of DNA found in the nucleus of a cell", topic: "Cell Division", level: "Biology-National 5", keywords: ["DNA", "nucleus", "thread-like"] },
+  { term: "Chromatid", definition: "One of the two identical copies of a chromosome joined at the centromere after DNA replication", topic: "Cell Division", level: "Biology-National 5", keywords: ["identical copy", "chromosome", "centromere"] },
+  { term: "Centromere", definition: "The region that joins two sister chromatids together", topic: "Cell Division", level: "Biology-National 5", keywords: ["joins", "chromatids"] },
+  { term: "Mitosis", definition: "A type of cell division that produces two genetically identical daughter cells, each with the same number of chromosomes as the parent cell", topic: "Cell Division", level: "Biology-National 5", keywords: ["identical", "daughter cells", "chromosomes"] },
+  { term: "Diploid", definition: "A cell that contains two sets of chromosomes (2n)", topic: "Cell Division", level: "Biology-National 5", keywords: ["two sets", "chromosomes", "2n"] },
+  { term: "Haploid", definition: "A cell that contains one set of chromosomes (n), as found in gametes", topic: "Cell Division", level: "Biology-National 5", keywords: ["one set", "chromosomes", "gametes"] },
+
+  // Biology National 5 — Nervous System
+  { term: "CNS", definition: "The central nervous system, consisting of the brain and spinal cord", topic: "Nervous System", level: "Biology-National 5", keywords: ["brain", "spinal cord", "central"] },
+  { term: "Sensory Neuron", definition: "A nerve cell that carries electrical impulses from receptors to the central nervous system", topic: "Nervous System", level: "Biology-National 5", keywords: ["receptors", "central nervous system", "impulses"] },
+  { term: "Motor Neuron", definition: "A nerve cell that carries electrical impulses from the central nervous system to effectors (muscles or glands)", topic: "Nervous System", level: "Biology-National 5", keywords: ["central nervous system", "effectors", "muscles"] },
+  { term: "Synapse", definition: "The gap between two neurons where a chemical neurotransmitter is released to pass an impulse from one neuron to the next", topic: "Nervous System", level: "Biology-National 5", keywords: ["gap", "neurons", "neurotransmitter"] },
+  { term: "Reflex", definition: "An automatic, rapid response to a stimulus that does not involve conscious thought", topic: "Nervous System", level: "Biology-National 5", keywords: ["automatic", "rapid", "stimulus"] },
+
+  // Biology National 5 — Hormones
+  { term: "Hormone", definition: "A chemical messenger produced by a gland and transported in the blood to a target organ", topic: "Hormones", level: "Biology-National 5", keywords: ["chemical messenger", "gland", "blood", "target organ"] },
+  { term: "Insulin", definition: "A hormone produced by the pancreas that lowers blood glucose levels by stimulating cells to absorb glucose", topic: "Hormones", level: "Biology-National 5", keywords: ["pancreas", "lowers", "blood glucose"] },
+  { term: "Glucagon", definition: "A hormone produced by the pancreas that raises blood glucose levels by stimulating the liver to release glucose", topic: "Hormones", level: "Biology-National 5", keywords: ["pancreas", "raises", "blood glucose", "liver"] },
+
+  // Biology National 5 — Reproduction & Inheritance
+  { term: "Gametes", definition: "Sex cells (sperm and egg) that are haploid and fuse during fertilisation", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["sex cells", "sperm", "egg", "haploid"] },
+  { term: "Zygote", definition: "The diploid cell formed when a sperm cell and an egg cell fuse during fertilisation", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["fertilisation", "sperm", "egg", "diploid"] },
+  { term: "Variation", definition: "Differences in characteristics between individuals of the same species", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["differences", "characteristics", "species"] },
+  { term: "Alleles", definition: "Different forms of the same gene", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["forms", "gene"] },
+  { term: "Genotype", definition: "The genetic makeup of an organism, describing the alleles it carries", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["genetic makeup", "alleles"] },
+  { term: "Phenotype", definition: "The observable physical characteristics of an organism, resulting from its genotype and the environment", topic: "Reproduction & Inheritance", level: "Biology-National 5", keywords: ["observable", "characteristics", "genotype"] },
+
+  // Biology National 5 — Transport in Plants
+  { term: "Xylem", definition: "A plant tissue that transports water and dissolved minerals from the roots upwards through the plant", topic: "Transport in Plants", level: "Biology-National 5", keywords: ["water", "minerals", "roots", "upwards"] },
+  { term: "Phloem", definition: "A plant tissue that transports dissolved sugars produced by photosynthesis from the leaves to other parts of the plant", topic: "Transport in Plants", level: "Biology-National 5", keywords: ["sugars", "photosynthesis", "leaves"] },
+  { term: "Transpiration", definition: "The loss of water vapour from the leaves of a plant through the stomata", topic: "Transport in Plants", level: "Biology-National 5", keywords: ["water vapour", "leaves", "stomata"] },
+
+  // Biology National 5 — Circulatory System
+  { term: "Heart", definition: "The muscular organ that pumps blood around the body", topic: "Circulatory System", level: "Biology-National 5", keywords: ["muscular", "pumps", "blood"] },
+  { term: "Artery", definition: "A blood vessel that carries oxygenated blood away from the heart to the body", topic: "Circulatory System", level: "Biology-National 5", keywords: ["oxygenated", "away from heart"] },
+  { term: "Vein", definition: "A blood vessel that carries deoxygenated blood towards the heart", topic: "Circulatory System", level: "Biology-National 5", keywords: ["deoxygenated", "towards heart"] },
+  { term: "Capillary", definition: "The smallest blood vessel where exchange of materials between blood and body cells takes place", topic: "Circulatory System", level: "Biology-National 5", keywords: ["smallest", "exchange", "body cells"] },
+  { term: "Red Blood Cells", definition: "Blood cells that contain haemoglobin and carry oxygen around the body", topic: "Circulatory System", level: "Biology-National 5", keywords: ["haemoglobin", "oxygen"] },
+  { term: "White Blood Cells", definition: "Blood cells that form part of the immune system and help fight infection", topic: "Circulatory System", level: "Biology-National 5", keywords: ["immune system", "infection"] },
+
+  // National 5 — additional Physics entries from physics-defs-n5
+  // Vectors and Scalars
+  { term: "Bearing", definition: "A 3-digit direction measured clockwise from North", topic: "Vectors and Scalars", level: "National 5", keywords: ["direction", "North", "clockwise"] },
+
+  // Velocity-time graphs
+  { term: "Instantaneous Speed", definition: "The speed of an object at a particular moment in time", topic: "Velocity-time graphs", level: "National 5", keywords: ["speed", "moment", "time"] },
+
+  // Acceleration
+  { term: "Acceleration due to Gravity", definition: "The acceleration of a freely falling object near Earth's surface, equal to 9.8 m/s²", topic: "Acceleration", level: "National 5", keywords: ["9.8", "gravity", "falling"] },
+
+  // Newton's Laws
+  { term: "Balanced Forces", definition: "Forces that are equal in size and opposite in direction, resulting in no change in motion", topic: "Newton's Laws", level: "National 5", keywords: ["equal", "opposite", "no change"] },
+  { term: "Unbalanced Forces", definition: "Forces that are not equal, resulting in acceleration of an object", topic: "Newton's Laws", level: "National 5", keywords: ["not equal", "acceleration"] },
+
+  // Projectile Motion
+  { term: "Trajectory", definition: "The curved path followed by a projectile under gravity", topic: "Projectile Motion", level: "National 5", keywords: ["curved path", "gravity"] },
+  { term: "Range", definition: "The horizontal distance travelled by a projectile", topic: "Projectile Motion", level: "National 5", keywords: ["horizontal distance"] },
+  { term: "Time of Flight", definition: "The total time a projectile spends in the air", topic: "Projectile Motion", level: "National 5", keywords: ["total time", "air"] },
+  { term: "Satellite", definition: "An object in orbit; a projectile in freefall with sufficient horizontal velocity to keep missing the Earth", topic: "Projectile Motion", level: "National 5", keywords: ["orbit", "freefall", "horizontal velocity"] },
+
+  // Space Exploration — additional
+  { term: "Celestial Body", definition: "A natural object found in space, such as a star, planet or moon", topic: "Space Exploration", level: "National 5", keywords: ["natural", "space"] },
+  { term: "Planet", definition: "A large object that orbits a star and has cleared its orbital path", topic: "Space Exploration", level: "National 5", keywords: ["orbits", "star"] },
+  { term: "Dwarf Planet", definition: "A planet-like object that orbits the sun but has not cleared its orbital neighbourhood", topic: "Space Exploration", level: "National 5", keywords: ["orbits", "sun", "not cleared"] },
+  { term: "Exoplanet", definition: "A planet located outside our solar system, orbiting another star", topic: "Space Exploration", level: "National 5", keywords: ["outside solar system", "star"] },
+  { term: "Moon", definition: "A natural satellite that orbits a planet", topic: "Space Exploration", level: "National 5", keywords: ["natural satellite", "planet"] },
+  { term: "Asteroid", definition: "A rocky object that orbits the sun, smaller than a planet", topic: "Space Exploration", level: "National 5", keywords: ["rocky", "orbits", "sun"] },
+  { term: "Star", definition: "A massive sphere of hot gas that produces energy through nuclear fusion", topic: "Space Exploration", level: "National 5", keywords: ["hot gas", "nuclear fusion", "energy"] },
+  { term: "Solar System", definition: "A star together with all the planets, moons and other objects that orbit it", topic: "Space Exploration", level: "National 5", keywords: ["star", "planets", "orbit"] },
+  { term: "Galaxy", definition: "A large collection of stars, gas and dust held together by gravity", topic: "Space Exploration", level: "National 5", keywords: ["stars", "gas", "gravity"] },
+  { term: "Universe", definition: "Everything that exists, including all galaxies, stars and space", topic: "Space Exploration", level: "National 5", keywords: ["galaxies", "everything"] },
+  { term: "Geostationary Satellite", definition: "A satellite with an orbital period of 24 hours that stays above the same point on Earth's surface at an altitude of approximately 36,000 km", topic: "Space Exploration", level: "National 5", keywords: ["24 hours", "orbital period", "36000 km"] },
+  { term: "Orbital Period", definition: "The time taken for an object to complete one full orbit", topic: "Space Exploration", level: "National 5", keywords: ["time", "orbit", "complete"] },
+  { term: "Orbital Radius", definition: "The distance from the centre of the object being orbited to the orbiting object", topic: "Space Exploration", level: "National 5", keywords: ["distance", "centre", "orbit"] },
+  { term: "Vacuum", definition: "A region containing no matter or particles", topic: "Space Exploration", level: "National 5", keywords: ["no particles", "no matter"] },
+
+  // Cosmology — additional
+  { term: "Age of Universe", definition: "The time since the Big Bang, approximately 13.8 billion years", topic: "Cosmology", level: "National 5", keywords: ["13.8 billion", "Big Bang"] },
+  { term: "CMBR", definition: "Cosmic Microwave Background Radiation — low-level radiation left over from the Big Bang, providing evidence for the Big Bang theory", topic: "Cosmology", level: "National 5", keywords: ["microwave", "background", "Big Bang", "evidence"] },
+  { term: "Continuous Spectrum", definition: "A spectrum showing all wavelengths of visible light (all colours of the rainbow, ROYGBIV)", topic: "Cosmology", level: "National 5", keywords: ["all wavelengths", "ROYGBIV", "colours"] },
+  { term: "Line Emission Spectrum", definition: "A spectrum showing bright coloured lines on a dark background, unique to each element", topic: "Cosmology", level: "National 5", keywords: ["bright lines", "dark background", "element"] },
+  { term: "Line Absorption Spectrum", definition: "A continuous spectrum with dark lines where specific wavelengths have been absorbed by an element", topic: "Cosmology", level: "National 5", keywords: ["dark lines", "absorbed", "continuous"] },
+
+  // Current, voltage and resistance — additional
+  { term: "Direct Current", definition: "An electric current that flows in one direction only", topic: "Current, voltage and resistance", level: "National 5", keywords: ["one direction"] },
+  { term: "Alternating Current", definition: "An electric current that regularly reverses direction", topic: "Current, voltage and resistance", level: "National 5", keywords: ["reverses direction", "regular"] },
+  { term: "Voltage", definition: "The energy transferred per unit charge; also called potential difference", topic: "Current, voltage and resistance", level: "National 5", keywords: ["energy", "charge"] },
+  { term: "Ohm's Law", definition: "The current through a resistor is directly proportional to the voltage across it, provided temperature remains constant", topic: "Current, voltage and resistance", level: "National 5", keywords: ["proportional", "voltage", "temperature constant"] },
+  { term: "Ohmic Conductor", definition: "A conductor that obeys Ohm's Law, having a constant resistance", topic: "Current, voltage and resistance", level: "National 5", keywords: ["constant resistance", "Ohm's Law"] },
+  { term: "Non-Ohmic Conductor", definition: "A conductor whose resistance changes with current or voltage, not obeying Ohm's Law", topic: "Current, voltage and resistance", level: "National 5", keywords: ["changing resistance"] },
+  { term: "Series Circuit", definition: "A circuit in which components are connected in a single loop, so the same current flows through all components", topic: "Current, voltage and resistance", level: "National 5", keywords: ["single loop", "same current"] },
+  { term: "Parallel Circuit", definition: "A circuit in which components are connected across the same two points, so the voltage across each is the same", topic: "Current, voltage and resistance", level: "National 5", keywords: ["same voltage", "multiple paths"] },
+
+  // Electrical Power — additional
+  { term: "Fuse", definition: "A safety device containing a thin wire that melts and breaks the circuit if the current exceeds a safe level", topic: "Electrical Power", level: "National 5", keywords: ["melts", "current", "safety"] },
+  { term: "Diode", definition: "A component that allows current to flow in one direction only", topic: "Electrical Power", level: "National 5", keywords: ["one direction", "current"] },
+  { term: "LED", definition: "Light Emitting Diode — a diode that emits light when current flows through it", topic: "Electrical Power", level: "National 5", keywords: ["light emitting", "diode"] },
+  { term: "Transistor", definition: "An electronic component used as a switch or amplifier in circuits", topic: "Electrical Power", level: "National 5", keywords: ["switch", "amplifier"] },
+  { term: "Capacitor", definition: "A component that stores electrical charge", topic: "Electrical Power", level: "National 5", keywords: ["stores", "charge"] },
+  { term: "Thermistor", definition: "A component whose resistance changes with temperature; most thermistors used in circuits have a resistance that decreases as temperature increases", topic: "Electrical Power", level: "National 5", keywords: ["temperature", "resistance", "changes"] },
+  { term: "LDR", definition: "Light Dependent Resistor — a component whose resistance decreases as light intensity increases", topic: "Electrical Power", level: "National 5", keywords: ["light", "resistance decreases"] },
+  { term: "Solar Cell", definition: "A device that converts light energy into electrical energy", topic: "Electrical Power", level: "National 5", keywords: ["light energy", "electrical energy"] },
+
+  // Specific Heat Capacity — additional
+  { term: "Heat", definition: "A form of energy associated with the total kinetic energy of the particles in a substance", topic: "Specific Heat Capacity", level: "National 5", keywords: ["energy", "kinetic", "particles"] },
+  { term: "Temperature", definition: "A measure of the average kinetic energy of the particles in a substance", topic: "Specific Heat Capacity", level: "National 5", keywords: ["average kinetic energy", "particles"] },
+
+  // Specific Latent Heat — additional
+  { term: "Fusion (Latent Heat)", definition: "The change of state from solid to liquid (melting); the specific latent heat of fusion is the energy needed to melt 1 kg of a substance", topic: "Specific Latent Heat", level: "National 5", keywords: ["solid", "liquid", "melting"] },
+  { term: "Vaporisation (Latent Heat)", definition: "The change of state from liquid to gas (evaporation); the specific latent heat of vaporisation is the energy needed to evaporate 1 kg of a substance", topic: "Specific Latent Heat", level: "National 5", keywords: ["liquid", "gas", "evaporation"] },
+  { term: "Condensing", definition: "The change of state from gas to liquid, releasing energy", topic: "Specific Latent Heat", level: "National 5", keywords: ["gas", "liquid", "releasing energy"] },
+  { term: "Freezing", definition: "The change of state from liquid to solid, releasing energy", topic: "Specific Latent Heat", level: "National 5", keywords: ["liquid", "solid", "releasing energy"] },
+
+  // Pressure, Kinetic Theory and Gas Laws — additional
+  { term: "Absolute Zero", definition: "The lowest possible temperature, −273°C (0 K), at which particles have minimum kinetic energy and gas pressure would be zero", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["−273", "lowest temperature", "zero pressure"] },
+  { term: "Boyle's Law", definition: "At constant temperature, the pressure of a fixed mass of gas is inversely proportional to its volume", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["pressure", "volume", "inversely proportional", "constant temperature"] },
+  { term: "Charles' Law", definition: "At constant pressure, the volume of a fixed mass of gas is directly proportional to its absolute temperature", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["volume", "temperature", "directly proportional", "constant pressure"] },
+  { term: "Gay-Lussac's Law", definition: "At constant volume, the pressure of a fixed mass of gas is directly proportional to its absolute temperature", topic: "Pressure, Kinetic Theory and Gas Laws", level: "National 5", keywords: ["pressure", "temperature", "directly proportional", "constant volume"] },
+
+  // Nuclear Radiation — additional
+  { term: "Ionisation", definition: "The process of removing or adding electrons to an atom, giving it a charge", topic: "Nuclear Radiation", level: "National 5", keywords: ["electrons", "charge", "atom"] },
+  { term: "Activity", definition: "The number of radioactive decays per second, measured in becquerels (Bq)", topic: "Nuclear Radiation", level: "National 5", keywords: ["decays per second", "becquerels"] },
+  { term: "Absorbed Dose", definition: "The energy absorbed from radiation per kilogram of tissue, measured in grays (Gy)", topic: "Nuclear Radiation", level: "National 5", keywords: ["energy absorbed", "kilogram", "grays"] },
+  { term: "Equivalent Dose", definition: "The absorbed dose multiplied by the radiation weighting factor, measuring biological effect in sieverts (Sv)", topic: "Nuclear Radiation", level: "National 5", keywords: ["absorbed dose", "weighting factor", "sieverts"] },
+  { term: "Radiation Weighting Factor", definition: "A number that accounts for the relative biological damage caused by different types of radiation", topic: "Nuclear Radiation", level: "National 5", keywords: ["biological damage", "radiation type"] },
+  { term: "Background Radiation", definition: "Low-level radiation present in the environment from both natural and artificial sources", topic: "Nuclear Radiation", level: "National 5", keywords: ["environment", "natural", "artificial"] },
+  { term: "Nuclear Fission", definition: "The splitting of a large nucleus into two smaller nuclei, releasing energy and neutrons", topic: "Nuclear Radiation", level: "National 5", keywords: ["splitting", "nucleus", "energy", "neutrons"] },
+  { term: "Chain Reaction", definition: "A self-sustaining sequence of fission reactions where neutrons released by each fission event trigger further fissions", topic: "Nuclear Radiation", level: "National 5", keywords: ["self-sustaining", "fission", "neutrons"] },
+  { term: "Nuclear Fusion", definition: "The joining of two light nuclei to form a heavier nucleus, releasing energy", topic: "Nuclear Radiation", level: "National 5", keywords: ["joining", "light nuclei", "energy"] },
 ]
 
 const VALID_LEVELS = ["National 5", "Higher", "Advanced Higher"]
@@ -900,9 +1086,14 @@ const DEF_UNIT_TOPICS: Record<string, Record<string, string[]>> = {
     Other: ["Uncertainties"],
   },
   "Chemistry-National 5": {
-    "Unit 1": ["Rates of Reaction", "Atomic Structure", "Bonding and Structure", "Formulae and Reacting Quantities", "Acids and Bases"],
-    "Unit 2": ["Homologous Series & Hydrocarbons", "Everyday Consumer Products", "Energy from Fuels"],
-    "Unit 3": ["Metals", "Plastics", "Fertilisers", "Nuclear Chemistry", "Chemical Analysis"],
+    "Unit 1 - Chemical Changes and Structure": ["Rates of Reaction", "Atomic Structure", "Bonding and Structure", "Formulae and Reacting Quantities", "Acids and Bases"],
+    "Unit 2 - Nature's Chemistry": ["Homologous Series & Hydrocarbons", "Everyday Consumer Products", "Energy from Fuels"],
+    "Unit 3 - Chemistry in Society": ["Metals", "Plastics", "Fertilisers", "Nuclear Chemistry", "Chemical Analysis"],
+  },
+  "Biology-National 5": {
+    "Unit 1 - Life on Earth": ["Ecosystems & Interdependence", "Competition & Environmental Factors", "Sampling Techniques", "Photosynthesis"],
+    "Unit 2 - Cell Biology": ["Cell Structure", "Transport", "DNA & Proteins", "Enzymes"],
+    "Unit 3 - Multicellular Organisms": ["Cell Division", "Nervous System", "Hormones", "Reproduction & Inheritance", "Transport in Plants", "Circulatory System"],
   },
 }
 
