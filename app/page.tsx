@@ -2085,6 +2085,28 @@ function DefinitionsMode({
     // Whether the current quizType+difficulty selection is valid to start
     const canStart = selectedTopics.length > 0 && isUnlocked(quizType, difficulty)
 
+    // Returns the highest difficulty level accessible for a given topic+quiz type (used for per-topic access badges)
+    const getTopicHighestDiff = (topic: string, qt: QuizType): "locked" | "easy" | "medium" | "hard" => {
+      if (!lockingEnabled) return "hard"
+      if (!isUnlockedForTopic(topic, qt, "easy")) return "locked"
+      if (!isUnlockedForTopic(topic, qt, "medium")) return "easy"
+      if (!isUnlockedForTopic(topic, qt, "hard")) return "medium"
+      return "hard"
+    }
+
+    // Short labels for each quiz type in the per-topic access badges
+    const qtShortLabel: Record<QuizType, string> = {
+      mc: "MC", match: "Match", swapped: "Swap", cloze: "Cloze", "keyword-builder": "KW", "spot-mistake": "Spot",
+    }
+
+    // CSS classes for the per-topic access badge colours
+    const accessBadgeClass = (level: "locked" | "easy" | "medium" | "hard") => {
+      if (level === "locked") return "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
+      if (level === "easy") return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+      if (level === "medium") return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+      return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+    }
+
     return (
       <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
         <div className="max-w-4xl mx-auto">
@@ -2105,6 +2127,15 @@ function DefinitionsMode({
                 <button onClick={clearAll} className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">Clear</button>
               </div>
             </div>
+            {lockingEnabled && (
+              <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                <span className="font-bold uppercase tracking-wide">Access key:</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-600" />Locked</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-400 dark:bg-green-600" />Easy</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-400 dark:bg-amber-500" />Medium</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-400 dark:bg-red-600" />Hard</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {topics.map((topic) => {
                 const count = levelEntries.filter((e) => e.topic === topic).length
@@ -2113,12 +2144,28 @@ function DefinitionsMode({
                 const weakCount = topicEntries.filter((e) => (progress[e.term]?.incorrect ?? 0) > 0).length
                 return (
                   <button key={topic} onClick={() => toggleTopic(topic)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${sel ? "border-[#800000] bg-red-50 dark:bg-red-900/20" : isDarkMode ? "border-slate-600 hover:border-slate-500" : "border-slate-200 hover:border-slate-300"}`}>
-                    <div>
-                      <span className="font-semibold text-sm">{topic}</span>
-                      {weakCount > 0 && <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-bold">⚠ {weakCount} weak</span>}
+                    className={`flex items-start justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${sel ? "border-[#800000] bg-red-50 dark:bg-red-900/20" : isDarkMode ? "border-slate-600 hover:border-slate-500" : "border-slate-200 hover:border-slate-300"}`}>
+                    <div className="flex-1 min-w-0 mr-3">
+                      <div>
+                        <span className="font-semibold text-sm">{topic}</span>
+                        {weakCount > 0 && <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-bold">⚠ {weakCount} weak</span>}
+                      </div>
+                      {lockingEnabled && (
+                        <div className="flex flex-wrap gap-1 mt-1.5" aria-label="Access levels per quiz mode">
+                          {DEF_QUIZ_ORDER.map((qt) => {
+                            const highest = getTopicHighestDiff(topic, qt)
+                            const accessLabel = `${qtShortLabel[qt]}: ${highest === "locked" ? "Locked" : highest.charAt(0).toUpperCase() + highest.slice(1)} accessible`
+                            return (
+                              <span key={qt} aria-label={accessLabel}
+                                className={`text-xs px-1.5 py-0.5 rounded font-bold ${accessBadgeClass(highest)}`}>
+                                {highest === "locked" && <span aria-hidden="true">🔒</span>}{qtShortLabel[qt]}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sel ? "bg-[#800000] text-white" : isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>{count}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold shrink-0 ${sel ? "bg-[#800000] text-white" : isDarkMode ? "bg-slate-700 text-slate-400" : "bg-slate-100 text-slate-500"}`}>{count}</span>
                   </button>
                 )
               })}
