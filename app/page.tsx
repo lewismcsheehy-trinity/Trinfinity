@@ -194,9 +194,9 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | null
+type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | "experimental-techniques" | "bio-maths" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool"
+type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool" | "experimental-techniques" | "bio-maths"
 
 type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
 
@@ -7911,7 +7911,9 @@ function ModeSelection({
     { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems", comingSoon: false },
     { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice", comingSoon: false },
     { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
-    { id: "problem-solving" as const, icon: FlaskConical, title: "Problem Solving", desc: "Guided biology problem solving practice", comingSoon: true },
+    { id: "experimental-techniques" as const, icon: FlaskConical, title: "Experimental Techniques", desc: "Apparatus and practical techniques", comingSoon: false },
+    { id: "bio-maths" as const, icon: Sigma, title: "Maths Skills", desc: "Percentages, averages, ratios & graphs", comingSoon: false },
+    { id: "problem-solving" as const, icon: Lightbulb, title: "Problem Solving", desc: "Guided biology problem solving practice", comingSoon: true },
     { id: "essay" as const, icon: Pencil, title: "Essay Questions", desc: "Structured essay writing practice", comingSoon: true },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
     { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
@@ -9558,6 +9560,701 @@ function CharacterKeyboard({ isDarkMode, onClose }: { isDarkMode: boolean; onClo
   )
 }
 
+// ─── BiologyExperimentalMode ─────────────────────────────────────────────────
+
+interface BioExpQuestion {
+  id: string
+  difficulty: "easy" | "medium" | "hard"
+  category: "apparatus" | "technique"
+  question: string
+  options?: string[]
+  answer: number | string
+  explanation: string
+}
+
+const BIO_EXP_QUESTIONS: BioExpQuestion[] = [
+  // EASY – Multiple Choice – Apparatus
+  { id: "bio-exp-e1", difficulty: "easy", category: "apparatus", question: "Which piece of apparatus is used to measure an exact volume of liquid?", options: ["Beaker", "Measuring cylinder", "Test tube", "Funnel"], answer: 1, explanation: "A measuring cylinder has graduations allowing precise volume measurement." },
+  { id: "bio-exp-e2", difficulty: "easy", category: "apparatus", question: "What is a quadrat used for in biology fieldwork?", options: ["Catching insects", "Estimating the number or distribution of plants or slow-moving animals", "Measuring temperature", "Collecting water samples"], answer: 1, explanation: "A quadrat is a square frame used to sample organisms within a defined area." },
+  { id: "bio-exp-e3", difficulty: "easy", category: "apparatus", question: "Which apparatus would you use to keep a reaction at a constant temperature?", options: ["Thermometer", "Water bath", "Petri dish", "Syringe"], answer: 1, explanation: "A water bath maintains a stable temperature for reactions." },
+  { id: "bio-exp-e4", difficulty: "easy", category: "apparatus", question: "What is a pitfall trap used to catch?", options: ["Fish", "Birds", "Invertebrates living on the ground", "Flying insects"], answer: 2, explanation: "A pitfall trap is a container sunk into the ground to capture ground-living invertebrates." },
+  { id: "bio-exp-e5", difficulty: "easy", category: "apparatus", question: "Which apparatus is used to observe cells?", options: ["Quadrat", "Petri dish", "Microscope", "Syringe"], answer: 2, explanation: "A microscope magnifies specimens so individual cells can be seen." },
+  { id: "bio-exp-e6", difficulty: "easy", category: "apparatus", question: "Which instrument measures temperature?", options: ["Balance", "Thermometer", "Timer", "Funnel"], answer: 1, explanation: "A thermometer measures temperature in degrees Celsius." },
+  { id: "bio-exp-e7", difficulty: "easy", category: "apparatus", question: "What does a balance measure?", options: ["Volume", "Temperature", "Mass", "Length"], answer: 2, explanation: "A balance (or weighing scale) measures the mass of an object in grams or kilograms." },
+  { id: "bio-exp-e8", difficulty: "easy", category: "apparatus", question: "Which piece of apparatus is used to transfer small, accurate volumes of liquid drop by drop?", options: ["Measuring cylinder", "Beaker", "Dropper/pipette", "Funnel"], answer: 2, explanation: "A dropper or pipette delivers liquid in small, controlled drops." },
+  { id: "bio-exp-e9", difficulty: "easy", category: "apparatus", question: "What is a petri dish used for?", options: ["Measuring volume", "Growing microorganisms or storing specimens", "Measuring light levels", "Catching insects"], answer: 1, explanation: "A petri dish is a shallow dish used to culture bacteria, fungi, or other organisms." },
+  { id: "bio-exp-e10", difficulty: "easy", category: "technique", question: "Which technique measures the rate at which plants take up water?", options: ["Respirometer", "Potometer", "Quadrat sampling", "Light meter"], answer: 1, explanation: "A potometer measures transpiration by tracking water uptake." },
+  { id: "bio-exp-e11", difficulty: "easy", category: "technique", question: "A respirometer is used to measure:", options: ["Photosynthesis rate directly", "Rate of oxygen consumption during respiration", "Water loss in plants", "Distribution of organisms"], answer: 1, explanation: "A respirometer tracks oxygen consumed (or CO₂ produced) during cellular respiration." },
+  { id: "bio-exp-e12", difficulty: "easy", category: "technique", question: "Which technique involves placing a line across a habitat and recording organisms along it?", options: ["Quadrat sampling", "Pitfall trapping", "Transect line", "Potometer"], answer: 2, explanation: "A transect line is stretched across a habitat; organisms are recorded at set intervals along it." },
+  { id: "bio-exp-e13", difficulty: "easy", category: "technique", question: "Which piece of equipment measures light intensity in a habitat?", options: ["Syringe", "Light/moisture meter", "Funnel", "Boiling tube"], answer: 1, explanation: "A light/moisture meter records abiotic factors such as light intensity or soil moisture." },
+  { id: "bio-exp-e14", difficulty: "easy", category: "apparatus", question: "Which apparatus is used to inject or withdraw a precise volume of gas or liquid?", options: ["Thermometer", "Funnel", "Syringe", "Timer"], answer: 2, explanation: "A syringe can accurately measure and transfer volumes of gas or liquid." },
+  { id: "bio-exp-e15", difficulty: "easy", category: "apparatus", question: "A stopwatch/timer is used to:", options: ["Measure mass", "Measure time intervals in experiments", "Measure volume", "Measure temperature"], answer: 1, explanation: "A timer measures elapsed time, essential for calculating rates." },
+
+  // MEDIUM – Typed – Apparatus & Techniques
+  { id: "bio-exp-m1", difficulty: "medium", category: "apparatus", question: "State the purpose of a water bath in a biology experiment.", answer: "To maintain a constant temperature during the experiment.", explanation: "A water bath keeps the reaction mixture at a set temperature, ensuring fair testing." },
+  { id: "bio-exp-m2", difficulty: "medium", category: "apparatus", question: "Describe how a pitfall trap works.", answer: "A container is sunk into the ground so the opening is level with the soil surface. Invertebrates walking across the ground fall into the trap and are collected.", explanation: "Pitfall traps passively capture ground-dwelling invertebrates for population estimates." },
+  { id: "bio-exp-m3", difficulty: "medium", category: "technique", question: "Explain how you would use a quadrat to estimate the number of daisies in a field.", answer: "Place the quadrat randomly in the field. Count the number of daisies inside the quadrat. Repeat at several random positions and calculate the mean count per quadrat. Multiply by the number of quadrats that would fit in the total field area to estimate the total population.", explanation: "Random placement avoids bias; multiple samples improve reliability." },
+  { id: "bio-exp-m4", difficulty: "medium", category: "technique", question: "Describe how a potometer is used to measure transpiration in a plant.", answer: "A leafy shoot is cut underwater and connected to the potometer. An air bubble is introduced into the capillary tube. As the plant transpires, water is taken up, moving the bubble. The distance the bubble moves in a set time gives the rate of water uptake (transpiration).", explanation: "The potometer measures water uptake as a proxy for transpiration." },
+  { id: "bio-exp-m5", difficulty: "medium", category: "technique", question: "State two abiotic factors that could be measured in a habitat investigation.", answer: "Any two of: light intensity, temperature, moisture/humidity, wind speed, pH of soil.", explanation: "Abiotic factors are the non-living parts of an environment that affect organisms." },
+  { id: "bio-exp-m6", difficulty: "medium", category: "technique", question: "Why is it important to set up a control in an experiment on enzyme activity?", answer: "A control is set up exactly as the experiment but without the enzyme. This allows a comparison to be made, confirming that any changes observed are due to the enzyme and not other factors.", explanation: "Controls isolate the variable being investigated." },
+  { id: "bio-exp-m7", difficulty: "medium", category: "technique", question: "Describe how you would measure the rate of photosynthesis using pondweed.", answer: "Place pondweed in sodium hydrogen carbonate solution (to supply CO₂) under a lamp. Count the number of oxygen bubbles produced per minute. Change the light intensity (distance from lamp) and repeat. The bubble count per minute gives the rate of photosynthesis.", explanation: "Oxygen production is a measurable product of photosynthesis." },
+  { id: "bio-exp-m8", difficulty: "medium", category: "apparatus", question: "Give one advantage of using a measuring cylinder rather than a beaker to measure volume.", answer: "A measuring cylinder has graduations/markings that allow a more accurate and precise measurement of volume than a beaker.", explanation: "Beakers give only approximate volumes; measuring cylinders are calibrated." },
+
+  // HARD – Typed – Extended/Analysis
+  { id: "bio-exp-h1", difficulty: "hard", category: "technique", question: "A student wants to investigate the effect of temperature on enzyme activity. Identify the independent variable, dependent variable, and two controlled variables.", answer: "Independent variable: temperature. Dependent variable: rate of enzyme activity (e.g. time for reaction to complete, or change in absorbance). Controlled variables (any two): pH, concentration of substrate, concentration of enzyme, volume of solutions.", explanation: "Variables must be clearly identified to ensure a fair test." },
+  { id: "bio-exp-h2", difficulty: "hard", category: "technique", question: "A class used quadrats to count buttercups in three areas of a field. Area A had a mean of 12, Area B had 6, and Area C had 18 buttercups per quadrat. Explain what conclusion can be drawn and suggest one reason for the difference.", answer: "Area C has the highest density of buttercups (18 per quadrat), followed by Area A (12) then Area B (6). A possible reason is that abiotic factors such as light intensity or soil moisture differ between areas, affecting growth.", explanation: "Differences in abiotic conditions cause variation in distribution." },
+  { id: "bio-exp-h3", difficulty: "hard", category: "technique", question: "Explain why reliability is important in an experiment and describe how you would improve the reliability of a transpiration investigation using a potometer.", answer: "Reliability means the results can be repeated and trusted. To improve reliability, repeat the experiment several times under the same conditions and calculate a mean rate. Ensure the same shoot, length of capillary tube, and environmental conditions are used each time.", explanation: "Repeating experiments and averaging results reduces the effect of random errors." },
+  { id: "bio-exp-h4", difficulty: "hard", category: "technique", question: "Describe the transect line method and explain when it is more useful than random quadrat sampling.", answer: "A transect line is a tape or string stretched across a habitat. Quadrats are placed at regular intervals along the line and organisms recorded. It is more useful than random sampling when investigating changes in species distribution along an environmental gradient (e.g. from a pond edge to open grassland), because it captures how organisms change across the habitat.", explanation: "Transects reveal gradients; random quadrats give overall estimates." },
+]
+
+type ExpPhase = "hub" | "quiz" | "results"
+type ExpDifficulty = "easy" | "medium" | "hard"
+type ExpCategory = "all" | "apparatus" | "technique"
+
+function BiologyExperimentalMode({
+  onBack,
+  isDarkMode,
+}: {
+  onBack: () => void
+  isDarkMode: boolean
+}) {
+  const [phase, setPhase] = useState<ExpPhase>("hub")
+  const [difficulty, setDifficulty] = useState<ExpDifficulty>("easy")
+  const [category, setCategory] = useState<ExpCategory>("all")
+  const [questions, setQuestions] = useState<BioExpQuestion[]>([])
+  const [idx, setIdx] = useState(0)
+  const [typed, setTyped] = useState("")
+  const [mcSelected, setMcSelected] = useState<number | null>(null)
+  const [revealed, setRevealed] = useState(false)
+  const [score, setScore] = useState(0)
+  const [answers, setAnswers] = useState<{ correct: boolean; userAnswer: string }[]>([])
+
+  function startQuiz() {
+    let pool = BIO_EXP_QUESTIONS.filter(q => q.difficulty === difficulty)
+    if (category !== "all") pool = pool.filter(q => q.category === category)
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 10)
+    setQuestions(shuffled)
+    setIdx(0)
+    setTyped("")
+    setMcSelected(null)
+    setRevealed(false)
+    setScore(0)
+    setAnswers([])
+    setPhase("quiz")
+  }
+
+  function handleNext() {
+    const q = questions[idx]
+    let correct = false
+    let userAnswer = ""
+    if (q.difficulty === "easy") {
+      correct = mcSelected === (q.answer as number)
+      userAnswer = q.options?.[mcSelected ?? -1] ?? "—"
+    } else {
+      correct = false
+      userAnswer = typed
+    }
+    const newAnswers = [...answers, { correct, userAnswer }]
+    setAnswers(newAnswers)
+    if (correct) setScore(s => s + 1)
+
+    if (idx + 1 < questions.length) {
+      setIdx(i => i + 1)
+      setTyped("")
+      setMcSelected(null)
+      setRevealed(false)
+    } else {
+      setPhase("results")
+    }
+  }
+
+  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+
+  // ── Hub ───────────────────────────────────────────────────────────────────
+  if (phase === "hub") {
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-2xl w-full">
+          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+          <h2 className="text-4xl font-black mb-2 text-center">Experimental Techniques</h2>
+          <p className={`text-center mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Practice questions on biology apparatus and practical techniques.
+          </p>
+
+          {/* Difficulty */}
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Difficulty</h3>
+            <div className="flex gap-3">
+              {(["easy", "medium", "hard"] as ExpDifficulty[]).map(d => (
+                <button
+                  key={d}
+                  onClick={() => setDifficulty(d)}
+                  className={`flex-1 py-2 rounded-xl font-black text-sm capitalize transition-all ${
+                    difficulty === d
+                      ? d === "easy" ? "bg-emerald-500 text-white" : d === "medium" ? "bg-amber-500 text-white" : "bg-red-600 text-white"
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {d === "easy" ? "Easy (MC)" : d === "medium" ? "Medium (Typed)" : "Hard (Extended)"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Category</h3>
+            <div className="flex gap-3">
+              {(["all", "apparatus", "technique"] as ExpCategory[]).map(c => (
+                <button
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  className={`flex-1 py-2 rounded-xl font-black text-sm capitalize transition-all ${
+                    category === c
+                      ? "bg-teal-500 text-white"
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {c === "all" ? "All" : c === "apparatus" ? "Apparatus" : "Techniques"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reference lists */}
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div className={`rounded-2xl border-2 p-4 ${cardBg}`}>
+              <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-teal-600">Apparatus</h4>
+              <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                {["Beaker","Balance","Measuring cylinder","Dropper/pipette","Test tube / boiling tube","Thermometer","Funnel","Syringe","Timer / stopwatch","Microscope","Petri dish","Quadrat","Pitfall trap","Light/moisture meter","Water bath"].map(a => (
+                  <li key={a} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />{a}</li>
+                ))}
+              </ul>
+            </div>
+            <div className={`rounded-2xl border-2 p-4 ${cardBg}`}>
+              <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-violet-600">Techniques</h4>
+              <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                {["Measuring enzyme activity","Using a respirometer","Measuring transpiration (potometer)","Measuring abiotic factors","Measuring distribution of a species","Using a transect line","Measuring rate of photosynthesis"].map(t => (
+                  <li key={t} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />{t}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <button
+            onClick={startQuiz}
+            className="w-full py-4 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black text-lg transition-all shadow-xl"
+          >
+            Start Quiz →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Quiz ──────────────────────────────────────────────────────────────────
+  if (phase === "quiz") {
+    const q = questions[idx]
+    const isEasy = q.difficulty === "easy"
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center p-6 animate-in fade-in">
+        <div className="max-w-2xl w-full">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => setPhase("hub")} className="text-slate-500 hover:text-[#800000]">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              {idx + 1} / {questions.length}
+            </span>
+            <span className={`text-xs px-3 py-1 rounded-full font-black uppercase tracking-widest ${
+              q.category === "apparatus"
+                ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400"
+                : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+            }`}>{q.category}</span>
+          </div>
+
+          {/* Progress bar */}
+          <div className={`h-2 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+            <div className="h-full rounded-full bg-[#800000] transition-all" style={{ width: `${((idx) / questions.length) * 100}%` }} />
+          </div>
+
+          {/* Question */}
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
+            <p className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>{q.question}</p>
+          </div>
+
+          {/* MC options */}
+          {isEasy && q.options && (
+            <div className="space-y-3 mb-4">
+              {q.options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => !revealed && setMcSelected(i)}
+                  className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-semibold text-sm transition-all ${
+                    revealed
+                      ? i === (q.answer as number)
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700"
+                        : i === mcSelected
+                          ? "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700"
+                          : isDarkMode ? "border-slate-600 bg-slate-800 text-slate-400" : "border-slate-200 bg-slate-50 text-slate-400"
+                      : mcSelected === i
+                        ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                        : isDarkMode ? "border-slate-600 bg-slate-800 hover:border-slate-400" : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <span className="font-black mr-3">{String.fromCharCode(65 + i)}.</span>{opt}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Typed answer */}
+          {!isEasy && (
+            <textarea
+              value={typed}
+              onChange={e => setTyped(e.target.value)}
+              placeholder="Type your answer here…"
+              rows={4}
+              className={`w-full px-4 py-3 rounded-2xl border-2 text-sm mb-4 resize-none focus:outline-none focus:border-[#800000] ${
+                isDarkMode
+                  ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
+                  : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+          )}
+
+          {/* Reveal / Next */}
+          {isEasy ? (
+            <>
+              {!revealed && mcSelected !== null && (
+                <button
+                  onClick={() => setRevealed(true)}
+                  className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all mb-3"
+                >
+                  Check Answer
+                </button>
+              )}
+              {revealed && (
+                <>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 ${isDarkMode ? "bg-slate-700/50 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Explanation</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.explanation}</p>
+                  </div>
+                  <button onClick={handleNext} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+                    {idx + 1 < questions.length ? "Next →" : "See Results"}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {!revealed ? (
+                <button
+                  onClick={() => setRevealed(true)}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black transition-all mb-3"
+                >
+                  Show Model Answer
+                </button>
+              ) : (
+                <>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 border-emerald-400 ${isDarkMode ? "bg-emerald-900/20" : "bg-emerald-50"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-600 mb-1">Model Answer</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.answer as string}</p>
+                  </div>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 ${isDarkMode ? "bg-slate-700/50 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Explanation</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.explanation}</p>
+                  </div>
+                  <button onClick={handleNext} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+                    {idx + 1 < questions.length ? "Next →" : "See Results"}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Results ───────────────────────────────────────────────────────────────
+  const isEasyMode = questions[0]?.difficulty === "easy"
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in">
+      <div className="max-w-2xl w-full text-center">
+        <div className="text-6xl mb-4">{isEasyMode && score >= questions.length * 0.7 ? "🎉" : "📋"}</div>
+        <h2 className="text-3xl font-black mb-2">Quiz Complete!</h2>
+        {isEasyMode && (
+          <p className={`text-lg mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            You scored <span className="font-black text-[#800000]">{score}</span> / {questions.length}
+          </p>
+        )}
+        {!isEasyMode && (
+          <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Compare your typed answers with the model answers above. Review any questions you found difficult.
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button onClick={startQuiz} className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+            Try Again
+          </button>
+          <button onClick={onBack} className={`flex-1 py-3 rounded-2xl font-black border-2 transition-all ${isDarkMode ? "border-slate-600 text-slate-300" : "border-slate-200 text-slate-600"}`}>
+            Back to Modes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── BioMathsMode ────────────────────────────────────────────────────────────
+
+interface BioMathQuestion {
+  id: string
+  difficulty: "easy" | "medium" | "hard"
+  skill: "average" | "ratio" | "percentage" | "percentage-change" | "graph"
+  question: string
+  options?: string[]
+  answer: number | string
+  workingOut: string
+  explanation: string
+}
+
+const BIO_MATHS_QUESTIONS: BioMathQuestion[] = [
+  // ── AVERAGES ──────────────────────────────────────────────────────────────
+  { id: "bm-av-e1", difficulty: "easy", skill: "average", question: "Five plants measured 8 cm, 12 cm, 10 cm, 6 cm and 14 cm. What is the mean height?", options: ["9 cm", "10 cm", "11 cm", "12 cm"], answer: 1, workingOut: "(8 + 12 + 10 + 6 + 14) ÷ 5 = 50 ÷ 5 = 10 cm", explanation: "Add all values and divide by how many there are." },
+  { id: "bm-av-e2", difficulty: "easy", skill: "average", question: "A student counted seeds in 3 pods: 7, 9, and 5. What is the mean number of seeds?", options: ["5", "6", "7", "8"], answer: 2, workingOut: "(7 + 9 + 5) ÷ 3 = 21 ÷ 3 = 7", explanation: "Mean = sum ÷ count." },
+  { id: "bm-av-m1", difficulty: "medium", skill: "average", question: "Four pulse rate measurements were taken: 72, 78, 68 and 74 beats per minute. Calculate the mean pulse rate.", answer: "73 beats per minute", workingOut: "(72 + 78 + 68 + 74) ÷ 4 = 292 ÷ 4 = 73 bpm", explanation: "Add all values (292) then divide by 4." },
+  { id: "bm-av-h1", difficulty: "hard", skill: "average", question: "The table below shows the number of woodlice found under five stones: 3, 7, 0, 12, 8. Calculate the mean and explain why the mean might not accurately represent a 'typical' result.", answer: "Mean = (3+7+0+12+8)÷5 = 30÷5 = 6. The mean may not represent a typical result because the value 0 (no woodlice) and the high value of 12 skew the average — the range is large, so the mean is not central to most values.", workingOut: "30 ÷ 5 = 6", explanation: "Outliers and wide ranges affect how well the mean represents the data." },
+
+  // ── RATIOS ────────────────────────────────────────────────────────────────
+  { id: "bm-ra-e1", difficulty: "easy", skill: "ratio", question: "In a genetics experiment, 60 tall plants and 20 short plants were produced. What is the simplest whole-number ratio of tall:short?", options: ["6:2", "3:1", "4:1", "2:1"], answer: 1, workingOut: "60:20 — divide both by 20 → 3:1", explanation: "Divide both numbers by the highest common factor (20)." },
+  { id: "bm-ra-e2", difficulty: "easy", skill: "ratio", question: "Simplify the ratio 35:21:14.", options: ["5:3:2", "7:4:2", "5:4:3", "4:3:2"], answer: 0, workingOut: "Divide all by 7 → 5:3:2", explanation: "HCF of 35, 21, 14 is 7. Dividing gives 5:3:2." },
+  { id: "bm-ra-m1", difficulty: "medium", skill: "ratio", question: "In a cross between two heterozygous pea plants, 90 round seeds and 30 wrinkled seeds were produced. Express this as the simplest whole-number ratio.", answer: "3:1", workingOut: "90:30 → divide by 30 → 3:1", explanation: "This is a classic Mendelian 3:1 phenotype ratio." },
+  { id: "bm-ra-h1", difficulty: "hard", skill: "ratio", question: "A habitat survey found 84 robins, 56 sparrows and 28 blackbirds. Express this as a simplified ratio and explain whether this sample is likely to be representative of the whole habitat.", answer: "Ratio: 84:56:28 → divide by 28 → 3:2:1. Whether it is representative depends on sample size and whether the sample was taken randomly. One survey location may be biased.", workingOut: "84:56:28 ÷ 28 = 3:2:1", explanation: "Random sampling and large sample size improve representativeness." },
+
+  // ── PERCENTAGES ───────────────────────────────────────────────────────────
+  { id: "bm-pc-e1", difficulty: "easy", skill: "percentage", question: "A student scored 22 out of 30 in a test. What is the percentage score?", options: ["70%", "73%", "75%", "80%"], answer: 1, workingOut: "22 ÷ 30 × 100 = 73.3% ≈ 73%", explanation: "Percentage = (score ÷ total) × 100." },
+  { id: "bm-pc-e2", difficulty: "easy", skill: "percentage", question: "Out of 50 plants, 35 had red flowers. What percentage had red flowers?", options: ["60%", "65%", "70%", "75%"], answer: 2, workingOut: "35 ÷ 50 × 100 = 70%", explanation: "Divide 35 by 50 and multiply by 100." },
+  { id: "bm-pc-m1", difficulty: "medium", skill: "percentage", question: "In a sample of 200 cells viewed under a microscope, 46 were in the process of dividing. Calculate the percentage of dividing cells.", answer: "23%", workingOut: "46 ÷ 200 × 100 = 23%", explanation: "Percentage = (part ÷ whole) × 100." },
+  { id: "bm-pc-h1", difficulty: "hard", skill: "percentage", question: "A student finds that 17 out of 68 pea plants show the recessive phenotype. Calculate the percentage and explain whether this matches the expected 25% from a monohybrid cross.", answer: "17 ÷ 68 × 100 = 25%. Yes, this matches the expected 25% ratio from a monohybrid cross of two heterozygous parents (Aa × Aa), where 1 in 4 offspring shows the recessive trait.", workingOut: "17 ÷ 68 × 100 = 25%", explanation: "Mendelian ratio for recessive phenotype = 25% (1 in 4)." },
+
+  // ── PERCENTAGE CHANGE ─────────────────────────────────────────────────────
+  { id: "bm-pch-e1", difficulty: "easy", skill: "percentage-change", question: "A population of bacteria started at 50 and grew to 700 after 5 hours. What is the percentage change?", options: ["13%", "650%", "1300%", "700%"], answer: 2, workingOut: "Difference = 700 − 50 = 650. Percentage change = 650 ÷ 50 × 100 = 1300%", explanation: "Percentage change = (difference ÷ original) × 100." },
+  { id: "bm-pch-e2", difficulty: "easy", skill: "percentage-change", question: "A plant was 20 cm tall and grew to 25 cm. What is the percentage increase in height?", options: ["20%", "25%", "5%", "50%"], answer: 1, workingOut: "Difference = 25 − 20 = 5. % change = 5 ÷ 20 × 100 = 25%", explanation: "Always divide the change by the ORIGINAL value." },
+  { id: "bm-pch-m1", difficulty: "medium", skill: "percentage-change", question: "The mean heart rate of a patient before exercise was 68 bpm and after exercise was 102 bpm. Calculate the percentage increase in heart rate.", answer: "50%", workingOut: "Difference = 102 − 68 = 34. % change = 34 ÷ 68 × 100 = 50%", explanation: "Percentage change uses the original (before) value as the denominator." },
+  { id: "bm-pch-h1", difficulty: "hard", skill: "percentage-change", question: "In a pond, the number of water fleas was 240 in spring and 60 in winter. Calculate the percentage decrease and suggest one reason for this change.", answer: "% decrease = (240 − 60) ÷ 240 × 100 = 180 ÷ 240 × 100 = 75%. Reason: cold temperature in winter reduces metabolic rate and reproduction, or food sources are scarcer in winter.", workingOut: "(240−60)÷240×100 = 180÷240×100 = 75%", explanation: "Abiotic factors like temperature affect population size." },
+
+  // ── GRAPHS ────────────────────────────────────────────────────────────────
+  { id: "bm-gr-e1", difficulty: "easy", skill: "graph", question: "What does the 'L' in the SLURP rule for graphs stand for?", options: ["Line of best fit", "Labels on axes", "Large scale", "Legend"], answer: 1, workingOut: "SLURP = Scale, Labels, Units, Relationship, Points", explanation: "SLURP: Scale, Labels, Units, Relationship, Points. Labels must be taken directly from the table headings." },
+  { id: "bm-gr-e2", difficulty: "easy", skill: "graph", question: "When drawing a graph, where should you copy axis labels from?", options: ["Make up your own labels", "The table column headings", "The question text only", "The graph title"], answer: 1, workingOut: "Copy labels (including units) directly from table column headings.", explanation: "Copy labels directly from table column headings, including units." },
+  { id: "bm-gr-e3", difficulty: "easy", skill: "graph", question: "A graph shows that as temperature increases from 20°C to 40°C, enzyme activity increases then decreases. What type of relationship is shown between 20°C and the optimum?", options: ["Negative correlation", "No relationship", "Positive correlation", "Constant"], answer: 2, workingOut: "As one variable increases, so does the other → positive correlation.", explanation: "As temperature increases (up to the optimum), activity increases — a positive correlation." },
+  { id: "bm-gr-m1", difficulty: "medium", skill: "graph", question: "Describe the relationship shown when a graph of enzyme activity vs. temperature shows a peak at 37°C and declines either side.", answer: "As temperature increases from low values to 37°C, enzyme activity increases (positive correlation). Above 37°C, as temperature continues to increase, enzyme activity decreases (negative correlation). 37°C is the optimum temperature.", workingOut: "Identify both the increase and decrease, mentioning both variables.", explanation: "You must mention both variables and describe what happens to both." },
+  { id: "bm-gr-h1", difficulty: "hard", skill: "graph", question: "A student plotted a graph of photosynthesis rate (y-axis) against light intensity (x-axis). The line levels off at high light intensity. Explain this trend fully and suggest what is limiting the rate at the plateau.", answer: "As light intensity increases, the rate of photosynthesis increases — a positive correlation. This is because light provides the energy for the light-dependent reactions. At high light intensity, the rate levels off (plateau). At this point, light is no longer the limiting factor; another factor such as CO₂ concentration or temperature is now limiting the rate.", workingOut: "Identify the positive correlation phase and the plateau, then link to limiting factors.", explanation: "Limiting factors control the rate when another resource is in excess." },
+]
+
+type BioMathPhase = "hub" | "quiz" | "results"
+type BioMathDifficulty = "easy" | "medium" | "hard"
+type BioMathSkill = "all" | "average" | "ratio" | "percentage" | "percentage-change" | "graph"
+
+const SKILL_LABELS: Record<BioMathSkill, string> = {
+  all: "All Skills",
+  average: "Averages",
+  ratio: "Ratios",
+  percentage: "Percentages",
+  "percentage-change": "% Change",
+  graph: "Graphs",
+}
+
+function BioMathsMode({
+  onBack,
+  isDarkMode,
+}: {
+  onBack: () => void
+  isDarkMode: boolean
+}) {
+  const [phase, setPhase] = useState<BioMathPhase>("hub")
+  const [difficulty, setDifficulty] = useState<BioMathDifficulty>("easy")
+  const [skill, setSkill] = useState<BioMathSkill>("all")
+  const [questions, setQuestions] = useState<BioMathQuestion[]>([])
+  const [idx, setIdx] = useState(0)
+  const [typed, setTyped] = useState("")
+  const [mcSelected, setMcSelected] = useState<number | null>(null)
+  const [revealed, setRevealed] = useState(false)
+  const [score, setScore] = useState(0)
+
+  function startQuiz() {
+    let pool = BIO_MATHS_QUESTIONS.filter(q => q.difficulty === difficulty)
+    if (skill !== "all") pool = pool.filter(q => q.skill === skill)
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 8)
+    setQuestions(shuffled)
+    setIdx(0)
+    setTyped("")
+    setMcSelected(null)
+    setRevealed(false)
+    setScore(0)
+    setPhase("quiz")
+  }
+
+  function handleNext() {
+    const q = questions[idx]
+    const isEasy = q.difficulty === "easy"
+    if (isEasy && mcSelected === (q.answer as number)) setScore(s => s + 1)
+    if (idx + 1 < questions.length) {
+      setIdx(i => i + 1)
+      setTyped("")
+      setMcSelected(null)
+      setRevealed(false)
+    } else {
+      setPhase("results")
+    }
+  }
+
+  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
+
+  const skillColour: Record<BioMathSkill, string> = {
+    all: "bg-slate-500",
+    average: "bg-blue-500",
+    ratio: "bg-purple-500",
+    percentage: "bg-emerald-500",
+    "percentage-change": "bg-orange-500",
+    graph: "bg-pink-500",
+  }
+
+  // ── Hub ───────────────────────────────────────────────────────────────────
+  if (phase === "hub") {
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-2xl w-full">
+          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+          <h2 className="text-4xl font-black mb-2 text-center">Maths Skills</h2>
+          <p className={`text-center mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Practice averages, ratios, percentages, percentage change and graph skills.
+          </p>
+
+          {/* Reference box */}
+          <div className={`rounded-2xl border-2 p-4 mb-4 ${cardBg}`}>
+            <h4 className="font-black text-sm uppercase tracking-widest mb-3 text-amber-600">Quick Reference</h4>
+            <div className="space-y-2 text-xs">
+              {[
+                { label: "Average (Mean)", formula: "Add all values ÷ how many values" },
+                { label: "Ratio", formula: "Divide all numbers by the same HCF (whole numbers only)" },
+                { label: "Percentage", formula: "(Part ÷ Total) × 100" },
+                { label: "% Change", formula: "(Difference ÷ Original) × 100" },
+                { label: "Graph Rule", formula: "SLURP – Scale, Labels, Units, Relationship, Points" },
+              ].map(r => (
+                <div key={r.label} className={`flex gap-2 p-2 rounded-lg ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                  <span className="font-black w-32 shrink-0">{r.label}</span>
+                  <span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>{r.formula}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Difficulty */}
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Difficulty</h3>
+            <div className="flex gap-3">
+              {(["easy", "medium", "hard"] as BioMathDifficulty[]).map(d => (
+                <button
+                  key={d}
+                  onClick={() => setDifficulty(d)}
+                  className={`flex-1 py-2 rounded-xl font-black text-sm capitalize transition-all ${
+                    difficulty === d
+                      ? d === "easy" ? "bg-emerald-500 text-white" : d === "medium" ? "bg-amber-500 text-white" : "bg-red-600 text-white"
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {d === "easy" ? "Easy (MC)" : d === "medium" ? "Medium (Typed)" : "Hard (Extended)"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Skill */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Skill Focus</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(SKILL_LABELS) as BioMathSkill[]).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSkill(s)}
+                  className={`py-2 px-3 rounded-xl font-black text-xs transition-all ${
+                    skill === s
+                      ? `${skillColour[s]} text-white`
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {SKILL_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={startQuiz}
+            className="w-full py-4 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black text-lg transition-all shadow-xl"
+          >
+            Start Quiz →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Quiz ──────────────────────────────────────────────────────────────────
+  if (phase === "quiz") {
+    const q = questions[idx]
+    const isEasy = q.difficulty === "easy"
+    const skillLabel = SKILL_LABELS[q.skill as BioMathSkill] ?? q.skill
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center p-6 animate-in fade-in">
+        <div className="max-w-2xl w-full">
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => setPhase("hub")} className="text-slate-500 hover:text-[#800000]">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              {idx + 1} / {questions.length}
+            </span>
+            <span className={`text-xs px-3 py-1 rounded-full font-black uppercase tracking-widest ${skillColour[q.skill as BioMathSkill] ?? "bg-slate-500"} text-white`}>{skillLabel}</span>
+          </div>
+
+          <div className={`h-2 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
+            <div className="h-full rounded-full bg-[#800000] transition-all" style={{ width: `${(idx / questions.length) * 100}%` }} />
+          </div>
+
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
+            <p className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>{q.question}</p>
+          </div>
+
+          {isEasy && q.options && (
+            <div className="space-y-3 mb-4">
+              {q.options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => !revealed && setMcSelected(i)}
+                  className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-semibold text-sm transition-all ${
+                    revealed
+                      ? i === (q.answer as number)
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700"
+                        : i === mcSelected
+                          ? "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700"
+                          : isDarkMode ? "border-slate-600 bg-slate-800 text-slate-400" : "border-slate-200 bg-slate-50 text-slate-400"
+                      : mcSelected === i
+                        ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                        : isDarkMode ? "border-slate-600 bg-slate-800 hover:border-slate-400" : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <span className="font-black mr-3">{String.fromCharCode(65 + i)}.</span>{opt}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!isEasy && (
+            <textarea
+              value={typed}
+              onChange={e => setTyped(e.target.value)}
+              placeholder="Show your working and write your answer here…"
+              rows={4}
+              className={`w-full px-4 py-3 rounded-2xl border-2 text-sm mb-4 resize-none focus:outline-none focus:border-[#800000] ${
+                isDarkMode
+                  ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
+                  : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+          )}
+
+          {isEasy ? (
+            <>
+              {!revealed && mcSelected !== null && (
+                <button onClick={() => setRevealed(true)} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all mb-3">
+                  Check Answer
+                </button>
+              )}
+              {revealed && (
+                <>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 border-blue-300 ${isDarkMode ? "bg-blue-900/20" : "bg-blue-50"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-blue-600 mb-1">Working Out</p>
+                    <p className={`text-sm font-mono ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.workingOut}</p>
+                  </div>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 ${isDarkMode ? "bg-slate-700/50 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Explanation</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.explanation}</p>
+                  </div>
+                  <button onClick={handleNext} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+                    {idx + 1 < questions.length ? "Next →" : "See Results"}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {!revealed ? (
+                <button onClick={() => setRevealed(true)} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black transition-all mb-3">
+                  Show Working &amp; Answer
+                </button>
+              ) : (
+                <>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 border-blue-300 ${isDarkMode ? "bg-blue-900/20" : "bg-blue-50"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-blue-600 mb-1">Working Out</p>
+                    <p className={`text-sm font-mono ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.workingOut}</p>
+                  </div>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 border-emerald-400 ${isDarkMode ? "bg-emerald-900/20" : "bg-emerald-50"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-600 mb-1">Model Answer</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.answer as string}</p>
+                  </div>
+                  <div className={`rounded-2xl p-4 mb-3 border-2 ${isDarkMode ? "bg-slate-700/50 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Explanation</p>
+                    <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.explanation}</p>
+                  </div>
+                  <button onClick={handleNext} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+                    {idx + 1 < questions.length ? "Next →" : "See Results"}
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Results ───────────────────────────────────────────────────────────────
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in">
+      <div className="max-w-2xl w-full text-center">
+        <div className="text-6xl mb-4">{score >= questions.length * 0.7 ? "🎉" : "📊"}</div>
+        <h2 className="text-3xl font-black mb-2">Quiz Complete!</h2>
+        {difficulty === "easy" && (
+          <p className={`text-lg mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            You scored <span className="font-black text-[#800000]">{score}</span> / {questions.length}
+          </p>
+        )}
+        {difficulty !== "easy" && (
+          <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Compare your working with the model answers. Focus on correct method and clear working out.
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button onClick={startQuiz} className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+            Try Again
+          </button>
+          <button onClick={onBack} className={`flex-1 py-3 rounded-2xl font-black border-2 transition-all ${isDarkMode ? "border-slate-600 text-slate-300" : "border-slate-200 text-slate-600"}`}>
+            Back to Modes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function FloatingMenu({
   isDarkMode,
   toggleDarkMode,
@@ -9713,10 +10410,89 @@ const [isOpen, setIsOpen] = useState(false)
   )
 }
 
+// ─── N5 Chemistry Equations ───────────────────────────────────────────────────
+interface ChemEquationInfo {
+  id: string
+  formula: string
+  description: string
+  topic: string
+  variables: { symbol: string; meaning: string; unit: string }[]
+}
+
+const N5_CHEM_EQUATIONS: ChemEquationInfo[] = [
+  {
+    id: "heat-energy",
+    formula: "Eh = cmΔT",
+    description: "Heat Energy (specific heat capacity)",
+    topic: "Thermochemistry",
+    variables: [
+      { symbol: "Eh", meaning: "Heat energy", unit: "kJ or J" },
+      { symbol: "c", meaning: "Specific heat capacity", unit: "J g⁻¹ °C⁻¹" },
+      { symbol: "m", meaning: "Mass", unit: "g" },
+      { symbol: "ΔT", meaning: "Change in temperature", unit: "°C" },
+    ],
+  },
+  {
+    id: "moles-conc",
+    formula: "n = cV",
+    description: "Moles from Concentration and Volume",
+    topic: "Calculations",
+    variables: [
+      { symbol: "n", meaning: "Number of moles", unit: "mol" },
+      { symbol: "c", meaning: "Concentration", unit: "mol L⁻¹" },
+      { symbol: "V", meaning: "Volume", unit: "L" },
+    ],
+  },
+  {
+    id: "moles-mass",
+    formula: "n = m / GFM",
+    description: "Moles from Mass and Formula Mass",
+    topic: "Calculations",
+    variables: [
+      { symbol: "n", meaning: "Number of moles", unit: "mol" },
+      { symbol: "m", meaning: "Mass", unit: "g" },
+      { symbol: "GFM", meaning: "Gram Formula Mass", unit: "g mol⁻¹" },
+    ],
+  },
+  {
+    id: "dilution",
+    formula: "c₁V₁/n₁ = c₂V₂/n₂",
+    description: "Concentration–Volume–Moles Ratio",
+    topic: "Calculations",
+    variables: [
+      { symbol: "c₁, c₂", meaning: "Concentrations of solutions 1 and 2", unit: "mol L⁻¹" },
+      { symbol: "V₁, V₂", meaning: "Volumes of solutions 1 and 2", unit: "L" },
+      { symbol: "n₁, n₂", meaning: "Mole ratios from balanced equation", unit: "—" },
+    ],
+  },
+  {
+    id: "avg-rate",
+    formula: "average rate = Δquantity / Δt",
+    description: "Average Rate of Reaction",
+    topic: "Rates of Reaction",
+    variables: [
+      { symbol: "Δquantity", meaning: "Change in quantity (e.g. mass, volume, concentration)", unit: "varies" },
+      { symbol: "Δt", meaning: "Change in time", unit: "s or min" },
+    ],
+  },
+  {
+    id: "percent-mass",
+    formula: "% by mass = (m / GFM) × 100",
+    description: "Percentage by Mass",
+    topic: "Calculations",
+    variables: [
+      { symbol: "m", meaning: "Mass of element in compound", unit: "g" },
+      { symbol: "GFM", meaning: "Gram Formula Mass of compound", unit: "g mol⁻¹" },
+    ],
+  },
+]
+
 // ─── ChemDataBooklet ──────────────────────────────────────────────────────────
 
 function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
+  const [activeTab, setActiveTab] = useState<"elements" | "equations">("elements")
   const [selectedElement, setSelectedElement] = useState<ChemElement | null>(null)
+  const [selectedEquation, setSelectedEquation] = useState<ChemEquationInfo | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
   const blockColours: Record<string, { bg: string; text: string; border: string }> = {
@@ -9734,102 +10510,176 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
 
   const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
 
+  const topicColours: Record<string, string> = {
+    "Thermochemistry": "border-orange-400 bg-orange-50 dark:bg-orange-900/20",
+    "Calculations": "border-teal-400 bg-teal-50 dark:bg-teal-900/20",
+    "Rates of Reaction": "border-violet-400 bg-violet-50 dark:bg-violet-900/20",
+  }
+
   return (
     <div className="space-y-4">
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-emerald-900/40 border border-emerald-400" : "bg-emerald-100 border border-emerald-400"}`} />
-          <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>s-block</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-sky-900/40 border border-sky-400" : "bg-sky-100 border border-sky-400"}`} />
-          <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>p-block</span>
-        </div>
-        <span className={`text-xs ml-auto ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an element for details</span>
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        {(["elements", "equations"] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => { setActiveTab(tab); setSelectedElement(null); setSelectedEquation(null); setSearchQuery("") }}
+            className={`flex-1 py-2 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${
+              activeTab === tab
+                ? "bg-teal-500 text-white shadow"
+                : isDarkMode
+                  ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {tab === "elements" ? "⚛ Elements" : "📐 Equations"}
+          </button>
+        ))}
       </div>
 
-      {/* Search */}
-      <input
-        type="text"
-        placeholder="Search by name, symbol or number…"
-        value={searchQuery}
-        onChange={e => setSearchQuery(e.target.value)}
-        className={`w-full px-4 py-2 rounded-xl border text-sm ${
-          isDarkMode
-            ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
-            : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
-        }`}
-      />
-
-      {/* Element grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-        {filtered.map(el => {
-          const colours = blockColours[el.block] ?? blockColours.p
-          const isSelected = selectedElement?.symbol === el.symbol
-          return (
-            <button
-              key={el.symbol}
-              onClick={() => setSelectedElement(isSelected ? null : el)}
-              className={`relative p-2 rounded-xl border-2 text-left transition-all hover:scale-105 active:scale-95 ${
-                isSelected
-                  ? `${colours.border} ring-2 ring-offset-1 ${isDarkMode ? "ring-white/30" : "ring-slate-400"}`
-                  : colours.border
-              } ${colours.bg}`}
-            >
-              <span className={`absolute top-1 left-1.5 text-[10px] font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                {el.atomic_number}
-              </span>
-              <div className="mt-3 text-center">
-                <span className={`block text-lg font-black ${colours.text}`}>{el.symbol}</span>
-                <span className={`block text-[10px] font-semibold leading-tight truncate ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{el.name}</span>
-                <span className={`block text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{el.relative_atomic_mass}</span>
-              </div>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Detail panel */}
-      {selectedElement && (
-        <div className={`rounded-2xl border-2 p-4 space-y-3 ${
-          blockColours[selectedElement.block]?.border ?? "border-slate-300"
-        } ${cardBg}`}>
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <span className={`text-3xl font-black ${blockColours[selectedElement.block]?.text ?? "text-slate-700"}`}>
-                {selectedElement.symbol}
-              </span>
-              <span className={`ml-2 text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
-                {selectedElement.name}
-              </span>
+      {/* ── Elements tab ── */}
+      {activeTab === "elements" && (
+        <>
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-emerald-900/40 border border-emerald-400" : "bg-emerald-100 border border-emerald-400"}`} />
+              <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>s-block</span>
             </div>
-            <button
-              onClick={() => setSelectedElement(null)}
-              className={`p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-sky-900/40 border border-sky-400" : "bg-sky-100 border border-sky-400"}`} />
+              <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>p-block</span>
+            </div>
+            <span className={`text-xs ml-auto ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an element for details</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Atomic Number",        value: selectedElement.atomic_number },
-              { label: "Relative Atomic Mass",  value: selectedElement.relative_atomic_mass },
-              { label: "Electron Arrangement",  value: selectedElement.electron_arrangement },
-              { label: "Group",                 value: selectedElement.group },
-              { label: "Period",                value: selectedElement.period },
-              { label: "Block",                 value: `${selectedElement.block}-block` },
-              { label: "Melting Point",         value: selectedElement.melting_point_c != null ? `${selectedElement.melting_point_c} °C` : "—" },
-              { label: "Boiling Point",         value: selectedElement.boiling_point_c != null ? `${selectedElement.boiling_point_c} °C` : "—" },
-              { label: "Density (g/cm³)",       value: selectedElement.density_gcm3 != null ? selectedElement.density_gcm3 : "—" },
-              { label: "Discovery",             value: selectedElement.discovery_date },
-            ].map(({ label, value }) => (
-              <div key={label} className={`p-2 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
-                <p className={`text-sm font-bold mt-0.5 ${isDarkMode ? "text-white" : "text-slate-800"}`}>{String(value)}</p>
+
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search by name, symbol or number…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className={`w-full px-4 py-2 rounded-xl border text-sm ${
+              isDarkMode
+                ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
+                : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
+            }`}
+          />
+
+          {/* Element grid */}
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+            {filtered.map(el => {
+              const colours = blockColours[el.block] ?? blockColours.p
+              const isSelected = selectedElement?.symbol === el.symbol
+              return (
+                <button
+                  key={el.symbol}
+                  onClick={() => setSelectedElement(isSelected ? null : el)}
+                  className={`relative p-2 rounded-xl border-2 text-left transition-all hover:scale-105 active:scale-95 ${
+                    isSelected
+                      ? `${colours.border} ring-2 ring-offset-1 ${isDarkMode ? "ring-white/30" : "ring-slate-400"}`
+                      : colours.border
+                  } ${colours.bg}`}
+                >
+                  <span className={`absolute top-1 left-1.5 text-[10px] font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    {el.atomic_number}
+                  </span>
+                  <div className="mt-3 text-center">
+                    <span className={`block text-lg font-black ${colours.text}`}>{el.symbol}</span>
+                    <span className={`block text-[10px] font-semibold leading-tight truncate ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{el.name}</span>
+                    <span className={`block text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{el.relative_atomic_mass}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Detail panel */}
+          {selectedElement && (
+            <div className={`rounded-2xl border-2 p-4 space-y-3 ${
+              blockColours[selectedElement.block]?.border ?? "border-slate-300"
+            } ${cardBg}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className={`text-3xl font-black ${blockColours[selectedElement.block]?.text ?? "text-slate-700"}`}>
+                    {selectedElement.symbol}
+                  </span>
+                  <span className={`ml-2 text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
+                    {selectedElement.name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedElement(null)}
+                  className={`p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Atomic Number",        value: selectedElement.atomic_number },
+                  { label: "Relative Atomic Mass",  value: selectedElement.relative_atomic_mass },
+                  { label: "Electron Arrangement",  value: selectedElement.electron_arrangement },
+                  { label: "Group",                 value: selectedElement.group },
+                  { label: "Period",                value: selectedElement.period },
+                  { label: "Block",                 value: `${selectedElement.block}-block` },
+                  { label: "Melting Point",         value: selectedElement.melting_point_c != null ? `${selectedElement.melting_point_c} °C` : "—" },
+                  { label: "Boiling Point",         value: selectedElement.boiling_point_c != null ? `${selectedElement.boiling_point_c} °C` : "—" },
+                  { label: "Density (g/cm³)",       value: selectedElement.density_gcm3 != null ? selectedElement.density_gcm3 : "—" },
+                  { label: "Discovery",             value: selectedElement.discovery_date },
+                ].map(({ label, value }) => (
+                  <div key={label} className={`p-2 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${isDarkMode ? "text-white" : "text-slate-800"}`}>{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Equations tab ── */}
+      {activeTab === "equations" && (
+        <div className="space-y-3">
+          <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an equation to see variables &amp; units.</p>
+          {N5_CHEM_EQUATIONS.map(eq => {
+            const isSelected = selectedEquation?.id === eq.id
+            const colourClass = topicColours[eq.topic] ?? "border-slate-300 bg-slate-50"
+            return (
+              <button
+                key={eq.id}
+                onClick={() => setSelectedEquation(isSelected ? null : eq)}
+                className={`w-full text-left rounded-2xl border-2 p-4 transition-all hover:scale-[1.01] active:scale-[0.99] ${colourClass} ${
+                  isSelected ? "ring-2 ring-offset-1 ring-teal-400" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className={`block text-xl font-black ${isDarkMode ? "text-white" : "text-slate-800"}`}>{eq.formula}</span>
+                    <span className={`block text-xs font-semibold mt-0.5 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{eq.description}</span>
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                    isDarkMode ? "bg-slate-700 text-slate-300" : "bg-white/80 text-slate-500 border border-slate-200"
+                  }`}>{eq.topic}</span>
+                </div>
+                {isSelected && (
+                  <div className="mt-3 grid grid-cols-1 gap-1.5">
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-black uppercase tracking-widest opacity-60 px-1">
+                      <span>Symbol</span><span>Meaning</span><span>Unit</span>
+                    </div>
+                    {eq.variables.map(v => (
+                      <div key={v.symbol} className={`grid grid-cols-3 gap-1 rounded-xl p-2 text-xs ${isDarkMode ? "bg-slate-800/60" : "bg-white/70"}`}>
+                        <span className="font-black">{v.symbol}</span>
+                        <span className="font-semibold">{v.meaning}</span>
+                        <span className={`${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{v.unit}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
@@ -11642,6 +12492,10 @@ export default function App() {
       setView("assignment")
     } else if (mode === "exam-paper") {
       setView("exam-paper")
+    } else if (mode === "experimental-techniques") {
+      setView("experimental-techniques")
+    } else if (mode === "bio-maths") {
+      setView("bio-maths")
     } else if (
       mode === "stripboarding" ||
       mode === "block-diagrams" ||
@@ -12028,6 +12882,18 @@ export default function App() {
         {view === "electronics-tool" && (
           <ElectronicsToolMode
             appMode={appMode}
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
+          />
+        )}
+        {view === "experimental-techniques" && (
+          <BiologyExperimentalMode
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
+          />
+        )}
+        {view === "bio-maths" && (
+          <BioMathsMode
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
           />
