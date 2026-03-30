@@ -12,7 +12,9 @@ import {
   COMMENTARY_PDF_URL,
   PRACTICE_QUESTIONS,
   IMPROVE_EXAMPLES,
+  ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
   type CandidatePaper,
+  type PracticeQuestion,
 } from "@/data/n5-physics-assignment"
 import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
 import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_Elements_1_20.json"
@@ -4310,10 +4312,12 @@ function AssignmentMode({
   selectedLevel,
   onBack,
   isDarkMode,
+  currentUser,
 }: {
   selectedLevel: string
   onBack: () => void
   isDarkMode: boolean
+  currentUser?: UserAccount | null
 }) {
   type AssignPhase = "hub" | "practice" | "mark" | "review" | "improve"
   type MarkPhase = "select-paper" | "marking" | "submitted"
@@ -4326,9 +4330,31 @@ function AssignmentMode({
   const [practiceRevealed, setPracticeRevealed] = useState<Record<string, boolean>>({})
   const [practiceFinished, setPracticeFinished] = useState(false)
 
+  // ── Custom questions (teacher-added, persisted in localStorage) ──────────
+  const [customQuestions, setCustomQuestions] = useState<PracticeQuestion[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      return JSON.parse(localStorage.getItem(ASSIGNMENT_CUSTOM_QUESTIONS_KEY) ?? "[]") as PracticeQuestion[]
+    } catch (err) {
+      console.error("[AssignmentMode] Failed to parse custom questions from localStorage:", err)
+      return []
+    }
+  })
+  const [showAddQuestion, setShowAddQuestion] = useState(false)
+  const [newQ, setNewQ] = useState({ question: "", options: ["", "", "", ""], answer: 0, explanation: "", sectionRef: "aim" })
+  const [addQuestionError, setAddQuestionError] = useState<string | null>(null)
+
+  const allPracticeQuestions: PracticeQuestion[] = [...PRACTICE_QUESTIONS, ...customQuestions]
+
+  function saveCustomQuestions(updated: PracticeQuestion[]) {
+    setCustomQuestions(updated)
+    if (typeof window !== "undefined") localStorage.setItem(ASSIGNMENT_CUSTOM_QUESTIONS_KEY, JSON.stringify(updated))
+  }
+
   // ── Mark state ───────────────────────────────────────────────────────────
   const [markPhase, setMarkPhase] = useState<MarkPhase>("select-paper")
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null)
+  /** Scores for single-mark sections (key = sectionId) and sub-criteria sections (key = sectionId_subId). */
   const [userSectionScores, setUserSectionScores] = useState<Record<string, number>>({})
   const [openCommentary, setOpenCommentary] = useState<string | null>(null)
 
@@ -4346,6 +4372,26 @@ function AssignmentMode({
   const selectedCandidate: CandidatePaper | null =
     CANDIDATE_PAPERS.find((c) => c.id === selectedCandidateId) ?? null
 
+  /** Compute the user's awarded total for a section (handles sub-criteria). */
+  function userSectionTotal(sectionId: string): number {
+    const section = ASSIGNMENT_SECTIONS.find((s) => s.id === sectionId)
+    if (!section) return 0
+    if (section.subCriteria) {
+      return section.subCriteria.reduce((sum, sc) => sum + (userSectionScores[`${sectionId}_${sc.id}`] ?? 0), 0)
+    }
+    return userSectionScores[sectionId] ?? 0
+  }
+
+  /** True when the user has finished awarding all marks for a section. */
+  function isSectionMarked(sectionId: string): boolean {
+    const section = ASSIGNMENT_SECTIONS.find((s) => s.id === sectionId)
+    if (!section) return false
+    if (section.subCriteria) {
+      return section.subCriteria.every((sc) => userSectionScores[`${sectionId}_${sc.id}`] !== undefined)
+    }
+    return userSectionScores[sectionId] !== undefined
+  }
+
   function resetToHub() {
     setPracticeIdx(0)
     setPracticeChoices({})
@@ -4359,6 +4405,7 @@ function AssignmentMode({
     setImproveIdx(0)
     setImproveChoices({})
     setImproveFinished(false)
+    setShowAddQuestion(false)
     setPhase("hub")
   }
 
@@ -4447,17 +4494,17 @@ function AssignmentMode({
 
   // ── Practice ─────────────────────────────────────────────────────────────
   if (phase === "practice") {
-    const q = PRACTICE_QUESTIONS[practiceIdx]
+    const q = allPracticeQuestions[practiceIdx]
     const isAnswered = practiceRevealed[q.id]
     const chosenIdx = practiceChoices[q.id]
     const isCorrect = chosenIdx === q.answer
-    const isLast = practiceIdx === PRACTICE_QUESTIONS.length - 1
-    const correctCount = PRACTICE_QUESTIONS.filter(
+    const isLast = practiceIdx === allPracticeQuestions.length - 1
+    const correctCount = allPracticeQuestions.filter(
       (pq) => practiceChoices[pq.id] === pq.answer,
     ).length
 
     if (practiceFinished) {
-      const pct = Math.round((correctCount / PRACTICE_QUESTIONS.length) * 100)
+      const pct = Math.round((correctCount / allPracticeQuestions.length) * 100)
       return (
         <div className="pt-24 min-h-screen p-6 animate-in fade-in slide-in-from-right-4">
           <div className="max-w-2xl mx-auto">
@@ -4470,12 +4517,116 @@ function AssignmentMode({
               <p className="text-6xl font-black mb-1">
                 <span className={perfColour(pct)}>{correctCount}</span>
                 <span className={`text-3xl ${isDarkMode ? "text-slate-400" : "text-slate-400"}`}>
-                  &nbsp;/ {PRACTICE_QUESTIONS.length}
+                  &nbsp;/ {allPracticeQuestions.length}
                 </span>
               </p>
               <p className={`text-sm mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                 {pct >= 80 ? "Excellent understanding of the marking scheme!" : pct >= 60 ? "Good progress — review the sections you missed." : "Keep practising — focus on the marking criteria for each section."}
               </p>
+
+              {/* Teacher: add custom question */}
+              {currentUser?.accountType === "teacher" && (
+                <div className="mb-6 text-left">
+                  <button
+                    onClick={() => setShowAddQuestion((v) => !v)}
+                    className={`w-full py-2 rounded-xl font-bold text-sm border-2 transition-colors mb-3 ${
+                      isDarkMode
+                        ? "border-slate-600 text-slate-300 hover:border-amber-500 hover:text-amber-400"
+                        : "border-slate-300 text-slate-600 hover:border-amber-500 hover:text-amber-600"
+                    }`}
+                  >
+                    {showAddQuestion ? "▲ Cancel" : "＋ Add a custom question"}
+                  </button>
+                  {showAddQuestion && (
+                    <div className={`rounded-2xl border-2 p-4 space-y-3 ${isDarkMode ? "border-slate-600 bg-slate-800" : "border-slate-200 bg-slate-50"}`}>
+                      <p className="text-xs font-black uppercase tracking-widest text-amber-600">New Question</p>
+                      <textarea
+                        rows={2}
+                        placeholder="Question text…"
+                        value={newQ.question}
+                        onChange={(e) => setNewQ((prev) => ({ ...prev, question: e.target.value }))}
+                        className={`w-full rounded-xl border px-3 py-2 text-sm resize-none ${isDarkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-slate-300 text-slate-800"}`}
+                      />
+                      {newQ.options.map((opt, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="correct-option"
+                            checked={newQ.answer === idx}
+                            onChange={() => setNewQ((prev) => ({ ...prev, answer: idx }))}
+                            className="accent-[#800000]"
+                          />
+                          <input
+                            type="text"
+                            placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                            value={opt}
+                            onChange={(e) => {
+                              const opts = [...newQ.options]
+                              opts[idx] = e.target.value
+                              setNewQ((prev) => ({ ...prev, options: opts }))
+                            }}
+                            className={`flex-1 rounded-xl border px-3 py-1.5 text-sm ${isDarkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-slate-300 text-slate-800"}`}
+                          />
+                        </div>
+                      ))}
+                      <input
+                        type="text"
+                        placeholder="Explanation…"
+                        value={newQ.explanation}
+                        onChange={(e) => setNewQ((prev) => ({ ...prev, explanation: e.target.value }))}
+                        className={`w-full rounded-xl border px-3 py-2 text-sm ${isDarkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-slate-300 text-slate-800"}`}
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-bold text-slate-500">Section:</label>
+                        <select
+                          value={newQ.sectionRef}
+                          onChange={(e) => setNewQ((prev) => ({ ...prev, sectionRef: e.target.value }))}
+                          className={`rounded-xl border px-2 py-1 text-xs ${isDarkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-slate-300 text-slate-800"}`}
+                        >
+                          {ASSIGNMENT_SECTIONS.map((s) => (
+                            <option key={s.id} value={s.id}>{s.title}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {addQuestionError && (
+                        <p className="text-xs text-red-500 font-bold">{addQuestionError}</p>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (!newQ.question.trim()) { setAddQuestionError("Please enter a question."); return }
+                          if (newQ.options.some((o) => !o.trim())) { setAddQuestionError("Please fill in all four options."); return }
+                          setAddQuestionError(null)
+                          const id = `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`
+                          const cq: PracticeQuestion = { id, type: "mc", ...newQ }
+                          saveCustomQuestions([...customQuestions, cq])
+                          setNewQ({ question: "", options: ["", "", "", ""], answer: 0, explanation: "", sectionRef: "aim" })
+                          setShowAddQuestion(false)
+                        }}
+                        className="w-full py-2 rounded-xl font-black bg-amber-600 hover:bg-amber-700 text-white text-sm transition-colors"
+                      >
+                        Save Question
+                      </button>
+                    </div>
+                  )}
+                  {customQuestions.length > 0 && (
+                    <div className={`mt-3 rounded-2xl border-2 p-3 ${isDarkMode ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Your custom questions ({customQuestions.length})</p>
+                      {customQuestions.map((cq) => (
+                        <div key={cq.id} className={`flex items-center justify-between py-1.5 border-b last:border-0 ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                          <p className="text-xs truncate flex-1">{cq.question}</p>
+                          <button
+                            onClick={() => saveCustomQuestions(customQuestions.filter((q) => q.id !== cq.id))}
+                            className="ml-3 text-xs text-red-500 hover:text-red-700 font-bold"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -4513,7 +4664,7 @@ function AssignmentMode({
               Hub
             </button>
             <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Question {practiceIdx + 1} / {PRACTICE_QUESTIONS.length}
+              Question {practiceIdx + 1} / {allPracticeQuestions.length}
             </span>
           </div>
 
@@ -4521,7 +4672,7 @@ function AssignmentMode({
           <div className={`h-2 rounded-full mb-8 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
             <div
               className="h-full bg-[#800000] rounded-full transition-all"
-              style={{ width: `${((practiceIdx + 1) / PRACTICE_QUESTIONS.length) * 100}%` }}
+              style={{ width: `${((practiceIdx + 1) / allPracticeQuestions.length) * 100}%` }}
             />
           </div>
 
@@ -4671,11 +4822,12 @@ function AssignmentMode({
     // Phase 2: Marking interface
     if (markPhase === "marking" && selectedCandidate) {
       const totalUserAwarded = ASSIGNMENT_SECTIONS.reduce(
-        (sum, s) => sum + (userSectionScores[s.id] ?? 0),
+        (sum, s) => sum + userSectionTotal(s.id),
         0,
       )
       const totalAvailable = 20
-      const allSectionsMarked = ASSIGNMENT_SECTIONS.every((s) => userSectionScores[s.id] !== undefined)
+      const allSectionsMarked = ASSIGNMENT_SECTIONS.every((s) => isSectionMarked(s.id))
+      const doneCount = ASSIGNMENT_SECTIONS.filter((s) => isSectionMarked(s.id)).length
 
       return (
         <div className="pt-24 min-h-screen p-4 animate-in fade-in slide-in-from-right-4">
@@ -4700,7 +4852,7 @@ function AssignmentMode({
 
             {/* Layout: PDF left, rubric right on desktop */}
             <div className="grid lg:grid-cols-2 gap-6">
-              {/* PDF Panel */}
+              {/* PDF Panel — embedded via Google Docs viewer for cross-origin compatibility */}
               <div className={`rounded-3xl border-2 overflow-hidden ${cardBase}`}>
                 <div className={`px-5 py-3 flex items-center justify-between border-b ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
                   <p className="text-xs font-black uppercase tracking-widest text-[#800000]">
@@ -4716,7 +4868,7 @@ function AssignmentMode({
                   </a>
                 </div>
                 <iframe
-                  src={selectedCandidate.pdfUrl}
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedCandidate.pdfUrl)}&embedded=true`}
                   className="w-full"
                   style={{ height: "70vh" }}
                   title={`Candidate ${selectedCandidate.id} evidence`}
@@ -4730,14 +4882,14 @@ function AssignmentMode({
                     Marking Rubric — N5 Physics Assignment
                   </p>
                   <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    Award marks for each section. Submit when done to see the actual marks and commentary.
+                    Award marks for each section. For sub-criteria sections, tick each criterion independently. Submit when done to see the actual marks and commentary.
                   </p>
                 </div>
 
                 <div className="space-y-3 overflow-y-auto" style={{ maxHeight: "60vh" }}>
                   {ASSIGNMENT_SECTIONS.map((section) => {
-                    const userScore = userSectionScores[section.id]
-                    const isMarked = userScore !== undefined
+                    const sectionTotal = userSectionTotal(section.id)
+                    const isMarked = isSectionMarked(section.id)
                     return (
                       <div key={section.id} className={`rounded-2xl border-2 p-4 transition-all ${
                         isMarked
@@ -4753,43 +4905,88 @@ function AssignmentMode({
                           </div>
                           {isMarked && (
                             <span className="text-lg font-black text-[#800000]">
-                              {userScore}/{section.maxMarks}
+                              {sectionTotal}/{section.maxMarks}
                             </span>
                           )}
                         </div>
 
-                        {/* Criterion hint */}
-                        <p className={`text-xs mb-3 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                          {section.criterion}
-                        </p>
-
-                        {/* Mark buttons with descriptions */}
-                        <div className="space-y-1.5">
-                          {Array.from({ length: section.maxMarks + 1 }, (_, i) => i).map((v) => (
-                            <button
-                              key={v}
-                              onClick={() =>
-                                setUserSectionScores((prev) => ({ ...prev, [section.id]: v }))
-                              }
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border-2 text-left transition-all ${
-                                userScore === v
-                                  ? "bg-[#800000] text-white border-[#800000] shadow"
-                                  : isDarkMode
-                                    ? "border-slate-600 hover:border-slate-400 text-slate-300"
-                                    : "border-slate-200 hover:border-[#800000] text-slate-700"
-                              }`}
-                            >
-                              <span className={`w-7 h-7 flex-shrink-0 rounded-lg font-black text-sm flex items-center justify-center ${
-                                userScore === v
-                                  ? "bg-white/20 text-white"
-                                  : isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"
-                              }`}>{v}</span>
-                              <span className="text-xs leading-snug">
-                                {section.markDescriptions[v] ?? `${v} mark${v !== 1 ? "s" : ""}`}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
+                        {/* Sub-criteria sections: individual Yes/No per criterion */}
+                        {section.subCriteria ? (
+                          <div className="space-y-1.5">
+                            {section.subCriteria.map((sc) => {
+                              const scKey = `${section.id}_${sc.id}`
+                              const scVal = userSectionScores[scKey]
+                              return (
+                                <div key={sc.id} className={`rounded-xl border p-2.5 ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
+                                  <p className={`text-xs mb-2 leading-snug ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{sc.label}</p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => setUserSectionScores((prev) => ({ ...prev, [scKey]: 1 }))}
+                                      className={`flex-1 py-1.5 rounded-lg text-xs font-black border-2 transition-all ${
+                                        scVal === 1
+                                          ? "bg-green-600 border-green-600 text-white"
+                                          : isDarkMode
+                                            ? "border-slate-600 text-slate-400 hover:border-green-500"
+                                            : "border-slate-200 text-slate-600 hover:border-green-500"
+                                      }`}
+                                    >
+                                      ✓ Awarded
+                                    </button>
+                                    <button
+                                      onClick={() => setUserSectionScores((prev) => ({ ...prev, [scKey]: 0 }))}
+                                      className={`flex-1 py-1.5 rounded-lg text-xs font-black border-2 transition-all ${
+                                        scVal === 0
+                                          ? "bg-red-600 border-red-600 text-white"
+                                          : isDarkMode
+                                            ? "border-slate-600 text-slate-400 hover:border-red-500"
+                                            : "border-slate-200 text-slate-600 hover:border-red-500"
+                                      }`}
+                                    >
+                                      ✗ Not awarded
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          /* Single-mark or holistic sections: 0–N selector */
+                          <>
+                            {/* Criterion hint */}
+                            <p className={`text-xs mb-3 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                              {section.criterion}
+                            </p>
+                            <div className="space-y-1.5">
+                              {Array.from({ length: section.maxMarks + 1 }, (_, i) => i).map((v) => {
+                                const userScore = userSectionScores[section.id]
+                                return (
+                                  <button
+                                    key={v}
+                                    onClick={() =>
+                                      setUserSectionScores((prev) => ({ ...prev, [section.id]: v }))
+                                    }
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border-2 text-left transition-all ${
+                                      userScore === v
+                                        ? "bg-[#800000] text-white border-[#800000] shadow"
+                                        : isDarkMode
+                                          ? "border-slate-600 hover:border-slate-400 text-slate-300"
+                                          : "border-slate-200 hover:border-[#800000] text-slate-700"
+                                    }`}
+                                  >
+                                    <span className={`w-7 h-7 flex-shrink-0 rounded-lg font-black text-sm flex items-center justify-center ${
+                                      userScore === v
+                                        ? "bg-white/20 text-white"
+                                        : isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"
+                                    }`}>{v}</span>
+                                    <span className="text-xs leading-snug">
+                                      {section.markDescriptions[v] ?? `${v} mark${v !== 1 ? "s" : ""}`}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )
                   })}
@@ -4801,7 +4998,7 @@ function AssignmentMode({
                   onClick={() => setMarkPhase("submitted")}
                   className="w-full py-4 rounded-2xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg shadow-lg"
                 >
-                  {allSectionsMarked ? "Submit & See Real Marks →" : `Award all sections to continue (${ASSIGNMENT_SECTIONS.filter((s) => userSectionScores[s.id] !== undefined).length}/${ASSIGNMENT_SECTIONS.length} done)`}
+                  {allSectionsMarked ? "Submit & See Real Marks →" : `Award all sections to continue (${doneCount}/${ASSIGNMENT_SECTIONS.length} done)`}
                 </button>
               </div>
             </div>
@@ -4813,7 +5010,7 @@ function AssignmentMode({
     // Phase 3: Results — compare user marks vs real marks
     if (markPhase === "submitted" && selectedCandidate) {
       const totalUser = ASSIGNMENT_SECTIONS.reduce(
-        (sum, s) => sum + (userSectionScores[s.id] ?? 0),
+        (sum, s) => sum + userSectionTotal(s.id),
         0,
       )
       const totalActual = Object.values(selectedCandidate.sectionMarks).reduce((a, b) => a + b, 0)
@@ -4864,7 +5061,7 @@ function AssignmentMode({
               <p className="text-xs font-black uppercase tracking-widest text-[#800000] mb-4">Section Breakdown</p>
               <div className="space-y-3">
                 {ASSIGNMENT_SECTIONS.map((section) => {
-                  const userScore = userSectionScores[section.id] ?? 0
+                  const userScore = userSectionTotal(section.id)
                   const actualScore = selectedCandidate.sectionMarks[section.id] ?? 0
                   const diff = userScore - actualScore
                   const commentary = selectedCandidate.sectionCommentary[section.id]
@@ -4900,6 +5097,35 @@ function AssignmentMode({
                           </div>
                         </div>
                       </div>
+
+                      {/* Sub-criteria comparison (sections 3, 4, 7, 8) */}
+                      {section.subCriteria && selectedCandidate.subCriteriaMarks?.[section.id] && (
+                        <div className={`mt-3 rounded-xl p-3 space-y-1 ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Sub-criteria</p>
+                          {section.subCriteria.map((sc) => {
+                            const scKey = `${section.id}_${sc.id}`
+                            const userScVal = userSectionScores[scKey] ?? 0
+                            const actualScVal = selectedCandidate.subCriteriaMarks?.[section.id]?.[sc.id] ?? 0
+                            const scMatch = userScVal === actualScVal
+                            return (
+                              <div key={sc.id} className="flex items-center justify-between gap-2">
+                                <span className={`text-xs flex-1 leading-snug ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{sc.label}</span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className={`text-xs font-bold ${userScVal === 1 ? "text-green-600" : "text-red-500"}`}>
+                                    {userScVal === 1 ? "✓" : "✗"} You
+                                  </span>
+                                  <span className={`text-xs font-bold ${actualScVal === 1 ? "text-green-600" : "text-red-500"}`}>
+                                    {actualScVal === 1 ? "✓" : "✗"} Actual
+                                  </span>
+                                  {!scMatch && (
+                                    <span className="text-xs font-black text-amber-500">≠</span>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
 
                       {/* Commentary toggle */}
                       {commentary && (
@@ -5054,7 +5280,7 @@ function AssignmentMode({
             </div>
           </div>
 
-          {/* Commentary PDF embed */}
+          {/* Commentary PDF embed — use Google Docs viewer for cross-origin compatibility */}
           <div className={`rounded-3xl border-2 overflow-hidden mb-6 ${cardBase}`}>
             <div className={`px-5 py-3 flex items-center justify-between border-b ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
               <p className="text-xs font-black uppercase tracking-widest text-[#800000]">Official Marking Commentary PDF</p>
@@ -5068,7 +5294,7 @@ function AssignmentMode({
               </a>
             </div>
             <iframe
-              src={COMMENTARY_PDF_URL}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(COMMENTARY_PDF_URL)}&embedded=true`}
               className="w-full"
               style={{ height: "70vh" }}
               title="N5 Physics Assignment marking commentary"
@@ -11412,6 +11638,7 @@ export default function App() {
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
+            currentUser={currentUser}
           />
         )}
         {view === "exam-paper" && (

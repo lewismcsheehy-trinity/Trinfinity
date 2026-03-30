@@ -1,6 +1,11 @@
 // N5 Physics Assignment data — Understanding Standards 2023-24
 // Papers: https://www.understandingstandards.org.uk/Subjects/Physics/national5/Assignment
 
+export interface SubCriterion {
+  id: string
+  label: string
+}
+
 export interface AssignmentSection {
   id: string
   title: string
@@ -9,6 +14,8 @@ export interface AssignmentSection {
   guidance: string
   tips: string
   markDescriptions: Record<number, string>
+  /** Individual sub-criteria for sections marked per-criterion (e.g. 3a–3f, 4a–4d). When present the UI awards 0 or 1 per sub-criterion instead of a holistic 0–N selector. */
+  subCriteria?: SubCriterion[]
 }
 
 export interface CandidatePaper {
@@ -17,6 +24,8 @@ export interface CandidatePaper {
   pdfUrl: string
   sectionMarks: Record<string, number>
   sectionCommentary: Record<string, string>
+  /** Per-sub-criterion actual marks for sections that have subCriteria defined. Key: sectionId → Record<subCriterionId, 0|1>. */
+  subCriteriaMarks?: Record<string, Record<string, number>>
 }
 
 export interface PracticeQuestion {
@@ -96,6 +105,14 @@ export const ASSIGNMENT_SECTIONS: AssignmentSection[] = [
       5: "5 of 6 criteria met",
       6: "All 6 criteria met: description, raw data, correct table, derived values, literature data, and reference",
     },
+    subCriteria: [
+      { id: "3a", label: "3a — Brief description of approach that allows the experiment to be visualised" },
+      { id: "3b", label: "3b — Sufficient unprocessed (raw) data from the candidate's experiment" },
+      { id: "3c", label: "3c — Data in a correctly produced table with headings and units in every column" },
+      { id: "3d", label: "3d — Mean and/or derived values calculated correctly" },
+      { id: "3e", label: "3e — Relevant data from an internet or literature source included" },
+      { id: "3f", label: "3f — A retrievable reference for the internet/literature source" },
+    ],
   },
   {
     id: "graphical",
@@ -114,6 +131,12 @@ export const ASSIGNMENT_SECTIONS: AssignmentSection[] = [
       3: "3 of 4 criteria met",
       4: "All 4 criteria met: appropriate format, suitable scales, labelled axes with units, and accurately plotted points with best-fit line",
     },
+    subCriteria: [
+      { id: "4a", label: "4a — An appropriate graph format used (scatter, line, or bar)" },
+      { id: "4b", label: "4b — Suitable scale(s) spreading the data across most of the grid" },
+      { id: "4c", label: "4c — Axes have suitable labels with units on both axes" },
+      { id: "4d", label: "4d — Data points accurately plotted with an appropriate best-fit line or curve" },
+    ],
   },
   {
     id: "analysis",
@@ -160,6 +183,10 @@ export const ASSIGNMENT_SECTIONS: AssignmentSection[] = [
       1: "Factor with significant effect on reliability/accuracy/precision identified, but no explanation of how to minimise it or evidence supporting it",
       2: "Factor identified AND explanation of minimisation, what was done, or evidence supporting the identification",
     },
+    subCriteria: [
+      { id: "7a", label: "7a — Identifies a specific factor with a significant effect on reliability, accuracy, or precision" },
+      { id: "7b", label: "7b — Explains how to minimise the effect, what was done, or provides evidence supporting the identification" },
+    ],
   },
   {
     id: "structure",
@@ -176,6 +203,10 @@ export const ASSIGNMENT_SECTIONS: AssignmentSection[] = [
       1: "Either an informative title OR a clear and concise report (not both)",
       2: "Both an informative title AND a clear and concise report that flows logically",
     },
+    subCriteria: [
+      { id: "8a", label: "8a — An informative title that indicates the topic and nature of the investigation" },
+      { id: "8b", label: "8b — A clear and concise report that flows logically from start to finish" },
+    ],
   },
 ]
 
@@ -199,6 +230,12 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       conclusion: 1,
       evaluation: 1,
       structure: 2,
+    },
+    subCriteriaMarks: {
+      dataCollection: { "3a": 1, "3b": 1, "3c": 1, "3d": 1, "3e": 1, "3f": 1 },
+      graphical:      { "4a": 1, "4b": 1, "4c": 1, "4d": 0 },
+      evaluation:     { "7a": 1, "7b": 0 },
+      structure:      { "8a": 1, "8b": 1 },
     },
     sectionCommentary: {
       aim:
@@ -234,6 +271,12 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       evaluation: 2,
       structure: 2,
     },
+    subCriteriaMarks: {
+      dataCollection: { "3a": 1, "3b": 1, "3c": 1, "3d": 0, "3e": 1, "3f": 1 },
+      graphical:      { "4a": 1, "4b": 1, "4c": 1, "4d": 1 },
+      evaluation:     { "7a": 1, "7b": 1 },
+      structure:      { "8a": 1, "8b": 1 },
+    },
     sectionCommentary: {
       aim:
         "The aim clearly states the investigation of how current varies with resistance at a constant voltage. Both variables are named. 1 mark awarded.",
@@ -267,6 +310,12 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       conclusion: 1,
       evaluation: 2,
       structure: 2,
+    },
+    subCriteriaMarks: {
+      dataCollection: { "3a": 1, "3b": 1, "3c": 1, "3d": 1, "3e": 1, "3f": 1 },
+      graphical:      { "4a": 1, "4b": 1, "4c": 1, "4d": 1 },
+      evaluation:     { "7a": 1, "7b": 1 },
+      structure:      { "8a": 1, "8b": 1 },
     },
     sectionCommentary: {
       aim:
@@ -302,6 +351,12 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       evaluation: 2,
       structure: 2,
     },
+    subCriteriaMarks: {
+      dataCollection: { "3a": 1, "3b": 1, "3c": 1, "3d": 1, "3e": 1, "3f": 1 },
+      graphical:      { "4a": 1, "4b": 1, "4c": 1, "4d": 1 },
+      evaluation:     { "7a": 1, "7b": 1 },
+      structure:      { "8a": 1, "8b": 1 },
+    },
     sectionCommentary: {
       aim:
         "The aim clearly states investigating how the mass of a vehicle affects its braking distance on a fixed surface. Both variables are clearly identified. 1 mark awarded.",
@@ -335,6 +390,12 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       conclusion: 1,
       evaluation: 2,
       structure: 2,
+    },
+    subCriteriaMarks: {
+      dataCollection: { "3a": 1, "3b": 1, "3c": 0, "3d": 0, "3e": 1, "3f": 1 },
+      graphical:      { "4a": 1, "4b": 0, "4c": 0, "4d": 1 },
+      evaluation:     { "7a": 1, "7b": 1 },
+      structure:      { "8a": 1, "8b": 1 },
     },
     sectionCommentary: {
       aim:
@@ -574,7 +635,250 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
       "The raw data mark (3b) is specifically for unprocessed experimental measurements — the numbers recorded directly from the experiment before any calculation. Mean values or derived quantities belong to mark 3d, not 3b.",
     sectionRef: "dataCollection",
   },
+  {
+    id: "p16",
+    question: "Which of the following BEST describes what makes a reference sufficient to gain mark 3f?",
+    type: "mc",
+    options: [
+      "Any website address (URL), even if it no longer works",
+      "The name of the book or website visited",
+      "Enough detail that a third party could retrieve the source (e.g. full URL, or author, title, volume and page number)",
+      "A screenshot of the webpage pasted into the report",
+    ],
+    answer: 2,
+    explanation:
+      "Mark 3f requires a reference detailed enough for a third party to find and retrieve the source. For a website this means the full URL; for a book or journal it means author, title, volume, and page number. A partial or broken URL, or just a website name, would not be sufficient.",
+    sectionRef: "dataCollection",
+  },
+  {
+    id: "p17",
+    question:
+      "Why is 'human error' alone NOT sufficient to gain the first mark in the Evaluation section?",
+    type: "mc",
+    options: [
+      "Because human error is not a valid type of uncertainty in physics",
+      "Because the mark requires the candidate to name a specific factor whose effect on the result can be assessed",
+      "Because evaluation marks are only for equipment faults",
+      "Because the candidate must identify two separate errors to gain the first mark",
+    ],
+    answer: 1,
+    explanation:
+      "The evaluation mark requires a specific, identifiable factor (e.g. 'parallax error when reading the ruler', 'heat loss through the container walls'). 'Human error' is too vague — a marker cannot assess its expected effect on accuracy or reliability. One specific factor is enough for the first mark.",
+    sectionRef: "evaluation",
+  },
+  {
+    id: "p18",
+    question:
+      "A candidate writes: 'To improve accuracy I would repeat the experiment more times.' Does this gain the second Evaluation mark (7b)?",
+    type: "mc",
+    options: [
+      "Yes — repeating experiments always improves accuracy",
+      "No — the mark requires a specific improvement linked to the identified factor, not a generic suggestion",
+      "Yes — if combined with identifying a specific error",
+      "No — only instrumental improvements count for the second mark",
+    ],
+    answer: 1,
+    explanation:
+      "'Repeat the experiment more times' is too generic to gain mark 7b. The improvement must be specifically linked to the identified factor — for example, 'use a digital thermometer to reduce the parallax error when reading the scale'. Generic advice about repeating measurements or using better equipment is insufficient.",
+    sectionRef: "evaluation",
+  },
+  {
+    id: "p19",
+    question:
+      "What is the key requirement for gaining the Graphical Presentation scale mark (4b)?",
+    type: "mc",
+    options: [
+      "The scale must start at zero on both axes",
+      "The plotted data points must spread across most of the available grid area",
+      "The scale must use only multiples of 2, 5, or 10",
+      "The scale must be the same on both axes",
+    ],
+    answer: 1,
+    explanation:
+      "Mark 4b requires a suitable scale that spreads the data points across most of the graph grid. If all the data points are bunched into a small corner of the grid, this mark is not awarded. The scale does NOT have to start at zero — an interrupted scale or a scale that starts part-way up is acceptable.",
+    sectionRef: "graphical",
+  },
+  {
+    id: "p20",
+    question:
+      "A candidate draws an appropriate graph, uses a suitable scale, and correctly labels both axes with units. Their line of best fit is a smooth curve through most of the points. How many graphical marks (4a–4d) should be awarded?",
+    type: "mc",
+    options: [
+      "2 — smooth curves are not acceptable",
+      "3 — a curve can only count if the relationship is known to be non-linear",
+      "4 — all four criteria are met",
+      "1 — only the format mark is awarded without a straight line",
+    ],
+    answer: 2,
+    explanation:
+      "All four graphical criteria are met: appropriate format (4a ✓), suitable scale (4b ✓), labelled axes with units (4c ✓), and accurately plotted points with a best-fit line or curve (4d ✓). A smooth curve is a valid best-fit line when the data suggests a non-linear relationship. 4/4 marks awarded.",
+    sectionRef: "graphical",
+  },
+  {
+    id: "p21",
+    question:
+      "The Analysis section is worth 1 mark. Which response BEST demonstrates what is required?",
+    type: "mc",
+    options: [
+      "'My results matched the literature values.'",
+      "'As voltage increased, resistance also increased — this is consistent with Ohm's Law as expected.'",
+      "'My experimental pressure values (105–145 kPa) followed the same increasing trend with temperature as the Gay-Lussac's Law values from the NASA source (103–148 kPa), with a maximum difference of 3%.'",
+      "'The graph shows that the results are roughly proportional.'",
+    ],
+    answer: 2,
+    explanation:
+      "The Analysis mark requires a valid, specific comparison between the candidate's own experimental data and the literature/internet source data. Option C explicitly references both datasets with numerical values and describes the comparison. Vague statements like 'my results matched' or 'the results are proportional' are insufficient.",
+    sectionRef: "analysis",
+  },
+  {
+    id: "p22",
+    question:
+      "A candidate states in their conclusion: 'As resistance increases, current decreases.' No reference is made to the aim or to the data. Will this gain the Conclusion mark?",
+    type: "mc",
+    options: [
+      "Yes — it correctly identifies the direction of the relationship",
+      "No — the conclusion must relate to the aim and be supported by all the data in the report",
+      "Yes — as long as it is consistent with Ohm's Law",
+      "No — the conclusion must also include a formula",
+    ],
+    answer: 1,
+    explanation:
+      "The Conclusion mark requires a valid statement that (a) relates to the aim and (b) is supported by all the data in the report. Simply stating the direction of change without linking back to the aim or to the data in the report is not sufficient.",
+    sectionRef: "conclusion",
+  },
+  {
+    id: "p23",
+    question:
+      "How many marks are available for the Structure section, and how are they awarded?",
+    type: "mc",
+    options: [
+      "1 mark — for having a clear title",
+      "2 marks — one for an informative title (8a) and one for a clear, logical, concise report (8b)",
+      "2 marks — both awarded together only if both criteria are met",
+      "3 marks — title, structure, and length",
+    ],
+    answer: 1,
+    explanation:
+      "Structure is worth 2 marks: 8a for an informative title that indicates the topic and nature of the investigation, and 8b for a report that is clear, concise, and flows logically. These are separate marks — a candidate can gain 8a without 8b and vice versa.",
+    sectionRef: "structure",
+  },
+  {
+    id: "p24",
+    question:
+      "A title reads 'Physics Investigation — Experiment 3'. Will this gain mark 8a?",
+    type: "mc",
+    options: [
+      "Yes — any title gains the mark",
+      "No — the title must indicate the topic and nature of the investigation (e.g. naming the variables)",
+      "Yes — because it identifies that it is a physics investigation",
+      "No — only titles written at the top of the first page are accepted",
+    ],
+    answer: 1,
+    explanation:
+      "Mark 8a requires an informative title that tells the reader what is being investigated — what is being changed and what is being measured. 'Physics Investigation — Experiment 3' is too vague. An informative title might be 'An investigation into how the resistance of a thermistor varies with temperature'.",
+    sectionRef: "structure",
+  },
+  {
+    id: "p25",
+    question:
+      "The Underlying Physics section is marked holistically. What does this mean in practice?",
+    type: "mc",
+    options: [
+      "The marker adds up sub-marks and converts to a score out of 3",
+      "The marker assigns 3 marks only if every physics formula in the report is correct",
+      "The marker reads the whole section and awards 0, 1, 2, or 3 based on the overall quality of physics understanding shown",
+      "The marker awards 1 mark for each correct formula stated, up to a maximum of 3",
+    ],
+    answer: 2,
+    explanation:
+      "Holistic marking means the marker considers the entire Underlying Physics section and makes an overall judgement. 3 marks = good understanding, 2 marks = reasonable understanding, 1 mark = limited understanding. There is no sub-mark breakdown — a single formula mentioned correctly is unlikely to gain 3 marks on its own.",
+    sectionRef: "underlyingPhysics",
+  },
+  {
+    id: "p26",
+    question:
+      "What is the minimum number of data points required for mark 3b (sufficient raw data)?",
+    type: "mc",
+    options: [
+      "At least 2 data points",
+      "Exactly 5 data points",
+      "At least 3 repeat readings per condition",
+      "Enough unprocessed readings to allow a meaningful relationship to be identified — typically at least 4–5 values of the independent variable",
+    ],
+    answer: 3,
+    explanation:
+      "The marking scheme does not specify an exact number but requires 'sufficient' raw data. In practice this means enough unprocessed readings to show a meaningful trend — typically a minimum of 4–5 different values of the independent variable. Three or fewer readings would rarely be considered sufficient.",
+    sectionRef: "dataCollection",
+  },
+  {
+    id: "p27",
+    question:
+      "Which section contains the mark for comparing experimental data with data from a literature or internet source?",
+    type: "mc",
+    options: [
+      "Section 5 – Analysis",
+      "Section 3 – Data Collection and Handling (mark 3e)",
+      "Section 6 – Conclusion",
+      "Both 3e and 5 require this comparison",
+    ],
+    answer: 3,
+    explanation:
+      "Both sections involve the literature source but for different purposes. Mark 3e (Data Collection) is awarded for including relevant data from an internet/literature source. Mark 5 (Analysis) is awarded for making a valid comparison between that literature data and the candidate's own experimental data. These are separate marks targeting different skills.",
+    sectionRef: "analysis",
+  },
+  {
+    id: "p28",
+    question:
+      "A candidate's graph uses a scale where all data points fit within the bottom-left quarter of the grid. Which mark is NOT awarded?",
+    type: "mc",
+    options: [
+      "4a — appropriate format",
+      "4b — suitable scale",
+      "4c — axes labelled with units",
+      "4d — accurately plotted points with best-fit line",
+    ],
+    answer: 1,
+    explanation:
+      "Mark 4b (suitable scale) requires the data points to be spread across most of the available grid. If all points are bunched in one quarter of the graph, the scale is not appropriate. Marks 4a, 4c and 4d can still be awarded independently of the scale choice.",
+    sectionRef: "graphical",
+  },
+  {
+    id: "p29",
+    question:
+      "A candidate's report has an informative title but jumps straight from the data table to the conclusion with no analysis or evaluation sections. Can mark 8b (logical structure) be awarded?",
+    type: "mc",
+    options: [
+      "Yes — the title is informative so both structure marks are awarded",
+      "No — the report must contain all sections to gain 8b",
+      "Possibly — 8b is about whether the reader can follow the flow of the investigation, not about having every section present. If the sections that are present flow logically, 8b may still be awarded.",
+      "No — missing sections always prevent 8b from being awarded",
+    ],
+    answer: 2,
+    explanation:
+      "Mark 8b is about whether the report flows logically so a reader can follow the investigation from start to finish. The marking scheme does not require a fixed set of headings. However, if key sections are missing it becomes difficult for the reader to follow the full investigation. The marker makes a holistic judgement — a report missing significant sections would likely not be considered clear and logical.",
+    sectionRef: "structure",
+  },
+  {
+    id: "p30",
+    question:
+      "Which of the following would gain mark 3d (mean and/or derived values)?",
+    type: "mc",
+    options: [
+      "A table that shows three repeat readings but no calculated average",
+      "A table where averages of three repeat readings are calculated for each value of the independent variable",
+      "A single set of readings with no repeats",
+      "A graph plotted from raw data",
+    ],
+    answer: 1,
+    explanation:
+      "Mark 3d requires evidence of mean (average) values or derived quantities (e.g. resistance calculated from V/I). A table with three repeat readings and calculated averages satisfies this criterion. Three repeat readings with no average would earn mark 3b (raw data) but not 3d.",
+    sectionRef: "dataCollection",
+  },
 ]
+
+// ── Teacher Custom Questions ──────────────────────────────────────────────────
+// Teachers can add custom questions via the Practice UI; stored in localStorage.
+export const ASSIGNMENT_CUSTOM_QUESTIONS_KEY = "trinfinity_assignment_custom_questions"
 
 // ── Improve Examples ─────────────────────────────────────────────────────────
 // Flawed candidate writing — user picks the best improvement
