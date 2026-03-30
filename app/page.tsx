@@ -9632,7 +9632,7 @@ function BiologyExperimentalMode({
   function startQuiz() {
     let pool = BIO_EXP_QUESTIONS.filter(q => q.difficulty === difficulty)
     if (category !== "all") pool = pool.filter(q => q.category === category)
-    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 10)
+    const shuffled = shuffleArray([...pool]).slice(0, 10)
     setQuestions(shuffled)
     setIdx(0)
     setTyped("")
@@ -9989,7 +9989,7 @@ function BioMathsMode({
   function startQuiz() {
     let pool = BIO_MATHS_QUESTIONS.filter(q => q.difficulty === difficulty)
     if (skill !== "all") pool = pool.filter(q => q.skill === skill)
-    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 8)
+    const shuffled = shuffleArray([...pool]).slice(0, 8)
     setQuestions(shuffled)
     setIdx(0)
     setTyped("")
