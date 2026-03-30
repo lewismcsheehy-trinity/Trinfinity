@@ -3923,8 +3923,8 @@ function CalculationsMode({
   currentUser?: UserAccount | null
 }) {
   type CalcDifficulty = "easy" | "medium" | "hard"
-  type CalcSubMode = CalcDifficulty | "exam-level" | "correct-me" | null
-  type CalcPhase = "hub" | "equation-select" | "quiz" | "results"
+  type CalcSubMode = CalcDifficulty | "exam-level" | "correct-me" | "endless" | null
+  type CalcPhase = "hub" | "equation-select" | "quiz" | "results" | "endless"
 
   const currentUserId = currentUser?.id
   // Locking applies only to pupils who haven't opted out
@@ -3947,6 +3947,130 @@ function CalculationsMode({
   const [calcProgress, setCalcProgress] = useState<CalcProgress>(() =>
     currentUserId ? loadUserCalcProgress(currentUserId, selectedLevel) : defaultCalcProgress()
   )
+
+  // ── Endless mode state ─────────────────────────────────────────────────────
+  type EndlessEntry = { question: CalcQuestion; difficulty: CalcDifficulty }
+
+  const [endlessLives, setEndlessLives] = useState(3)
+  const [endlessPowerUps, setEndlessPowerUps] = useState(3)
+  const [endlessScore, setEndlessScore] = useState(0)
+  const [endlessStreak, setEndlessStreak] = useState(0)
+  const [endlessEntry, setEndlessEntry] = useState<EndlessEntry | null>(null)
+  const [endlessTyped, setEndlessTyped] = useState("")
+  const [endlessMcSelected, setEndlessMcSelected] = useState<number | null>(null)
+  const [endlessRevealed, setEndlessRevealed] = useState(false)
+  const [endlessGameOver, setEndlessGameOver] = useState(false)
+  const [endlessActivePowerUp, setEndlessActivePowerUp] = useState<"skip" | "reveal" | "double" | null>(null)
+  // Pool stored as a ref so it persists between renders without causing re-renders
+  const endlessPoolRef = useRef<EndlessEntry[]>([])
+
+  function buildEndlessPool(): EndlessEntry[] {
+    const pool: EndlessEntry[] = []
+    const difficulties: CalcDifficulty[] = ["easy", "medium", "hard"]
+    for (const eq of SQA_EQUATIONS) {
+      for (const diff of difficulties) {
+        const qs = getEquationQuestions(eq.id, diff)
+        for (const q of qs) pool.push({ question: q, difficulty: diff })
+      }
+    }
+    return shuffleArray(pool)
+  }
+
+  function popEndlessEntry(): EndlessEntry {
+    if (endlessPoolRef.current.length === 0) {
+      endlessPoolRef.current = buildEndlessPool()
+    }
+    return endlessPoolRef.current.pop()!
+  }
+
+  function startEndless() {
+    setSubMode("endless")
+    setEndlessLives(3)
+    setEndlessPowerUps(3)
+    setEndlessScore(0)
+    setEndlessStreak(0)
+    setEndlessTyped("")
+    setEndlessMcSelected(null)
+    setEndlessRevealed(false)
+    setEndlessGameOver(false)
+    setEndlessActivePowerUp(null)
+    endlessPoolRef.current = buildEndlessPool()
+    setEndlessEntry(popEndlessEntry())
+    setPhase("endless")
+  }
+
+  function endlessHandleAnswer() {
+    if (!endlessEntry) return
+    const { question: endlessQ, difficulty: endlessDiff } = endlessEntry
+    const isEasy = endlessDiff === "easy"
+    const isDouble = endlessActivePowerUp === "double"
+    if (isEasy) {
+      const correct = endlessMcSelected === endlessQ.correctOption
+      if (correct) {
+        setEndlessScore(s => s + (isDouble ? 2 : 1))
+        setEndlessStreak(s => s + 1)
+      } else {
+        const newLives = endlessLives - 1
+        setEndlessLives(newLives)
+        setEndlessStreak(0)
+        if (newLives <= 0) setEndlessGameOver(true)
+      }
+      if (isDouble) setEndlessActivePowerUp(null)
+    }
+    setEndlessRevealed(true)
+  }
+
+  // Self-mark for typed/extended questions: handles scoring AND advancing in one call
+  // to avoid stale-state issues when checking endlessGameOver across two functions.
+  function endlessSelfMarkAndAdvance(gotIt: boolean) {
+    const isDouble = endlessActivePowerUp === "double"
+    let willGameOver = false
+    if (gotIt) {
+      setEndlessScore(s => s + (isDouble ? 2 : 1))
+      setEndlessStreak(s => s + 1)
+    } else {
+      const newLives = endlessLives - 1
+      setEndlessLives(newLives)
+      setEndlessStreak(0)
+      if (newLives <= 0) {
+        setEndlessGameOver(true)
+        willGameOver = true
+      }
+    }
+    if (isDouble) setEndlessActivePowerUp(null)
+    if (!willGameOver) {
+      setEndlessEntry(popEndlessEntry())
+      setEndlessTyped("")
+      setEndlessMcSelected(null)
+      setEndlessRevealed(false)
+    }
+  }
+
+  function endlessHandleNext() {
+    if (endlessGameOver) {
+      setPhase("hub")
+      return
+    }
+    setEndlessEntry(popEndlessEntry())
+    setEndlessTyped("")
+    setEndlessMcSelected(null)
+    setEndlessRevealed(false)
+  }
+
+  function endlessUsePowerUp(type: "skip" | "reveal" | "double") {
+    if (endlessPowerUps <= 0) return
+    setEndlessPowerUps(p => p - 1)
+    if (type === "skip") {
+      setEndlessEntry(popEndlessEntry())
+      setEndlessTyped("")
+      setEndlessMcSelected(null)
+      setEndlessRevealed(false)
+    } else if (type === "reveal") {
+      setEndlessRevealed(true)
+    } else if (type === "double") {
+      setEndlessActivePowerUp("double")
+    }
+  }
 
   const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
 
@@ -4096,7 +4220,7 @@ function CalculationsMode({
             ))}
           </div>
           {/* Secondary modes */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
             {extraModes.map((m) => (
               <button
                 key={m.id}
@@ -4122,6 +4246,240 @@ function CalculationsMode({
               </button>
             ))}
           </div>
+          {/* Endless mode */}
+          <button
+            onClick={startEndless}
+            className={`w-full group text-left rounded-2xl border-2 p-5 transition-all hover:scale-[1.01] hover:shadow-xl ${
+              isDarkMode
+                ? "bg-slate-800 border-purple-700 hover:border-purple-500"
+                : "bg-white border-purple-200 hover:border-purple-400 shadow-md"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-700 flex items-center justify-center text-xl shadow-md">
+                ♾️
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-base font-black">Endless Mode</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">NEW</span>
+                </div>
+                <p className={`text-xs leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                  All equations, all levels — survive as long as you can. 3 lives · 3 power-ups.
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Endless Mode ─────────────────────────────────────────────────────────
+  if (phase === "endless") {
+    if (!endlessEntry) return null
+    const { question: q, difficulty: endlessDiff } = endlessEntry
+    const isEasy = endlessDiff === "easy"
+    const livesArr = [0, 1, 2]
+    const puArr = [0, 1, 2]
+
+    const diffBadge = endlessDiff === "easy" ? "bg-emerald-500" : endlessDiff === "medium" ? "bg-amber-500" : "bg-red-600"
+
+    return (
+      <div className="pt-24 min-h-screen flex flex-col items-center p-6 animate-in fade-in">
+        <div className="max-w-2xl w-full">
+          {/* Header bar */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setPhase("hub")} className="text-slate-500 hover:text-[#800000]">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="font-black text-lg">♾️ Endless</span>
+            <span className={`text-sm font-black ${isDarkMode ? "text-amber-400" : "text-amber-600"}`}>Score: {endlessScore}</span>
+          </div>
+
+          {/* Lives & Power-ups */}
+          <div className={`rounded-2xl border-2 p-4 mb-4 flex items-center justify-between ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-widest text-slate-500">Lives</span>
+              <div className="flex gap-1">
+                {livesArr.map(i => (
+                  <span key={i} className={`text-xl ${i < endlessLives ? "opacity-100" : "opacity-20"}`}>❤️</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-widest text-slate-500">Power-ups</span>
+              <div className="flex gap-1">
+                {puArr.map(i => (
+                  <span key={i} className={`text-xl ${i < endlessPowerUps ? "opacity-100" : "opacity-20"}`}>⚡</span>
+                ))}
+              </div>
+            </div>
+            {endlessStreak >= 3 && (
+              <span className={`text-xs font-black px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400`}>
+                🔥 {endlessStreak} streak
+              </span>
+            )}
+          </div>
+
+          {/* Power-up buttons */}
+          {!endlessRevealed && endlessPowerUps > 0 && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => endlessUsePowerUp("skip")}
+                title="Skip this question (costs 1 power-up)"
+                className={`flex-1 py-2 rounded-xl font-black text-xs transition-all border-2 ${
+                  isDarkMode ? "border-slate-600 bg-slate-800 hover:border-amber-400 text-slate-300" : "border-slate-200 bg-white hover:border-amber-400 text-slate-600"
+                }`}
+              >
+                ⏭ Skip
+              </button>
+              {isEasy && (
+                <button
+                  onClick={() => endlessUsePowerUp("reveal")}
+                  title="Reveal the answer (costs 1 power-up)"
+                  className={`flex-1 py-2 rounded-xl font-black text-xs transition-all border-2 ${
+                    isDarkMode ? "border-slate-600 bg-slate-800 hover:border-blue-400 text-slate-300" : "border-slate-200 bg-white hover:border-blue-400 text-slate-600"
+                  }`}
+                >
+                  👁 Reveal
+                </button>
+              )}
+              <button
+                onClick={() => endlessUsePowerUp("double")}
+                disabled={endlessActivePowerUp === "double"}
+                title="Double points on next correct answer (costs 1 power-up)"
+                className={`flex-1 py-2 rounded-xl font-black text-xs transition-all border-2 ${
+                  endlessActivePowerUp === "double"
+                    ? "bg-yellow-400 text-yellow-900 border-yellow-400"
+                    : isDarkMode ? "border-slate-600 bg-slate-800 hover:border-yellow-400 text-slate-300" : "border-slate-200 bg-white hover:border-yellow-400 text-slate-600"
+                }`}
+              >
+                ✕2 Double
+              </button>
+            </div>
+          )}
+
+          {/* Question card */}
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full text-white ${diffBadge}`}>{endlessDiff}</span>
+              {q.equation && <span className={`text-xs font-mono px-2 py-0.5 rounded-full ${isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"}`}>{q.equation}</span>}
+            </div>
+            <p className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>{q.stem}</p>
+          </div>
+
+          {/* MC options */}
+          {isEasy && "options" in q && q.options && (
+            <div className="space-y-3 mb-4">
+              {q.options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => !endlessRevealed && setEndlessMcSelected(i)}
+                  className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-semibold text-sm transition-all ${
+                    endlessRevealed
+                      ? i === q.correctOption
+                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700"
+                        : i === endlessMcSelected
+                          ? "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700"
+                          : isDarkMode ? "border-slate-600 bg-slate-800 text-slate-400" : "border-slate-200 bg-slate-50 text-slate-400"
+                      : endlessMcSelected === i
+                        ? "border-[#800000] bg-red-50 dark:bg-red-900/20"
+                        : isDarkMode ? "border-slate-600 bg-slate-800 hover:border-slate-400" : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <span className="font-black mr-3">{String.fromCharCode(65 + i)}.</span>{opt}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Typed answer for non-easy */}
+          {!isEasy && (
+            <textarea
+              value={endlessTyped}
+              onChange={e => setEndlessTyped(e.target.value)}
+              placeholder="Type your answer here…"
+              rows={3}
+              className={`w-full px-4 py-3 rounded-2xl border-2 text-sm mb-4 resize-none focus:outline-none focus:border-[#800000] ${
+                isDarkMode
+                  ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
+                  : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+          )}
+
+          {/* Revealed answer / mark scheme */}
+          {endlessRevealed && (
+            <div className={`rounded-2xl p-4 mb-4 border-2 ${isDarkMode ? "bg-slate-700/50 border-slate-600" : "bg-slate-50 border-slate-200"}`}>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">Mark Scheme</p>
+              <p className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{q.markScheme}</p>
+            </div>
+          )}
+
+          {/* Game over overlay */}
+          {endlessGameOver && (
+            <div className={`rounded-2xl border-2 border-red-500 p-6 mb-4 text-center ${isDarkMode ? "bg-slate-800" : "bg-red-50"}`}>
+              <div className="text-4xl mb-2">💀</div>
+              <h3 className="text-2xl font-black mb-1">Game Over!</h3>
+              <p className={`text-sm mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>You scored <strong>{endlessScore}</strong> point{endlessScore !== 1 ? "s" : ""}</p>
+              <button
+                onClick={() => setPhase("hub")}
+                className="px-6 py-2 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-black text-sm transition-all"
+              >
+                Back to Hub
+              </button>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          {!endlessGameOver && (
+            isEasy ? (
+              <>
+                {!endlessRevealed && endlessMcSelected !== null && (
+                  <button
+                    onClick={endlessHandleAnswer}
+                    className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all mb-3"
+                  >
+                    Check Answer
+                  </button>
+                )}
+                {endlessRevealed && (
+                  <button onClick={endlessHandleNext} className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black transition-all">
+                    Next Question →
+                  </button>
+                )}
+              </>
+            ) : (
+              !endlessRevealed ? (
+                <button
+                  onClick={() => setEndlessRevealed(true)}
+                  disabled={!endlessTyped.trim()}
+                  className="w-full py-3 bg-[#800000] hover:bg-[#600000] disabled:opacity-40 text-white rounded-2xl font-black transition-all"
+                >
+                  Show Answer
+                </button>
+              ) : (
+                <>
+                  <p className={`text-xs font-black uppercase tracking-widest text-center mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Did you get it right?</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => endlessSelfMarkAndAdvance(true)}
+                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black transition-all"
+                    >
+                      ✓ Yes
+                    </button>
+                    <button
+                      onClick={() => endlessSelfMarkAndAdvance(false)}
+                      className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black transition-all"
+                    >
+                      ✗ No
+                    </button>
+                  </div>
+                </>
+              )
+            )
+          )}
         </div>
       </div>
     )
@@ -7913,7 +8271,6 @@ function ModeSelection({
     { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
     { id: "experimental-techniques" as const, icon: FlaskConical, title: "Experimental Techniques", desc: "Apparatus and practical techniques", comingSoon: false },
     { id: "bio-maths" as const, icon: Sigma, title: "Maths Skills", desc: "Percentages, averages, ratios & graphs", comingSoon: false },
-    { id: "problem-solving" as const, icon: Lightbulb, title: "Problem Solving", desc: "Guided biology problem solving practice", comingSoon: true },
     { id: "essay" as const, icon: Pencil, title: "Essay Questions", desc: "Structured essay writing practice", comingSoon: true },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
     { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
@@ -9627,11 +9984,14 @@ function BiologyExperimentalMode({
   const [mcSelected, setMcSelected] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [score, setScore] = useState(0)
+  const [showInfo, setShowInfo] = useState(false)
+  const [numQuestions, setNumQuestions] = useState(5)
 
   function startQuiz() {
     let pool = BIO_EXP_QUESTIONS.filter(q => q.difficulty === difficulty)
     if (category !== "all") pool = pool.filter(q => q.category === category)
-    const shuffled = shuffleArray([...pool]).slice(0, 10)
+    const count = numQuestions === 0 ? pool.length : numQuestions
+    const shuffled = shuffleArray([...pool]).slice(0, count)
     setQuestions(shuffled)
     setIdx(0)
     setTyped("")
@@ -9666,7 +10026,19 @@ function BiologyExperimentalMode({
           <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
-          <h2 className="text-4xl font-black mb-2 text-center">Experimental Techniques</h2>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h2 className="text-4xl font-black text-center">Experimental Techniques</h2>
+            <button
+              onClick={() => setShowInfo(true)}
+              title="View topics covered"
+              aria-label="View topics covered"
+              className={`w-8 h-8 rounded-full border-2 font-black text-sm flex items-center justify-center transition-all ${
+                isDarkMode ? "border-slate-500 text-slate-400 hover:border-amber-400 hover:text-amber-400" : "border-slate-300 text-slate-500 hover:border-[#800000] hover:text-[#800000]"
+              }`}
+            >
+              i
+            </button>
+          </div>
           <p className={`text-center mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
             Practice questions on biology apparatus and practical techniques.
           </p>
@@ -9692,7 +10064,7 @@ function BiologyExperimentalMode({
           </div>
 
           {/* Category */}
-          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
             <h3 className="font-black uppercase tracking-widest text-sm mb-3">Category</h3>
             <div className="flex gap-3">
               {(["all", "apparatus", "technique"] as ExpCategory[]).map(c => (
@@ -9711,23 +10083,23 @@ function BiologyExperimentalMode({
             </div>
           </div>
 
-          {/* Reference lists */}
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <div className={`rounded-2xl border-2 p-4 ${cardBg}`}>
-              <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-teal-600">Apparatus</h4>
-              <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-                {["Beaker","Balance","Measuring cylinder","Dropper/pipette","Test tube / boiling tube","Thermometer","Funnel","Syringe","Timer / stopwatch","Microscope","Petri dish","Quadrat","Pitfall trap","Light/moisture meter","Water bath"].map(a => (
-                  <li key={a} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />{a}</li>
-                ))}
-              </ul>
-            </div>
-            <div className={`rounded-2xl border-2 p-4 ${cardBg}`}>
-              <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-violet-600">Techniques</h4>
-              <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-                {["Measuring enzyme activity","Using a respirometer","Measuring transpiration (potometer)","Measuring abiotic factors","Measuring distribution of a species","Using a transect line","Measuring rate of photosynthesis"].map(t => (
-                  <li key={t} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />{t}</li>
-                ))}
-              </ul>
+          {/* Number of Questions */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Number of Questions</h3>
+            <div className="flex gap-3 flex-wrap">
+              {[5, 10, 15, 0].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setNumQuestions(n)}
+                  className={`px-5 py-2 rounded-xl font-black text-sm transition-all ${
+                    numQuestions === n
+                      ? "bg-[#800000] text-white"
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {n === 0 ? "All" : n}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -9738,6 +10110,36 @@ function BiologyExperimentalMode({
             Start Quiz →
           </button>
         </div>
+
+        {/* Info modal */}
+        {showInfo && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
+            <div className={`w-full max-w-lg rounded-3xl shadow-2xl border-2 p-6 animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`} onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-lg">Topics Covered</h3>
+                <button onClick={() => setShowInfo(false)} className={`w-8 h-8 rounded-full font-black text-lg flex items-center justify-center ${isDarkMode ? "bg-slate-700 text-slate-300 hover:bg-slate-600" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>×</button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-teal-600">Apparatus</h4>
+                  <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                    {["Beaker","Balance","Measuring cylinder","Dropper/pipette","Test tube / boiling tube","Thermometer","Funnel","Syringe","Timer / stopwatch","Microscope","Petri dish","Quadrat","Pitfall trap","Light/moisture meter","Water bath"].map(a => (
+                      <li key={a} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />{a}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm uppercase tracking-widest mb-2 text-violet-600">Techniques</h4>
+                  <ul className={`text-xs space-y-1 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
+                    {["Measuring enzyme activity","Using a respirometer","Measuring transpiration (potometer)","Measuring abiotic factors","Measuring distribution of a species","Using a transect line","Measuring rate of photosynthesis"].map(t => (
+                      <li key={t} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -9973,11 +10375,14 @@ function BioMathsMode({
   const [mcSelected, setMcSelected] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [score, setScore] = useState(0)
+  const [showInfo, setShowInfo] = useState(false)
+  const [numQuestions, setNumQuestions] = useState(5)
 
   function startQuiz() {
     let pool = BIO_MATHS_QUESTIONS.filter(q => q.difficulty === difficulty)
     if (skill !== "all") pool = pool.filter(q => q.skill === skill)
-    const shuffled = shuffleArray([...pool]).slice(0, 8)
+    const count = numQuestions === 0 ? pool.length : numQuestions
+    const shuffled = shuffleArray([...pool]).slice(0, count)
     setQuestions(shuffled)
     setIdx(0)
     setTyped("")
@@ -10020,29 +10425,22 @@ function BioMathsMode({
           <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] mb-8 font-bold uppercase text-xs tracking-widest">
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
-          <h2 className="text-4xl font-black mb-2 text-center">Maths Skills</h2>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h2 className="text-4xl font-black text-center">Maths Skills</h2>
+            <button
+              onClick={() => setShowInfo(true)}
+              title="View quick reference formulas"
+              aria-label="View quick reference formulas"
+              className={`w-8 h-8 rounded-full border-2 font-black text-sm flex items-center justify-center transition-all ${
+                isDarkMode ? "border-slate-500 text-slate-400 hover:border-amber-400 hover:text-amber-400" : "border-slate-300 text-slate-500 hover:border-[#800000] hover:text-[#800000]"
+              }`}
+            >
+              i
+            </button>
+          </div>
           <p className={`text-center mb-8 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
             Practice averages, ratios, percentages, percentage change and graph skills.
           </p>
-
-          {/* Reference box */}
-          <div className={`rounded-2xl border-2 p-4 mb-4 ${cardBg}`}>
-            <h4 className="font-black text-sm uppercase tracking-widest mb-3 text-amber-600">Quick Reference</h4>
-            <div className="space-y-2 text-xs">
-              {[
-                { label: "Average (Mean)", formula: "Add all values ÷ how many values" },
-                { label: "Ratio", formula: "Divide all numbers by the same HCF (whole numbers only)" },
-                { label: "Percentage", formula: "(Part ÷ Total) × 100" },
-                { label: "% Change", formula: "(Difference ÷ Original) × 100" },
-                { label: "Graph Rule", formula: "SLURP – Scale, Labels, Units, Relationship, Points" },
-              ].map(r => (
-                <div key={r.label} className={`flex gap-2 p-2 rounded-lg ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
-                  <span className="font-black w-32 shrink-0">{r.label}</span>
-                  <span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>{r.formula}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Difficulty */}
           <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
@@ -10065,7 +10463,7 @@ function BioMathsMode({
           </div>
 
           {/* Skill */}
-          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+          <div className={`rounded-2xl border-2 p-6 mb-4 ${cardBg}`}>
             <h3 className="font-black uppercase tracking-widest text-sm mb-3">Skill Focus</h3>
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(SKILL_LABELS) as BioMathSkill[]).map(s => (
@@ -10084,6 +10482,26 @@ function BioMathsMode({
             </div>
           </div>
 
+          {/* Number of Questions */}
+          <div className={`rounded-2xl border-2 p-6 mb-6 ${cardBg}`}>
+            <h3 className="font-black uppercase tracking-widest text-sm mb-3">Number of Questions</h3>
+            <div className="flex gap-3 flex-wrap">
+              {[5, 8, 10, 0].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setNumQuestions(n)}
+                  className={`px-5 py-2 rounded-xl font-black text-sm transition-all ${
+                    numQuestions === n
+                      ? "bg-[#800000] text-white"
+                      : isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {n === 0 ? "All" : n}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={startQuiz}
             className="w-full py-4 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black text-lg transition-all shadow-xl"
@@ -10091,6 +10509,32 @@ function BioMathsMode({
             Start Quiz →
           </button>
         </div>
+
+        {/* Info modal */}
+        {showInfo && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
+            <div className={`w-full max-w-md rounded-3xl shadow-2xl border-2 p-6 animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`} onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-lg text-amber-600">Quick Reference</h3>
+                <button onClick={() => setShowInfo(false)} className={`w-8 h-8 rounded-full font-black text-lg flex items-center justify-center ${isDarkMode ? "bg-slate-700 text-slate-300 hover:bg-slate-600" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>×</button>
+              </div>
+              <div className="space-y-2 text-xs">
+                {[
+                  { label: "Average (Mean)", formula: "Add all values ÷ how many values" },
+                  { label: "Ratio", formula: "Divide all numbers by the same HCF (whole numbers only)" },
+                  { label: "Percentage", formula: "(Part ÷ Total) × 100" },
+                  { label: "% Change", formula: "(Difference ÷ Original) × 100" },
+                  { label: "Graph Rule", formula: "SLURP – Scale, Labels, Units, Relationship, Points" },
+                ].map(r => (
+                  <div key={r.label} className={`flex gap-2 p-2 rounded-lg ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
+                    <span className="font-black w-32 shrink-0">{r.label}</span>
+                    <span className={isDarkMode ? "text-slate-300" : "text-slate-600"}>{r.formula}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
