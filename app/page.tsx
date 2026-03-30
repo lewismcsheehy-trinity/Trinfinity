@@ -3140,47 +3140,52 @@ interface SQAEquation {
 
 const SQA_EQUATIONS: SQAEquation[] = [
   // National 5 — Dynamics
-  { id: "d-vt",        formula: "d = vt",          description: "Distance, Speed and Time",                 topic: "Dynamics",    sqaLevel: "N5" },
-  { id: "v-uat",       formula: "v = u + at",       description: "Equations of Motion (v)",                  topic: "Dynamics",    sqaLevel: "N5" },
-  { id: "s-uat2",      formula: "s = ut + ½at²",    description: "Equations of Motion (s)",                  topic: "Dynamics",    sqaLevel: "N5" },
-  { id: "v2-uas",      formula: "v² = u² + 2as",    description: "Equations of Motion (v²)",                 topic: "Dynamics",    sqaLevel: "N5" },
-  { id: "F-ma",        formula: "F = ma",            description: "Newton's Second Law",                      topic: "Dynamics",    sqaLevel: "N5" },
-  { id: "W-mg",        formula: "W = mg",            description: "Weight",                                   topic: "Dynamics",    sqaLevel: "N5" },
+  { id: "d-vt",        formula: "d = vt",            description: "Distance, Speed and Time",                 topic: "Dynamics",    sqaLevel: "N5" },
+  { id: "v-uat",       formula: "v = u + at",         description: "Acceleration",                             topic: "Dynamics",    sqaLevel: "N5" },
+  { id: "F-ma",        formula: "F = ma",              description: "Newton's Second Law",                      topic: "Dynamics",    sqaLevel: "N5" },
+  { id: "W-mg",        formula: "W = mg",              description: "Weight",                                   topic: "Dynamics",    sqaLevel: "N5" },
   // National 5 — Energy
-  { id: "Ek",          formula: "Ek = ½mv²",         description: "Kinetic Energy",                           topic: "Energy",      sqaLevel: "N5" },
-  { id: "Ep",          formula: "Ep = mgh",           description: "Gravitational Potential Energy",           topic: "Energy",      sqaLevel: "N5" },
-  { id: "P-Et",        formula: "P = E/t",            description: "Power",                                    topic: "Energy",      sqaLevel: "N5" },
-  { id: "Eh",          formula: "Eh = cmΔT",          description: "Heat Energy",                              topic: "Energy",      sqaLevel: "N5" },
+  { id: "Ew-Fd",       formula: "Ew = Fd",             description: "Work Done",                                topic: "Energy",      sqaLevel: "N5" },
+  { id: "Ek",          formula: "Ek = ½mv²",           description: "Kinetic Energy",                           topic: "Energy",      sqaLevel: "N5" },
+  { id: "Ep",          formula: "Ep = mgh",             description: "Gravitational Potential Energy",           topic: "Energy",      sqaLevel: "N5" },
+  { id: "P-Et",        formula: "P = E/t",              description: "Power",                                    topic: "Energy",      sqaLevel: "N5" },
+  { id: "Eh",          formula: "Eh = cmΔT",            description: "Heat Energy (specific heat capacity)",    topic: "Energy",      sqaLevel: "N5" },
+  { id: "Eh-ml",       formula: "Eh = ml",              description: "Heat Energy (specific latent heat)",      topic: "Energy",      sqaLevel: "N5" },
   // National 5 — Electricity
-  { id: "Q-It",        formula: "Q = It",             description: "Charge",                                   topic: "Electricity", sqaLevel: "N5" },
-  { id: "V-IR",        formula: "V = IR",             description: "Ohm's Law",                                topic: "Electricity", sqaLevel: "N5" },
-  { id: "P-IV",        formula: "P = IV",             description: "Electrical Power (P = IV)",                topic: "Electricity", sqaLevel: "N5" },
-  { id: "P-I2R",       formula: "P = I²R",            description: "Electrical Power (P = I²R)",               topic: "Electricity", sqaLevel: "N5" },
-  { id: "P-V2R",       formula: "P = V²/R",           description: "Electrical Power (P = V²/R)",              topic: "Electricity", sqaLevel: "N5" },
+  { id: "Q-It",        formula: "Q = It",               description: "Charge",                                   topic: "Electricity", sqaLevel: "N5" },
+  { id: "V-IR",        formula: "V = IR",               description: "Ohm's Law",                                topic: "Electricity", sqaLevel: "N5" },
+  { id: "P-IV",        formula: "P = IV",               description: "Electrical Power (P = IV)",                topic: "Electricity", sqaLevel: "N5" },
+  { id: "P-I2R",       formula: "P = I²R",              description: "Electrical Power (P = I²R)",               topic: "Electricity", sqaLevel: "N5" },
   // National 5 — Waves
-  { id: "v-fl",        formula: "v = fλ",             description: "Wave Equation",                            topic: "Waves",       sqaLevel: "N5" },
-  { id: "T-1f",        formula: "T = 1/f",            description: "Period and Frequency",                     topic: "Waves",       sqaLevel: "N5" },
-  { id: "diffraction", formula: "d sinθ = mλ",        description: "Diffraction Grating",                      topic: "Waves",       sqaLevel: "N5" },
-  { id: "refraction",  formula: "n = sinθ₁ / sinθ₂", description: "Snell's Law",                              topic: "Waves",       sqaLevel: "N5" },
+  { id: "v-fl",        formula: "v = fλ",               description: "Wave Equation",                            topic: "Waves",       sqaLevel: "N5" },
+  { id: "T-1f",        formula: "T = 1/f",              description: "Period and Frequency",                     topic: "Waves",       sqaLevel: "N5" },
+  // National 5 — Radiation
+  { id: "D-Em",        formula: "D = E/m",              description: "Absorbed Dose",                            topic: "Radiation",   sqaLevel: "N5" },
+  { id: "H-DwR",       formula: "H = Dw_R",             description: "Equivalent Dose",                          topic: "Radiation",   sqaLevel: "N5" },
   // National 5 — Gas Laws
-  { id: "temp-conv",   formula: "T(K) = T(°C) + 273", description: "Temperature Conversion",                  topic: "Gas Laws",    sqaLevel: "N5" },
-  { id: "gas-law",     formula: "p₁V₁/T₁ = p₂V₂/T₂", description: "Ideal Gas Law",                           topic: "Gas Laws",    sqaLevel: "N5" },
+  { id: "temp-conv",   formula: "T(K) = T(°C) + 273",  description: "Temperature Conversion",                  topic: "Gas Laws",    sqaLevel: "N5" },
+  { id: "gas-law",     formula: "p₁V₁/T₁ = p₂V₂/T₂",  description: "Combined Gas Law",                         topic: "Gas Laws",    sqaLevel: "N5" },
   // Higher — Dynamics
-  { id: "F-kx",        formula: "F = kx",             description: "Hooke's Law (Spring Constant)",            topic: "Dynamics",    sqaLevel: "Higher" },
-  { id: "impulse",     formula: "Ft = mv − mu",       description: "Impulse and Change in Momentum",           topic: "Dynamics",    sqaLevel: "Higher" },
+  { id: "s-uat2",      formula: "s = ut + ½at²",        description: "Equations of Motion (s)",                  topic: "Dynamics",    sqaLevel: "Higher" },
+  { id: "v2-uas",      formula: "v² = u² + 2as",        description: "Equations of Motion (v²)",                 topic: "Dynamics",    sqaLevel: "Higher" },
+  { id: "F-kx",        formula: "F = kx",               description: "Hooke's Law (Spring Constant)",            topic: "Dynamics",    sqaLevel: "Higher" },
+  { id: "impulse",     formula: "Ft = mv − mu",         description: "Impulse and Change in Momentum",           topic: "Dynamics",    sqaLevel: "Higher" },
   // Higher — Electricity
-  { id: "E-QV",        formula: "E = QV",             description: "Energy of Charged Particle",               topic: "Electricity", sqaLevel: "Higher" },
-  { id: "int-resist",  formula: "V = E − Ir",         description: "Internal Resistance",                      topic: "Electricity", sqaLevel: "Higher" },
+  { id: "P-V2R",       formula: "P = V²/R",             description: "Electrical Power (P = V²/R)",              topic: "Electricity", sqaLevel: "Higher" },
+  { id: "E-QV",        formula: "E = QV",               description: "Energy of Charged Particle",               topic: "Electricity", sqaLevel: "Higher" },
+  { id: "int-resist",  formula: "V = E − Ir",           description: "Internal Resistance",                      topic: "Electricity", sqaLevel: "Higher" },
   // Higher — Waves & Radiation
-  { id: "E-hf",        formula: "E = hf",             description: "Photon Energy",                            topic: "Radiation",   sqaLevel: "Higher" },
-  { id: "photoelectric", formula: "Ek = hf − hf₀",   description: "Photoelectric Effect",                     topic: "Radiation",   sqaLevel: "Higher" },
-  { id: "irradiance",  formula: "I = P/A",            description: "Irradiance",                               topic: "Radiation",   sqaLevel: "Higher" },
+  { id: "diffraction", formula: "d sinθ = mλ",          description: "Diffraction Grating",                      topic: "Waves",       sqaLevel: "Higher" },
+  { id: "refraction",  formula: "n = sinθ₁ / sinθ₂",   description: "Snell's Law",                              topic: "Waves",       sqaLevel: "Higher" },
+  { id: "E-hf",        formula: "E = hf",               description: "Photon Energy",                            topic: "Radiation",   sqaLevel: "Higher" },
+  { id: "photoelectric", formula: "Ek = hf − hf₀",     description: "Photoelectric Effect",                     topic: "Radiation",   sqaLevel: "Higher" },
+  { id: "irradiance",  formula: "I = P/A",              description: "Irradiance",                               topic: "Radiation",   sqaLevel: "Higher" },
   // Higher — Space
-  { id: "mass-energy", formula: "E = mc²",            description: "Mass-Energy Equivalence",                  topic: "Space",       sqaLevel: "Higher" },
-  { id: "redshift",    formula: "z = Δλ/λ",           description: "Redshift",                                 topic: "Space",       sqaLevel: "Higher" },
-  { id: "hubble",      formula: "v = Hd",             description: "Hubble's Law",                             topic: "Space",       sqaLevel: "Higher" },
+  { id: "mass-energy", formula: "E = mc²",              description: "Mass-Energy Equivalence",                  topic: "Space",       sqaLevel: "Higher" },
+  { id: "redshift",    formula: "z = Δλ/λ",             description: "Redshift",                                 topic: "Space",       sqaLevel: "Higher" },
+  { id: "hubble",      formula: "v = Hd",               description: "Hubble's Law",                             topic: "Space",       sqaLevel: "Higher" },
   // Advanced Higher — Gravitation
-  { id: "gravity",     formula: "F = GMm/r²",         description: "Newton's Law of Gravitation",              topic: "Gravitation", sqaLevel: "AH" },
+  { id: "gravity",     formula: "F = GMm/r²",           description: "Newton's Law of Gravitation",              topic: "Gravitation", sqaLevel: "AH" },
   // Advanced Higher — Relativity
   { id: "time-dilation",  formula: "t' = t / √(1 − v²/c²)", description: "Time Dilation",                    topic: "Relativity",  sqaLevel: "AH" },
   { id: "len-contract",   formula: "l' = l√(1 − v²/c²)",    description: "Length Contraction",               topic: "Relativity",  sqaLevel: "AH" },
@@ -3570,6 +3575,84 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
     hard: [
       { id: "temp-h1", stem: "A gas has temperature −173 °C. Convert to kelvin.", equation: "T(K) = T(°C) + 273", correctAnswer: "100 K", markScheme: "T = −173 + 273 = 100 K" },
       { id: "temp-h2", stem: "The temperature of a gas is doubled from 150 K. Calculate the new temperature in °C.", equation: "T(°C) = T(K) − 273", correctAnswer: "27 °C", markScheme: "New T = 150 × 2 = 300 K;  T(°C) = 300 − 273 = 27 °C" },
+    ],
+  },
+
+  // ── Ew = Fd ────────────────────────────────────────────────────────────────
+  "Ew-Fd": {
+    easy: [
+      { id: "EwFd-e1", stem: "A force of 10 N moves an object 5 m. Calculate the work done.", equation: "Ew = Fd", options: ["2 J", "50 J", "15 J", "0.5 J"], correctOption: 1, markScheme: "Ew = F × d = 10 × 5 = 50 J" },
+      { id: "EwFd-e2", stem: "A person does 200 J of work pushing a box 4 m. Calculate the force applied.", equation: "Ew = Fd  →  F = Ew ÷ d", options: ["800 N", "50 N", "204 N", "196 N"], correctOption: 1, markScheme: "F = Ew ÷ d = 200 ÷ 4 = 50 N" },
+      { id: "EwFd-e3", stem: "A force of 25 N does 150 J of work. Calculate the distance moved.", equation: "Ew = Fd  →  d = Ew ÷ F", options: ["3 750 m", "175 m", "6 m", "125 m"], correctOption: 2, markScheme: "d = Ew ÷ F = 150 ÷ 25 = 6 m" },
+      { id: "EwFd-e4", stem: "A force of 8 N acts over a distance of 12 m. Calculate the work done.", equation: "Ew = Fd", options: ["96 J", "4 J", "20 J", "1.5 J"], correctOption: 0, markScheme: "Ew = 8 × 12 = 96 J" },
+    ],
+    medium: [
+      { id: "EwFd-m1", stem: "A force of 35 N moves an object 8 m along a surface. Calculate the work done.", equation: "Ew = Fd", correctAnswer: "280 J", markScheme: "Ew = 35 × 8 = 280 J" },
+      { id: "EwFd-m2", stem: "A crane does 4 500 J of work lifting a load 3 m. Calculate the force exerted.", equation: "Ew = Fd  →  F = Ew ÷ d", correctAnswer: "1 500 N", markScheme: "F = 4 500 ÷ 3 = 1 500 N" },
+      { id: "EwFd-m3", stem: "A 60 N force does 540 J of work on a trolley. Calculate the distance travelled.", equation: "Ew = Fd  →  d = Ew ÷ F", correctAnswer: "9 m", markScheme: "d = 540 ÷ 60 = 9 m" },
+      { id: "EwFd-m4", stem: "A motor exerts a force of 120 N over a distance of 15 m. Calculate the work done.", equation: "Ew = Fd", correctAnswer: "1 800 J", markScheme: "Ew = 120 × 15 = 1 800 J" },
+    ],
+    hard: [
+      { id: "EwFd-h1", stem: "A 2.5 kN force moves a vehicle 40 m. Calculate the work done.", equation: "Ew = Fd", correctAnswer: "100 000 J", markScheme: "F = 2.5 kN = 2 500 N;  Ew = 2 500 × 40 = 100 000 J (100 kJ)" },
+      { id: "EwFd-h2", stem: "A worker does 3.6 kJ of work pushing a crate 12 m. Calculate the force applied.", equation: "Ew = Fd  →  F = Ew ÷ d", correctAnswer: "300 N", markScheme: "Ew = 3.6 kJ = 3 600 J;  F = 3 600 ÷ 12 = 300 N" },
+      { id: "EwFd-h3", stem: "A locomotive applies a force of 80 kN and does 2.4 MJ of work. Calculate the distance moved.", equation: "Ew = Fd  →  d = Ew ÷ F", correctAnswer: "30 m", markScheme: "F = 80 000 N;  Ew = 2 400 000 J;  d = 2 400 000 ÷ 80 000 = 30 m" },
+    ],
+  },
+
+  // ── Eh = ml ────────────────────────────────────────────────────────────────
+  "Eh-ml": {
+    easy: [
+      { id: "Ehml-e1", stem: "Calculate the heat energy needed to melt 2 kg of ice. (Specific latent heat of fusion of ice = 3.34 × 10⁵ J kg⁻¹)", equation: "Eh = ml", options: ["1.67 × 10⁵ J", "6.68 × 10⁵ J", "3.34 × 10⁵ J", "3.34 × 10³ J"], correctOption: 1, markScheme: "Eh = m × l = 2 × 3.34 × 10⁵ = 6.68 × 10⁵ J" },
+      { id: "Ehml-e2", stem: "A sample absorbs 1.0 × 10⁶ J of heat energy during evaporation. The specific latent heat of vaporisation is 2.0 × 10⁶ J kg⁻¹. Calculate the mass that evaporated.", equation: "Eh = ml  →  m = Eh ÷ l", options: ["0.5 kg", "2.0 kg", "2.0 × 10¹² kg", "0.2 kg"], correctOption: 0, markScheme: "m = Eh ÷ l = 1.0 × 10⁶ ÷ 2.0 × 10⁶ = 0.5 kg" },
+      { id: "Ehml-e3", stem: "Calculate the heat energy needed to completely evaporate 0.5 kg of water. (l = 2.26 × 10⁶ J kg⁻¹)", equation: "Eh = ml", options: ["4.52 × 10⁶ J", "1.13 × 10⁶ J", "2.26 × 10⁶ J", "1.13 × 10⁵ J"], correctOption: 1, markScheme: "Eh = 0.5 × 2.26 × 10⁶ = 1.13 × 10⁶ J" },
+      { id: "Ehml-e4", stem: "A substance has a specific latent heat of fusion of 2.0 × 10⁵ J kg⁻¹. Calculate the heat needed to melt 4 kg of it.", equation: "Eh = ml", options: ["5.0 × 10⁴ J", "8.0 × 10⁵ J", "2.0 × 10⁵ J", "4.0 × 10⁵ J"], correctOption: 1, markScheme: "Eh = 4 × 2.0 × 10⁵ = 8.0 × 10⁵ J" },
+    ],
+    medium: [
+      { id: "Ehml-m1", stem: "Calculate the heat energy released when 3 kg of steam condenses. (l = 2.26 × 10⁶ J kg⁻¹)", equation: "Eh = ml", correctAnswer: "6.78 × 10⁶ J", markScheme: "Eh = 3 × 2.26 × 10⁶ = 6.78 × 10⁶ J" },
+      { id: "Ehml-m2", stem: "A total of 8.35 × 10⁵ J of energy is needed to melt a solid sample. The specific latent heat of fusion is 3.34 × 10⁵ J kg⁻¹. Calculate the mass of the sample.", equation: "Eh = ml  →  m = Eh ÷ l", correctAnswer: "2.5 kg", markScheme: "m = 8.35 × 10⁵ ÷ 3.34 × 10⁵ = 2.5 kg" },
+      { id: "Ehml-m3", stem: "A 1.5 kg block of wax melts absorbing 1.8 × 10⁵ J. Calculate the specific latent heat of fusion of wax.", equation: "Eh = ml  →  l = Eh ÷ m", correctAnswer: "1.2 × 10⁵ J kg⁻¹", markScheme: "l = 1.8 × 10⁵ ÷ 1.5 = 1.2 × 10⁵ J kg⁻¹" },
+    ],
+    hard: [
+      { id: "Ehml-h1", stem: "A freezer must remove 2.34 × 10⁶ J of energy to freeze 7.0 kg of water. Calculate the specific latent heat of fusion of water.", equation: "Eh = ml  →  l = Eh ÷ m", correctAnswer: "3.34 × 10⁵ J kg⁻¹", markScheme: "l = 2.34 × 10⁶ ÷ 7.0 = 3.34 × 10⁵ J kg⁻¹" },
+      { id: "Ehml-h2", stem: "250 g of a substance evaporates absorbing 5.75 × 10⁴ J. Calculate the specific latent heat of vaporisation.", equation: "Eh = ml  →  l = Eh ÷ m", correctAnswer: "2.30 × 10⁵ J kg⁻¹", markScheme: "m = 0.250 kg;  l = 5.75 × 10⁴ ÷ 0.250 = 2.30 × 10⁵ J kg⁻¹" },
+    ],
+  },
+
+  // ── D = E/m ────────────────────────────────────────────────────────────────
+  "D-Em": {
+    easy: [
+      { id: "DEm-e1", stem: "Radiation deposits 0.06 J of energy in a 2 kg tissue sample. Calculate the absorbed dose.", equation: "D = E/m", options: ["0.12 Gy", "0.03 Gy", "1.2 Gy", "2.06 Gy"], correctOption: 1, markScheme: "D = E ÷ m = 0.06 ÷ 2 = 0.03 Gy" },
+      { id: "DEm-e2", stem: "A 5 kg mass absorbs an absorbed dose of 4 mGy. Calculate the energy deposited.", equation: "D = E/m  →  E = Dm", options: ["0.8 mJ", "20 mJ", "9 mJ", "1.25 mJ"], correctOption: 1, markScheme: "E = D × m = 4 × 10⁻³ × 5 = 20 × 10⁻³ J = 20 mJ" },
+      { id: "DEm-e3", stem: "10 J of energy is absorbed by a 50 kg patient. Calculate the absorbed dose.", equation: "D = E/m", options: ["500 Gy", "60 Gy", "0.2 Gy", "5 Gy"], correctOption: 2, markScheme: "D = 10 ÷ 50 = 0.2 Gy" },
+      { id: "DEm-e4", stem: "An absorbed dose of 0.5 Gy is delivered to a 4 kg tissue mass. Calculate the energy absorbed.", equation: "D = E/m  →  E = Dm", options: ["8 J", "2 J", "0.125 J", "4.5 J"], correctOption: 1, markScheme: "E = 0.5 × 4 = 2 J" },
+    ],
+    medium: [
+      { id: "DEm-m1", stem: "A radiation source deposits 0.15 J of energy in 3 kg of tissue. Calculate the absorbed dose in mGy.", equation: "D = E/m", correctAnswer: "50 mGy", markScheme: "D = 0.15 ÷ 3 = 0.05 Gy = 50 mGy" },
+      { id: "DEm-m2", stem: "A patient of mass 70 kg receives an absorbed dose of 2.0 mGy. Calculate the energy absorbed.", equation: "D = E/m  →  E = Dm", correctAnswer: "0.14 J", markScheme: "D = 2.0 × 10⁻³ Gy;  E = 2.0 × 10⁻³ × 70 = 0.14 J" },
+      { id: "DEm-m3", stem: "A dose of 0.25 Gy is absorbed when 50 mJ of energy is deposited. Calculate the mass of tissue irradiated.", equation: "D = E/m  →  m = E ÷ D", correctAnswer: "0.2 kg", markScheme: "E = 50 mJ = 0.050 J;  m = 0.050 ÷ 0.25 = 0.2 kg" },
+    ],
+    hard: [
+      { id: "DEm-h1", stem: "A 65 kg person absorbs 130 mJ of energy from radiation. Calculate the absorbed dose in mGy.", equation: "D = E/m", correctAnswer: "2.0 mGy", markScheme: "E = 130 mJ = 0.130 J;  D = 0.130 ÷ 65 = 2.0 × 10⁻³ Gy = 2.0 mGy" },
+      { id: "DEm-h2", stem: "An absorbed dose of 4.0 mGy is given to a 250 g tumour. Calculate the energy deposited in mJ.", equation: "D = E/m  →  E = Dm", correctAnswer: "1.0 mJ", markScheme: "m = 0.250 kg;  D = 4.0 × 10⁻³ Gy;  E = 4.0 × 10⁻³ × 0.250 = 1.0 × 10⁻³ J = 1.0 mJ" },
+    ],
+  },
+
+  // ── H = Dw_R ───────────────────────────────────────────────────────────────
+  "H-DwR": {
+    easy: [
+      { id: "HDwR-e1", stem: "A tissue absorbs a dose of 0.02 Gy from beta radiation (w_R = 1). Calculate the equivalent dose.", equation: "H = Dw_R", options: ["0.02 Sv", "0.01 Sv", "0.2 Sv", "2 Sv"], correctOption: 0, markScheme: "H = D × w_R = 0.02 × 1 = 0.02 Sv" },
+      { id: "HDwR-e2", stem: "A person receives an absorbed dose of 5 mGy from alpha radiation (w_R = 20). Calculate the equivalent dose.", equation: "H = Dw_R", options: ["0.25 mSv", "5 mSv", "100 mSv", "25 mSv"], correctOption: 2, markScheme: "H = D × w_R = 5 × 10⁻³ × 20 = 0.10 Sv = 100 mSv" },
+      { id: "HDwR-e3", stem: "Slow neutrons (w_R = 3) deliver an equivalent dose of 30 mSv. Calculate the absorbed dose.", equation: "H = Dw_R  →  D = H ÷ w_R", options: ["10 mGy", "90 mGy", "27 mGy", "3 mGy"], correctOption: 0, markScheme: "D = H ÷ w_R = 30 × 10⁻³ ÷ 3 = 10 × 10⁻³ Gy = 10 mGy" },
+      { id: "HDwR-e4", stem: "Gamma radiation (w_R = 1) gives an equivalent dose of 0.5 Sv. Calculate the absorbed dose.", equation: "H = Dw_R  →  D = H ÷ w_R", options: ["5 Gy", "0.5 Gy", "0.05 Gy", "1 Gy"], correctOption: 1, markScheme: "D = H ÷ w_R = 0.5 ÷ 1 = 0.5 Gy" },
+    ],
+    medium: [
+      { id: "HDwR-m1", stem: "Alpha radiation (w_R = 20) delivers an absorbed dose of 3 mGy. Calculate the equivalent dose in mSv.", equation: "H = Dw_R", correctAnswer: "60 mSv", markScheme: "H = 3 × 10⁻³ × 20 = 0.060 Sv = 60 mSv" },
+      { id: "HDwR-m2", stem: "An equivalent dose of 50 mSv is received from fast neutrons (w_R = 10). Calculate the absorbed dose.", equation: "H = Dw_R  →  D = H ÷ w_R", correctAnswer: "5 mGy", markScheme: "D = 50 × 10⁻³ ÷ 10 = 5 × 10⁻³ Gy = 5 mGy" },
+      { id: "HDwR-m3", stem: "A beta source delivers an absorbed dose of 8 mGy. The equivalent dose is 8 mSv. Calculate the radiation weighting factor.", equation: "H = Dw_R  →  w_R = H ÷ D", correctAnswer: "1", markScheme: "w_R = H ÷ D = 8 × 10⁻³ ÷ 8 × 10⁻³ = 1" },
+    ],
+    hard: [
+      { id: "HDwR-h1", stem: "A worker is exposed to alpha radiation (w_R = 20) with an absorbed dose of 0.25 mGy and gamma radiation (w_R = 1) with an absorbed dose of 2 mGy. Calculate the total equivalent dose.", equation: "H = Dw_R; H_T = H_1 + H_2", correctAnswer: "7 mSv", markScheme: "H_α = 0.25 × 10⁻³ × 20 = 5 × 10⁻³ Sv;  H_γ = 2 × 10⁻³ × 1 = 2 × 10⁻³ Sv;  H_T = 5 + 2 = 7 mSv" },
+      { id: "HDwR-h2", stem: "An equivalent dose of 0.24 Sv is received from proton radiation (w_R = 2). Calculate the absorbed dose in mGy.", equation: "H = Dw_R  →  D = H ÷ w_R", correctAnswer: "120 mGy", markScheme: "D = 0.24 ÷ 2 = 0.12 Gy = 120 mGy" },
     ],
   },
 }
