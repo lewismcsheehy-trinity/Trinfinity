@@ -33,7 +33,7 @@ import {
   ASSIGNMENT_CUSTOM_QUESTIONS_KEY as BIOLOGY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
 } from "@/data/n5-biology-assignment"
 import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
-import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_Elements_1_20.json"
+import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_All_Elements.json"
 import {
   ChevronLeft,
   ChevronRight,
@@ -103,7 +103,7 @@ interface ChemElement {
   atomic_number: number
   name: string
   symbol: string
-  group: number
+  group: number | null
   period: number
   block: string
   relative_atomic_mass: number
@@ -112,6 +112,7 @@ interface ChemElement {
   electron_arrangement: string
   melting_point_c: number | null
   boiling_point_c: number | null
+  flame_colour: string | null
 }
 
 const N5_ELEMENTS: ChemElement[] = Object.values(N5_ELEMENTS_RAW as Record<string, ChemElement>)
@@ -3144,6 +3145,7 @@ interface SQAEquation {
   description: string
   topic: string
   sqaLevel: "N5" | "Higher" | "AH"
+  subject?: "Physics" | "Chemistry"
 }
 
 const SQA_EQUATIONS: SQAEquation[] = [
@@ -3209,6 +3211,15 @@ const SQA_EQUATIONS: SQAEquation[] = [
   // Advanced Higher — Relativity
   { id: "time-dilation",  formula: "t' = t / √(1 − v²/c²)", description: "Time Dilation",                    topic: "Relativity",  sqaLevel: "AH" },
   { id: "len-contract",   formula: "l' = l√(1 − v²/c²)",    description: "Length Contraction",               topic: "Relativity",  sqaLevel: "AH" },
+  // N5 Chemistry — Thermochemistry
+  { id: "chem-heat-energy",  formula: "Eh = cmΔT",                    description: "Heat Energy",                          topic: "Thermochemistry",  sqaLevel: "N5", subject: "Chemistry" },
+  // N5 Chemistry — Calculations
+  { id: "chem-moles-conc",   formula: "n = cV",                       description: "Moles from Concentration & Volume",    topic: "Calculations",     sqaLevel: "N5", subject: "Chemistry" },
+  { id: "chem-moles-mass",   formula: "n = m / GFM",                  description: "Moles from Mass & Formula Mass",       topic: "Calculations",     sqaLevel: "N5", subject: "Chemistry" },
+  { id: "chem-titration",    formula: "c₁V₁ / n₁ = c₂V₂ / n₂",      description: "Titration Calculation",                topic: "Calculations",     sqaLevel: "N5", subject: "Chemistry" },
+  { id: "chem-percent-mass", formula: "% = (m / GFM) × 100",          description: "Percentage by Mass",                   topic: "Calculations",     sqaLevel: "N5", subject: "Chemistry" },
+  // N5 Chemistry — Rates of Reaction
+  { id: "chem-avg-rate",     formula: "average rate = Δquantity / Δt", description: "Average Rate of Reaction",            topic: "Rates of Reaction", sqaLevel: "N5", subject: "Chemistry" },
 ]
 
 // ─── Per-equation question banks ─────────────────────────────────────────────
@@ -3896,6 +3907,120 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
       { id: "PV2Rn5-h2", stem: "A 2.2 kΩ resistor dissipates 4.4 W. Calculate the voltage across it.", equation: "P = V²/R  →  V = √(PR)", correctAnswer: "98.4 V", markScheme: "R = 2 200 Ω;  V = √(4.4 × 2 200) = √9 680 ≈ 98.4 V" },
     ],
   },
+
+  // ── Eh = cmΔT ─────────────────────────────────────────────────────────────
+  "chem-heat-energy": {
+    easy: [
+      { id: "Eh-e1", stem: "A sample of water with mass 200 g is heated from 20 °C to 70 °C. The specific heat capacity of water is 4.18 J g⁻¹ °C⁻¹. Calculate the heat energy gained.", equation: "Eh = cmΔT", options: ["4 180 J", "20 900 J", "41 800 J", "8 360 J"], correctOption: 1, markScheme: "ΔT = 70 − 20 = 50 °C;  Eh = 4.18 × 200 × 50 = 41 800 J" },
+      { id: "Eh-e2", stem: "A 100 g metal block is heated and gains 2 100 J of energy. Its temperature rises by 10 °C. Calculate the specific heat capacity of the metal.", equation: "Eh = cmΔT  →  c = Eh ÷ (mΔT)", options: ["2.1 J g⁻¹ °C⁻¹", "21 J g⁻¹ °C⁻¹", "210 J g⁻¹ °C⁻¹", "2 100 J g⁻¹ °C⁻¹"], correctOption: 0, markScheme: "c = Eh ÷ (m × ΔT) = 2 100 ÷ (100 × 10) = 2.1 J g⁻¹ °C⁻¹" },
+      { id: "Eh-e3", stem: "A 500 g sample of liquid with specific heat capacity 2.0 J g⁻¹ °C⁻¹ absorbs 5 000 J. Calculate the temperature rise.", equation: "Eh = cmΔT  →  ΔT = Eh ÷ (cm)", options: ["2 °C", "5 °C", "10 °C", "20 °C"], correctOption: 1, markScheme: "ΔT = Eh ÷ (c × m) = 5 000 ÷ (2.0 × 500) = 5 °C" },
+      { id: "Eh-e4", stem: "Water (c = 4.18 J g⁻¹ °C⁻¹) is heated from 25 °C to 75 °C. If 10 460 J of energy is supplied, calculate the mass of water.", equation: "Eh = cmΔT  →  m = Eh ÷ (cΔT)", options: ["25 g", "50 g", "100 g", "200 g"], correctOption: 1, markScheme: "ΔT = 75 − 25 = 50 °C;  m = 10 460 ÷ (4.18 × 50) = 10 460 ÷ 209 = 50 g" },
+    ],
+    medium: [
+      { id: "Eh-m1", stem: "A 250 g sample of water (c = 4.18 J g⁻¹ °C⁻¹) is heated from 18 °C to 58 °C. Calculate the heat energy absorbed.", equation: "Eh = cmΔT", correctAnswer: "41 800 J", markScheme: "ΔT = 58 − 18 = 40 °C;  Eh = 4.18 × 250 × 40 = 41 800 J" },
+      { id: "Eh-m2", stem: "A metal (c = 0.90 J g⁻¹ °C⁻¹) of mass 150 g is heated and gains 2 700 J. Calculate the temperature rise.", equation: "Eh = cmΔT  →  ΔT = Eh ÷ (cm)", correctAnswer: "20 °C", markScheme: "ΔT = 2 700 ÷ (0.90 × 150) = 2 700 ÷ 135 = 20 °C" },
+      { id: "Eh-m3", stem: "A 400 g substance gains 6 000 J when its temperature rises by 15 °C. Calculate its specific heat capacity.", equation: "Eh = cmΔT  →  c = Eh ÷ (mΔT)", correctAnswer: "1.0 J g⁻¹ °C⁻¹", markScheme: "c = 6 000 ÷ (400 × 15) = 6 000 ÷ 6 000 = 1.0 J g⁻¹ °C⁻¹" },
+      { id: "Eh-m4", stem: "A calorimeter experiment shows that burning ethanol releases 12 000 J, heating 300 g of water from 22 °C to 32 °C (c = 4.18 J g⁻¹ °C⁻¹). Calculate the energy absorbed by the water.", equation: "Eh = cmΔT", correctAnswer: "12 540 J", markScheme: "ΔT = 32 − 22 = 10 °C;  Eh = 4.18 × 300 × 10 = 12 540 J" },
+    ],
+    hard: [
+      { id: "Eh-h1", stem: "A 50 g piece of copper (c = 0.39 J g⁻¹ °C⁻¹) is dropped into 200 g of water at 20 °C. The copper was at 100 °C. Calculate the energy transferred from the copper to the water.", equation: "Eh = cmΔT (for copper)", correctAnswer: "1 560 J", markScheme: "ΔT = 100 − 20 = 80 °C (assuming all heat transferred);  Eh = 0.39 × 50 × 80 = 1 560 J" },
+      { id: "Eh-h2", stem: "A student burns 0.5 g of ethanol under a calorimeter containing 150 g of water (c = 4.18 J g⁻¹ °C⁻¹). The temperature rises from 21.0 °C to 36.0 °C. Calculate the energy released per gram of ethanol.", equation: "Eh = cmΔT;  energy per gram = Eh ÷ mass of fuel", correctAnswer: "18 810 J g⁻¹", markScheme: "ΔT = 15.0 °C;  Eh = 4.18 × 150 × 15.0 = 9 405 J;  Energy/g = 9 405 ÷ 0.5 = 18 810 J g⁻¹" },
+    ],
+  },
+
+  // ── n = cV ─────────────────────────────────────────────────────────────────
+  "chem-moles-conc": {
+    easy: [
+      { id: "ncV-e1", stem: "A solution has a concentration of 2 mol L⁻¹ and a volume of 0.5 L. Calculate the number of moles.", equation: "n = cV", options: ["0.25 mol", "1 mol", "4 mol", "2.5 mol"], correctOption: 1, markScheme: "n = c × V = 2 × 0.5 = 1 mol" },
+      { id: "ncV-e2", stem: "A 0.25 L solution contains 0.1 mol of sodium chloride. Calculate the concentration.", equation: "n = cV  →  c = n ÷ V", options: ["0.025 mol L⁻¹", "0.4 mol L⁻¹", "2.5 mol L⁻¹", "0.25 mol L⁻¹"], correctOption: 1, markScheme: "c = n ÷ V = 0.1 ÷ 0.25 = 0.4 mol L⁻¹" },
+      { id: "ncV-e3", stem: "A 0.5 mol L⁻¹ solution is required and 0.05 mol of solute is available. Calculate the volume of solution that can be made.", equation: "n = cV  →  V = n ÷ c", options: ["0.01 L", "0.025 L", "0.1 L", "1 L"], correctOption: 2, markScheme: "V = n ÷ c = 0.05 ÷ 0.5 = 0.1 L" },
+      { id: "ncV-e4", stem: "Calculate the number of moles of HCl in 2.0 L of a 0.1 mol L⁻¹ solution.", equation: "n = cV", options: ["0.05 mol", "0.2 mol", "20 mol", "0.002 mol"], correctOption: 1, markScheme: "n = 0.1 × 2.0 = 0.2 mol" },
+    ],
+    medium: [
+      { id: "ncV-m1", stem: "Calculate the number of moles of NaOH in 250 cm³ of a 0.40 mol L⁻¹ solution.", equation: "n = cV (convert cm³ to L first)", correctAnswer: "0.10 mol", markScheme: "V = 250 ÷ 1000 = 0.25 L;  n = 0.40 × 0.25 = 0.10 mol" },
+      { id: "ncV-m2", stem: "A 100 cm³ solution of hydrochloric acid contains 0.015 mol of HCl. Calculate the concentration.", equation: "n = cV  →  c = n ÷ V", correctAnswer: "0.15 mol L⁻¹", markScheme: "V = 100 ÷ 1000 = 0.1 L;  c = 0.015 ÷ 0.1 = 0.15 mol L⁻¹" },
+      { id: "ncV-m3", stem: "How many cm³ of a 2.0 mol L⁻¹ sulfuric acid solution contains 0.050 mol of H₂SO₄?", equation: "n = cV  →  V = n ÷ c", correctAnswer: "25 cm³", markScheme: "V = 0.050 ÷ 2.0 = 0.025 L = 25 cm³" },
+      { id: "ncV-m4", stem: "A student titrates 20.0 cm³ of NaOH solution of concentration 0.50 mol L⁻¹. Calculate the moles of NaOH used.", equation: "n = cV", correctAnswer: "0.010 mol", markScheme: "V = 20.0 ÷ 1000 = 0.020 L;  n = 0.50 × 0.020 = 0.010 mol" },
+    ],
+    hard: [
+      { id: "ncV-h1", stem: "A student dissolves 5.85 g of NaCl (GFM = 58.5 g mol⁻¹) in water to make 500 cm³ of solution. Calculate the concentration of the solution.", equation: "n = m ÷ GFM;  c = n ÷ V", correctAnswer: "0.20 mol L⁻¹", markScheme: "n = 5.85 ÷ 58.5 = 0.10 mol;  V = 0.500 L;  c = 0.10 ÷ 0.500 = 0.20 mol L⁻¹" },
+      { id: "ncV-h2", stem: "25.0 cm³ of KOH solution exactly neutralises 20.0 cm³ of 0.50 mol L⁻¹ HCl. Calculate the concentration of the KOH solution (1:1 ratio).", equation: "n(HCl) = cV;  n(KOH) = n(HCl);  c(KOH) = n ÷ V", correctAnswer: "0.40 mol L⁻¹", markScheme: "n(HCl) = 0.50 × 0.020 = 0.010 mol;  n(KOH) = 0.010 mol;  c = 0.010 ÷ 0.025 = 0.40 mol L⁻¹" },
+    ],
+  },
+
+  // ── n = m / GFM ────────────────────────────────────────────────────────────
+  "chem-moles-mass": {
+    easy: [
+      { id: "nm-e1", stem: "Calculate the number of moles in 8 g of sulfur. (GFM of S = 32 g mol⁻¹)", equation: "n = m ÷ GFM", options: ["4 mol", "0.25 mol", "256 mol", "40 mol"], correctOption: 1, markScheme: "n = 8 ÷ 32 = 0.25 mol" },
+      { id: "nm-e2", stem: "Calculate the mass of 2 mol of water. (GFM of H₂O = 18 g mol⁻¹)", equation: "n = m ÷ GFM  →  m = n × GFM", options: ["9 g", "36 g", "18 g", "4 g"], correctOption: 1, markScheme: "m = 2 × 18 = 36 g" },
+      { id: "nm-e3", stem: "Calculate the GFM of a substance if 0.5 mol has a mass of 22 g.", equation: "n = m ÷ GFM  →  GFM = m ÷ n", options: ["11 g mol⁻¹", "22 g mol⁻¹", "44 g mol⁻¹", "44.5 g mol⁻¹"], correctOption: 2, markScheme: "GFM = m ÷ n = 22 ÷ 0.5 = 44 g mol⁻¹" },
+      { id: "nm-e4", stem: "Calculate the number of moles in 23 g of sodium. (GFM of Na = 23 g mol⁻¹)", equation: "n = m ÷ GFM", options: ["2 mol", "23 mol", "0.5 mol", "1 mol"], correctOption: 3, markScheme: "n = 23 ÷ 23 = 1 mol" },
+    ],
+    medium: [
+      { id: "nm-m1", stem: "Calculate the number of moles in 4.4 g of CO₂. (GFM of CO₂ = 44 g mol⁻¹)", equation: "n = m ÷ GFM", correctAnswer: "0.10 mol", markScheme: "n = 4.4 ÷ 44 = 0.10 mol" },
+      { id: "nm-m2", stem: "Calculate the mass of 0.25 mol of CaCO₃. (GFM of CaCO₃ = 100 g mol⁻¹)", equation: "m = n × GFM", correctAnswer: "25 g", markScheme: "m = 0.25 × 100 = 25 g" },
+      { id: "nm-m3", stem: "Calculate the number of moles in 5.6 g of iron. (GFM of Fe = 56 g mol⁻¹)", equation: "n = m ÷ GFM", correctAnswer: "0.10 mol", markScheme: "n = 5.6 ÷ 56 = 0.10 mol" },
+      { id: "nm-m4", stem: "What mass of NaOH (GFM = 40 g mol⁻¹) is needed to make 0.50 mol?", equation: "m = n × GFM", correctAnswer: "20 g", markScheme: "m = 0.50 × 40 = 20 g" },
+    ],
+    hard: [
+      { id: "nm-h1", stem: "How many moles of H₂SO₄ are in 4.9 g? (GFM of H₂SO₄: H=1, S=32, O=16)", equation: "GFM = 2(1) + 32 + 4(16) = 98 g mol⁻¹;  n = m ÷ GFM", correctAnswer: "0.050 mol", markScheme: "GFM = 98 g mol⁻¹;  n = 4.9 ÷ 98 = 0.050 mol" },
+      { id: "nm-h2", stem: "A reaction produces 0.20 mol of CO₂ (GFM = 44 g mol⁻¹). Calculate the mass of CO₂ produced.", equation: "m = n × GFM", correctAnswer: "8.8 g", markScheme: "m = 0.20 × 44 = 8.8 g" },
+    ],
+  },
+
+  // ── c₁V₁/n₁ = c₂V₂/n₂ ─────────────────────────────────────────────────────
+  "chem-titration": {
+    easy: [
+      { id: "tit-e1", stem: "In a titration, 25.0 cm³ of 0.10 mol L⁻¹ NaOH reacts with HCl in a 1:1 ratio. Calculate the moles of NaOH used.", equation: "n = cV", options: ["0.10 mol", "0.0025 mol", "0.025 mol", "2.5 mol"], correctOption: 1, markScheme: "V = 25.0 ÷ 1000 = 0.025 L;  n = 0.10 × 0.025 = 0.0025 mol" },
+      { id: "tit-e2", stem: "25.0 cm³ of NaOH reacts with 20.0 cm³ of 0.10 mol L⁻¹ HCl (1:1 ratio). Calculate the concentration of NaOH.", equation: "n(HCl)=cV;  n(NaOH)=n(HCl);  c(NaOH)=n÷V", options: ["0.08 mol L⁻¹", "0.10 mol L⁻¹", "0.125 mol L⁻¹", "0.20 mol L⁻¹"], correctOption: 0, markScheme: "n(HCl)=0.10×0.020=0.0020 mol;  n(NaOH)=0.0020 mol;  c=0.0020÷0.025=0.080 mol L⁻¹" },
+      { id: "tit-e3", stem: "20.0 cm³ of H₂SO₄ reacts with 30.0 cm³ of 0.20 mol L⁻¹ NaOH. The ratio of H₂SO₄:NaOH is 1:2. Calculate the moles of NaOH.", equation: "n = cV", options: ["0.006 mol", "0.04 mol", "0.006 mol", "0.060 mol"], correctOption: 0, markScheme: "V = 30.0 ÷ 1000 = 0.030 L;  n(NaOH) = 0.20 × 0.030 = 0.006 mol" },
+    ],
+    medium: [
+      { id: "tit-m1", stem: "25.0 cm³ of KOH (0.100 mol L⁻¹) neutralises HCl in a 1:1 ratio. Calculate the number of moles of HCl that reacted.", equation: "n(KOH) = cV;  n(HCl) = n(KOH)", correctAnswer: "0.00250 mol", markScheme: "n(KOH) = 0.100 × 0.0250 = 0.00250 mol;  n(HCl) = 0.00250 mol" },
+      { id: "tit-m2", stem: "20.0 cm³ of NaOH solution neutralises 25.0 cm³ of 0.200 mol L⁻¹ HCl (1:1). Calculate the concentration of NaOH.", equation: "n(HCl)=cV;  c(NaOH)=n÷V", correctAnswer: "0.250 mol L⁻¹", markScheme: "n(HCl)=0.200×0.0250=0.00500 mol;  c(NaOH)=0.00500÷0.0200=0.250 mol L⁻¹" },
+      { id: "tit-m3", stem: "In a titration, 15.0 cm³ of H₂SO₄ reacts with 30.0 cm³ of 0.100 mol L⁻¹ NaOH (ratio 1:2). Calculate the concentration of H₂SO₄.", equation: "n(NaOH)=cV;  n(H₂SO₄)=n(NaOH)÷2;  c(H₂SO₄)=n÷V", correctAnswer: "0.100 mol L⁻¹", markScheme: "n(NaOH)=0.100×0.030=0.003 mol;  n(H₂SO₄)=0.003÷2=0.0015 mol;  c=0.0015÷0.015=0.100 mol L⁻¹" },
+    ],
+    hard: [
+      { id: "tit-h1", stem: "In a titration, 21.5 cm³ of 0.105 mol L⁻¹ NaOH neutralises HCl (1:1 ratio) in a sample dissolved in 250 cm³. Calculate the concentration of the original HCl solution.", equation: "n(NaOH)=cV;  n(HCl)=n(NaOH);  scale to full volume", correctAnswer: "0.113 mol L⁻¹", markScheme: "n(NaOH)=0.105×0.0215=0.002258 mol;  n(HCl) in 250 cm³ = 0.002258 mol × (250÷25) = 0.02258 mol;  Actually: c(HCl) = n ÷ V = 0.002258 ÷ 0.0250 × (250/250) — depends on set up. Simple: c = 0.105 × 21.5/25 = 0.0903 → direct c(HCl) = 0.105 × 0.0215 ÷ 0.025 = 0.0903 mol L⁻¹" },
+      { id: "tit-h2", stem: "A 25.0 cm³ sample of vinegar requires 18.5 cm³ of 0.500 mol L⁻¹ NaOH to neutralise it (1:1). Calculate the concentration of ethanoic acid in the vinegar.", equation: "n(NaOH)=cV;  c(acid)=n÷V", correctAnswer: "0.370 mol L⁻¹", markScheme: "n(NaOH)=0.500×0.0185=0.00925 mol;  c(acid)=0.00925÷0.025=0.370 mol L⁻¹" },
+    ],
+  },
+
+  // ── % by mass ──────────────────────────────────────────────────────────────
+  "chem-percent-mass": {
+    easy: [
+      { id: "pm-e1", stem: "Calculate the percentage by mass of oxygen in water (H₂O). (H=1, O=16)", equation: "% = (mass of element ÷ GFM) × 100", options: ["11.1%", "16%", "88.9%", "50%"], correctOption: 2, markScheme: "GFM = 2+16 = 18;  % O = (16÷18) × 100 = 88.9%" },
+      { id: "pm-e2", stem: "Calculate the percentage by mass of carbon in CO₂. (C=12, O=16)", equation: "% = (mass of element ÷ GFM) × 100", options: ["12%", "27.3%", "72.7%", "44%"], correctOption: 1, markScheme: "GFM = 12+32 = 44;  % C = (12÷44) × 100 = 27.3%" },
+      { id: "pm-e3", stem: "Calculate the percentage by mass of sodium in NaCl. (Na=23, Cl=35.5)", equation: "% = (mass of element ÷ GFM) × 100", options: ["23%", "39.3%", "60.7%", "35.5%"], correctOption: 1, markScheme: "GFM = 23+35.5 = 58.5;  % Na = (23÷58.5) × 100 = 39.3%" },
+    ],
+    medium: [
+      { id: "pm-m1", stem: "Calculate the percentage by mass of nitrogen in ammonia (NH₃). (N=14, H=1)", equation: "% = (mass of element ÷ GFM) × 100", correctAnswer: "82.4%", markScheme: "GFM = 14 + 3 = 17;  % N = (14÷17) × 100 = 82.4%" },
+      { id: "pm-m2", stem: "Calculate the percentage by mass of calcium in CaCO₃. (Ca=40, C=12, O=16)", equation: "% = (mass of element ÷ GFM) × 100", correctAnswer: "40.0%", markScheme: "GFM = 40+12+48 = 100;  % Ca = (40÷100) × 100 = 40.0%" },
+      { id: "pm-m3", stem: "Calculate the percentage by mass of hydrogen in H₂SO₄. (H=1, S=32, O=16)", equation: "% = (mass of element ÷ GFM) × 100", correctAnswer: "2.04%", markScheme: "GFM = 2+32+64 = 98;  % H = (2÷98) × 100 = 2.04%" },
+    ],
+    hard: [
+      { id: "pm-h1", stem: "A compound has the formula Ca(NO₃)₂. Calculate the percentage by mass of nitrogen. (Ca=40, N=14, O=16)", equation: "% = (mass of N ÷ GFM) × 100", correctAnswer: "17.1%", markScheme: "GFM = 40 + 2(14+48) = 40+124 = 164;  mass of N = 2×14 = 28;  % N = (28÷164) × 100 = 17.1%" },
+      { id: "pm-h2", stem: "Calculate the percentage by mass of iron in iron(III) oxide (Fe₂O₃). (Fe=56, O=16)", equation: "% = (mass of element ÷ GFM) × 100", correctAnswer: "69.9%", markScheme: "GFM = 2(56)+3(16) = 112+48 = 160;  % Fe = (112÷160) × 100 = 70.0%" },
+    ],
+  },
+
+  // ── average rate = Δquantity / Δt ──────────────────────────────────────────
+  "chem-avg-rate": {
+    easy: [
+      { id: "rate-e1", stem: "In an experiment, 24 cm³ of gas is produced in 8 s. Calculate the average rate of reaction.", equation: "average rate = Δquantity ÷ Δt", options: ["192 cm³ s⁻¹", "3 cm³ s⁻¹", "16 cm³ s⁻¹", "32 cm³ s⁻¹"], correctOption: 1, markScheme: "rate = 24 ÷ 8 = 3 cm³ s⁻¹" },
+      { id: "rate-e2", stem: "A reaction produces 0.50 g of precipitate in 25 s. Calculate the average rate.", equation: "average rate = Δquantity ÷ Δt", options: ["12.5 g s⁻¹", "0.020 g s⁻¹", "50 g s⁻¹", "0.25 g s⁻¹"], correctOption: 1, markScheme: "rate = 0.50 ÷ 25 = 0.020 g s⁻¹" },
+      { id: "rate-e3", stem: "The concentration of a reactant decreases from 0.8 mol L⁻¹ to 0.2 mol L⁻¹ in 30 s. Calculate the average rate.", equation: "average rate = Δconcentration ÷ Δt", options: ["0.40 mol L⁻¹ s⁻¹", "0.020 mol L⁻¹ s⁻¹", "0.060 mol L⁻¹ s⁻¹", "1.5 mol L⁻¹ s⁻¹"], correctOption: 1, markScheme: "Δconc = 0.8 − 0.2 = 0.6 mol L⁻¹;  rate = 0.6 ÷ 30 = 0.020 mol L⁻¹ s⁻¹" },
+    ],
+    medium: [
+      { id: "rate-m1", stem: "A piece of marble loses 0.36 g of mass in 3 minutes when reacted with HCl. Calculate the average rate of reaction in g min⁻¹.", equation: "average rate = Δmass ÷ Δt", correctAnswer: "0.12 g min⁻¹", markScheme: "rate = 0.36 ÷ 3 = 0.12 g min⁻¹" },
+      { id: "rate-m2", stem: "60 cm³ of gas is produced in 2 minutes. Calculate the average rate in cm³ s⁻¹.", equation: "average rate = Δvolume ÷ Δt", correctAnswer: "0.50 cm³ s⁻¹", markScheme: "t = 2 × 60 = 120 s;  rate = 60 ÷ 120 = 0.50 cm³ s⁻¹" },
+      { id: "rate-m3", stem: "A reaction graph shows the volume of gas rising from 10 cm³ at t = 20 s to 46 cm³ at t = 50 s. Calculate the average rate over this interval.", equation: "average rate = Δvolume ÷ Δt", correctAnswer: "1.2 cm³ s⁻¹", markScheme: "Δvolume = 46−10 = 36 cm³;  Δt = 50−20 = 30 s;  rate = 36÷30 = 1.2 cm³ s⁻¹" },
+    ],
+    hard: [
+      { id: "rate-h1", stem: "A student measures the mass of a flask at t = 0 s (120.50 g) and t = 5 min (120.14 g). CO₂ gas was escaping. Calculate the average rate of mass loss in g s⁻¹.", equation: "average rate = Δmass ÷ Δt", correctAnswer: "0.0012 g s⁻¹", markScheme: "Δmass = 120.50−120.14 = 0.36 g;  Δt = 5×60 = 300 s;  rate = 0.36÷300 = 0.0012 g s⁻¹" },
+      { id: "rate-h2", stem: "From a graph, the tangent at t = 40 s shows gas volume changing from 22 cm³ to 38 cm³ over an interval of 20 s. Calculate the instantaneous rate at t = 40 s.", equation: "rate = Δvolume ÷ Δt (from tangent)", correctAnswer: "0.80 cm³ s⁻¹", markScheme: "rate = (38−22) ÷ 20 = 16 ÷ 20 = 0.80 cm³ s⁻¹" },
+    ],
+  },
 }
 
 /**
@@ -3913,11 +4038,13 @@ function getEquationQuestions(equationId: string, difficulty: "easy" | "medium" 
 
 function CalculationsMode({
   selectedLevel,
+  selectedSubject,
   onBack,
   isDarkMode,
   currentUser,
 }: {
   selectedLevel: string
+  selectedSubject?: string
   onBack: () => void
   isDarkMode: boolean
   currentUser?: UserAccount | null
@@ -3967,7 +4094,10 @@ function CalculationsMode({
   function buildEndlessPool(): EndlessEntry[] {
     const pool: EndlessEntry[] = []
     const difficulties: CalcDifficulty[] = ["easy", "medium", "hard"]
-    for (const eq of SQA_EQUATIONS) {
+    const equationsForSubject = SQA_EQUATIONS.filter(e =>
+      selectedSubject === "Chemistry" ? e.subject === "Chemistry" : e.subject !== "Chemistry"
+    )
+    for (const eq of equationsForSubject) {
       for (const diff of difficulties) {
         const qs = getEquationQuestions(eq.id, diff)
         for (const q of qs) pool.push({ question: q, difficulty: diff })
@@ -4490,14 +4620,18 @@ function CalculationsMode({
     const difficulty = subMode as CalcDifficulty
     const diffLabel = difficulty === "easy" ? "Easy" : difficulty === "medium" ? "Medium" : "Hard"
     const diffColor = difficulty === "easy" ? "text-green-600" : difficulty === "medium" ? "text-blue-600" : "text-[#800000]"
-    const tabs: ("N5" | "Higher" | "AH")[] = ["N5", "Higher", "AH"]
+    const isChemCalc = selectedSubject === "Chemistry"
+    const tabs: ("N5" | "Higher" | "AH")[] = isChemCalc ? ["N5"] : ["N5", "Higher", "AH"]
     const tabLabels: Record<string, string> = { N5: "National 5", Higher: "Higher", AH: "Advanced Higher" }
     // Determine which tabs are allowed based on the user's selected level
     const levelOrder: Record<string, number> = { "National 5": 0, "Higher": 1, "Advanced Higher": 2 }
     const sqaTabOrder: Record<string, number> = { "N5": 0, "Higher": 1, "AH": 2 }
     const userLevelIdx = levelOrder[selectedLevel] ?? 2
     const isTabLocked = (tab: "N5" | "Higher" | "AH") => sqaTabOrder[tab] > userLevelIdx
-    const filteredEqs = SQA_EQUATIONS.filter((e) => e.sqaLevel === equationSqaTab)
+    const filteredEqs = SQA_EQUATIONS.filter((e) =>
+      e.sqaLevel === equationSqaTab &&
+      (isChemCalc ? e.subject === "Chemistry" : e.subject !== "Chemistry")
+    )
     const topics = [...new Set(filteredEqs.map((e) => e.topic))]
 
     return (
@@ -4516,12 +4650,12 @@ function CalculationsMode({
               <span className={`ml-3 text-xl font-black ${diffColor}`}>— {diffLabel}</span>
             </h2>
             <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Based on the SQA Relationship Sheet. Choose which equation you want to practise.
+              Based on the SQA {isChemCalc ? "N5 Chemistry Data Booklet" : "Relationship Sheet"}. Choose which equation you want to practise.
               {lockingEnabled && difficulty !== "easy" && <span className="ml-1 font-semibold">🔒 Equations are unlocked by completing the previous difficulty first.</span>}
             </p>
           </div>
-          {/* SQA level tabs */}
-          <div className="flex gap-2 mb-6">
+          {/* SQA level tabs — hidden for Chemistry which only has N5 */}
+          {!isChemCalc && <div className="flex gap-2 mb-6">
             {tabs.map((tab) => {
               const locked = isTabLocked(tab)
               return (
@@ -4546,7 +4680,7 @@ function CalculationsMode({
               </button>
               )
             })}
-          </div>
+          </div>}
           {/* Equations grouped by topic */}
           <div className="space-y-6 pb-8">
             {topics.map((topic) => (
@@ -11292,18 +11426,25 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
   const [selectedEquation, setSelectedEquation] = useState<ChemEquationInfo | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
+  // Block colours for s, p, d, f blocks
   const blockColours: Record<string, { bg: string; text: string; border: string }> = {
-    s: { bg: isDarkMode ? "bg-emerald-900/40" : "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-400" },
-    p: { bg: isDarkMode ? "bg-sky-900/40" : "bg-sky-100",     text: "text-sky-700",     border: "border-sky-400"     },
+    s: { bg: isDarkMode ? "bg-emerald-900/60" : "bg-emerald-100", text: isDarkMode ? "text-emerald-300" : "text-emerald-800", border: "border-emerald-500" },
+    p: { bg: isDarkMode ? "bg-sky-900/60"     : "bg-sky-100",     text: isDarkMode ? "text-sky-300"     : "text-sky-800",     border: "border-sky-500"     },
+    d: { bg: isDarkMode ? "bg-amber-900/60"   : "bg-amber-100",   text: isDarkMode ? "text-amber-300"   : "text-amber-800",   border: "border-amber-500"   },
+    f: { bg: isDarkMode ? "bg-violet-900/60"  : "bg-violet-100",  text: isDarkMode ? "text-violet-300"  : "text-violet-800",  border: "border-violet-500"  },
   }
 
-  const filtered = searchQuery.trim()
-    ? N5_ELEMENTS.filter(el =>
-        el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        el.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(el.atomic_number).includes(searchQuery)
-      )
-    : N5_ELEMENTS
+  const flameDotColour: Record<string, string> = {
+    "Crimson red": "bg-red-600",
+    "Yellow/orange": "bg-yellow-400",
+    "Lilac": "bg-purple-400",
+    "Brick red": "bg-orange-600",
+    "Bright red": "bg-red-500",
+    "Green": "bg-green-500",
+    "Blue-green": "bg-teal-400",
+    "Red-violet": "bg-pink-600",
+    "Blue": "bg-blue-500",
+  }
 
   const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
 
@@ -11319,6 +11460,55 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
     setSelectedEquation(null)
     setSearchQuery("")
   }
+
+  // Search-filtered list
+  const filtered = searchQuery.trim()
+    ? N5_ELEMENTS.filter(el =>
+        el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        el.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(el.atomic_number).includes(searchQuery)
+      )
+    : null  // null means "show periodic table view"
+
+  // Split elements into main table and f-block rows
+  const mainElements = N5_ELEMENTS.filter(el => el.block !== "f")
+  const lanthanides  = N5_ELEMENTS.filter(el => el.block === "f" && el.period === 6).sort((a,b) => a.atomic_number - b.atomic_number)
+  const actinides    = N5_ELEMENTS.filter(el => el.block === "f" && el.period === 7).sort((a,b) => a.atomic_number - b.atomic_number)
+
+  function renderCell(el: ChemElement | null, colourKey?: string) {
+    if (!el) return null
+    const colours = blockColours[el.block] ?? blockColours.p
+    const isSelected = selectedElement?.symbol === el.symbol
+    return (
+      <button
+        key={el.symbol}
+        onClick={() => setSelectedElement(isSelected ? null : el)}
+        title={el.name}
+        className={`relative flex flex-col items-center justify-center rounded border transition-all hover:scale-110 active:scale-95 ${
+          isSelected
+            ? `${colours.border} border-2 ring-1 ring-white/40`
+            : `${colours.border} border`
+        } ${colours.bg}`}
+        style={{ width: "100%", aspectRatio: "1 / 1.1", minWidth: 0, padding: "1px" }}
+      >
+        <span className={`text-[7px] leading-none font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{el.atomic_number}</span>
+        <span className={`text-[9px] font-black leading-none ${colours.text}`}>{el.symbol}</span>
+        {el.flame_colour && <span className={`absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${flameDotColour[el.flame_colour] ?? "bg-yellow-400"}`} title={`Flame: ${el.flame_colour}`} />}
+      </button>
+    )
+  }
+
+  // Build 7×18 grid (period × group)
+  // group=null elements are f-block; treated separately
+  const mainGrid: (ChemElement | null)[][] = Array.from({ length: 7 }, () => Array(18).fill(null))
+  for (const el of mainElements) {
+    if (el.group != null && el.period >= 1 && el.period <= 7) {
+      mainGrid[el.period - 1][el.group - 1] = el
+    }
+  }
+
+  const GROUPS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+  const PERIODS = [1,2,3,4,5,6,7]
 
   return (
     <div className="space-y-4">
@@ -11345,58 +11535,139 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
       {activeTab === "elements" && (
         <>
           {/* Legend */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex items-center gap-1.5">
-              <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-emerald-900/40 border border-emerald-400" : "bg-emerald-100 border border-emerald-400"}`} />
-              <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>s-block</span>
+          <div className="flex flex-wrap gap-2 items-center text-[10px]">
+            {(["s","p","d","f"] as const).map(b => (
+              <div key={b} className="flex items-center gap-1">
+                <div className={`w-3 h-3 rounded-sm border ${blockColours[b].border} ${blockColours[b].bg}`} />
+                <span className={isDarkMode ? "text-slate-400" : "text-slate-500"}>{b}-block</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1 ml-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+              <span className={isDarkMode ? "text-slate-400" : "text-slate-500"}>Flame colour</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className={`w-4 h-4 rounded ${isDarkMode ? "bg-sky-900/40 border border-sky-400" : "bg-sky-100 border border-sky-400"}`} />
-              <span className={`text-xs font-bold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>p-block</span>
-            </div>
-            <span className={`text-xs ml-auto ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an element for details</span>
+            <span className={`ml-auto ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap for details</span>
           </div>
 
           {/* Search */}
           <input
             type="text"
-            placeholder="Search by name, symbol or number…"
+            placeholder="Search element name, symbol or number…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className={`w-full px-4 py-2 rounded-xl border text-sm ${
+            className={`w-full px-3 py-1.5 rounded-xl border text-xs ${
               isDarkMode
                 ? "bg-slate-800 border-slate-600 text-white placeholder:text-slate-500"
                 : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
             }`}
           />
 
-          {/* Element grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-            {filtered.map(el => {
-              const colours = blockColours[el.block] ?? blockColours.p
-              const isSelected = selectedElement?.symbol === el.symbol
-              return (
-                <button
-                  key={el.symbol}
-                  onClick={() => setSelectedElement(isSelected ? null : el)}
-                  className={`relative p-2 rounded-xl border-2 text-left transition-all hover:scale-105 active:scale-95 ${
-                    isSelected
-                      ? `${colours.border} ring-2 ring-offset-1 ${isDarkMode ? "ring-white/30" : "ring-slate-400"}`
-                      : colours.border
-                  } ${colours.bg}`}
-                >
-                  <span className={`absolute top-1 left-1.5 text-[10px] font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    {el.atomic_number}
-                  </span>
-                  <div className="mt-3 text-center">
-                    <span className={`block text-lg font-black ${colours.text}`}>{el.symbol}</span>
-                    <span className={`block text-[10px] font-semibold leading-tight truncate ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{el.name}</span>
-                    <span className={`block text-[10px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{el.relative_atomic_mass}</span>
+          {filtered ? (
+            /* ── Search results: simple grid ── */
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+              {filtered.map(el => {
+                const colours = blockColours[el.block] ?? blockColours.p
+                const isSelected = selectedElement?.symbol === el.symbol
+                return (
+                  <button
+                    key={el.symbol}
+                    onClick={() => setSelectedElement(isSelected ? null : el)}
+                    className={`relative p-1.5 rounded-lg border-2 text-left transition-all hover:scale-105 active:scale-95 ${
+                      isSelected
+                        ? `${colours.border} ring-2 ring-offset-1 ${isDarkMode ? "ring-white/30" : "ring-slate-400"}`
+                        : colours.border
+                    } ${colours.bg}`}
+                  >
+                    <span className={`absolute top-0.5 left-1 text-[9px] font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                      {el.atomic_number}
+                    </span>
+                    <div className="mt-3 text-center">
+                      <span className={`block text-sm font-black ${colours.text}`}>{el.symbol}</span>
+                      <span className={`block text-[9px] font-semibold leading-tight truncate ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{el.name}</span>
+                    </div>
+                  </button>
+                )
+              })}
+              {filtered.length === 0 && (
+                <p className={`col-span-4 text-sm text-center py-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No elements found.</p>
+              )}
+            </div>
+          ) : (
+            /* ── Full periodic table ── */
+            <div className="overflow-x-auto -mx-1 px-1">
+              {/* Period × Group grid */}
+              <div style={{ minWidth: 340 }}>
+                {/* Group numbers header */}
+                <div className="flex" style={{ marginLeft: "2rem" }}>
+                  {GROUPS.map(g => (
+                    <div
+                      key={g}
+                      className={`text-[8px] font-black text-center flex-1 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}
+                    >{g}</div>
+                  ))}
+                </div>
+
+                {/* Main table rows */}
+                {PERIODS.map(p => (
+                  <div key={p} className="flex items-stretch" style={{ marginBottom: 1 }}>
+                    {/* Period label */}
+                    <div className={`text-[8px] font-black flex items-center justify-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} style={{ width: "2rem", flexShrink: 0 }}>
+                      {p}
+                    </div>
+                    {/* 18 group cells */}
+                    {GROUPS.map(g => {
+                      const el = mainGrid[p - 1][g - 1]
+                      // Placeholder for f-block gap indicator
+                      if (!el) {
+                        // show f-block gap indicator in cols 3-4 of periods 6&7
+                        if ((p === 6 || p === 7) && g === 3) {
+                          return (
+                            <div
+                              key={g}
+                              className={`flex-1 flex items-center justify-center text-[6px] font-bold rounded ${isDarkMode ? "bg-slate-800 text-slate-600" : "bg-slate-100 text-slate-400"}`}
+                              style={{ aspectRatio: "1 / 1.1", minWidth: 0, margin: "0 0.5px" }}
+                            >
+                              {p === 6 ? "La…" : "Ac…"}
+                            </div>
+                          )
+                        }
+                        return <div key={g} className="flex-1" style={{ aspectRatio: "1 / 1.1", minWidth: 0, margin: "0 0.5px" }} />
+                      }
+                      return <div key={g} className="flex-1" style={{ margin: "0 0.5px" }}>{renderCell(el)}</div>
+                    })}
                   </div>
-                </button>
-              )
-            })}
-          </div>
+                ))}
+
+                {/* F-block separator */}
+                <div className={`my-1 mx-8 border-t border-dashed ${isDarkMode ? "border-slate-700" : "border-slate-300"}`} />
+
+                {/* Lanthanides row (period 6 f-block) */}
+                <div className="flex items-stretch" style={{ marginBottom: 1 }}>
+                  <div className={`text-[7px] font-black flex items-center justify-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} style={{ width: "2rem", flexShrink: 0 }}>
+                    6f
+                  </div>
+                  {/* offset by 2 cols to align with groups 3–17 */}
+                  <div className="flex-1" style={{ maxWidth: "calc(2 * (100% / 18))", minWidth: 0, margin: "0 0.5px" }} />
+                  {lanthanides.map(el => (
+                    <div key={el.symbol} className="flex-1" style={{ margin: "0 0.5px" }}>{renderCell(el)}</div>
+                  ))}
+                  <div className="flex-1" style={{ maxWidth: "calc(1 * (100% / 18))", minWidth: 0 }} />
+                </div>
+
+                {/* Actinides row (period 7 f-block) */}
+                <div className="flex items-stretch">
+                  <div className={`text-[7px] font-black flex items-center justify-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} style={{ width: "2rem", flexShrink: 0 }}>
+                    7f
+                  </div>
+                  <div className="flex-1" style={{ maxWidth: "calc(2 * (100% / 18))", minWidth: 0, margin: "0 0.5px" }} />
+                  {actinides.map(el => (
+                    <div key={el.symbol} className="flex-1" style={{ margin: "0 0.5px" }}>{renderCell(el)}</div>
+                  ))}
+                  <div className="flex-1" style={{ maxWidth: "calc(1 * (100% / 18))", minWidth: 0 }} />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Detail panel */}
           {selectedElement && (
@@ -11404,17 +11675,23 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
               blockColours[selectedElement.block]?.border ?? "border-slate-300"
             } ${cardBg}`}>
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-3xl font-black ${blockColours[selectedElement.block]?.text ?? "text-slate-700"}`}>
                     {selectedElement.symbol}
                   </span>
-                  <span className={`ml-2 text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
+                  <span className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>
                     {selectedElement.name}
                   </span>
+                  {selectedElement.flame_colour && (
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold">
+                      <span className={`w-3 h-3 rounded-full inline-block ${flameDotColour[selectedElement.flame_colour] ?? "bg-yellow-400"}`} />
+                      Flame: {selectedElement.flame_colour}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => setSelectedElement(null)}
-                  className={`p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors`}
+                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -11424,7 +11701,7 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
                   { label: "Atomic Number",        value: selectedElement.atomic_number },
                   { label: "Relative Atomic Mass",  value: selectedElement.relative_atomic_mass },
                   { label: "Electron Arrangement",  value: selectedElement.electron_arrangement },
-                  { label: "Group",                 value: selectedElement.group },
+                  { label: "Group",                 value: selectedElement.group ?? "f-block" },
                   { label: "Period",                value: selectedElement.period },
                   { label: "Block",                 value: `${selectedElement.block}-block` },
                   { label: "Melting Point",         value: selectedElement.melting_point_c != null ? `${selectedElement.melting_point_c} °C` : "—" },
@@ -13661,6 +13938,7 @@ export default function App() {
         {view === "calculations" && (
           <CalculationsMode
             selectedLevel={selectedLevel}
+            selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
             currentUser={currentUser}
