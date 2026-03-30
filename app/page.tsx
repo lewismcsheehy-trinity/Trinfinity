@@ -9627,7 +9627,6 @@ function BiologyExperimentalMode({
   const [mcSelected, setMcSelected] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [score, setScore] = useState(0)
-  const [answers, setAnswers] = useState<{ correct: boolean; userAnswer: string }[]>([])
 
   function startQuiz() {
     let pool = BIO_EXP_QUESTIONS.filter(q => q.difficulty === difficulty)
@@ -9639,25 +9638,14 @@ function BiologyExperimentalMode({
     setMcSelected(null)
     setRevealed(false)
     setScore(0)
-    setAnswers([])
     setPhase("quiz")
   }
 
   function handleNext() {
     const q = questions[idx]
-    let correct = false
-    let userAnswer = ""
-    if (q.difficulty === "easy") {
-      correct = mcSelected === (q.answer as number)
-      userAnswer = q.options?.[mcSelected ?? -1] ?? "—"
-    } else {
-      correct = false
-      userAnswer = typed
+    if (q.difficulty === "easy" && mcSelected === (q.answer as number)) {
+      setScore(s => s + 1)
     }
-    const newAnswers = [...answers, { correct, userAnswer }]
-    setAnswers(newAnswers)
-    if (correct) setScore(s => s + 1)
-
     if (idx + 1 < questions.length) {
       setIdx(i => i + 1)
       setTyped("")
@@ -9778,7 +9766,7 @@ function BiologyExperimentalMode({
 
           {/* Progress bar */}
           <div className={`h-2 rounded-full mb-6 ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-            <div className="h-full rounded-full bg-[#800000] transition-all" style={{ width: `${((idx) / questions.length) * 100}%` }} />
+            <div className="h-full rounded-full bg-[#800000] transition-all" style={{ width: `${(idx / questions.length) * 100}%` }} />
           </div>
 
           {/* Question */}
@@ -10516,6 +10504,13 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
     "Rates of Reaction": "border-violet-400 bg-violet-50 dark:bg-violet-900/20",
   }
 
+  function handleTabChange(tab: "elements" | "equations") {
+    setActiveTab(tab)
+    setSelectedElement(null)
+    setSelectedEquation(null)
+    setSearchQuery("")
+  }
+
   return (
     <div className="space-y-4">
       {/* Tab switcher */}
@@ -10523,7 +10518,7 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
         {(["elements", "equations"] as const).map(tab => (
           <button
             key={tab}
-            onClick={() => { setActiveTab(tab); setSelectedElement(null); setSelectedEquation(null); setSearchQuery("") }}
+            onClick={() => handleTabChange(tab)}
             className={`flex-1 py-2 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${
               activeTab === tab
                 ? "bg-teal-500 text-white shadow"
@@ -10642,7 +10637,7 @@ function ChemDataBooklet({ isDarkMode }: { isDarkMode: boolean }) {
       {/* ── Equations tab ── */}
       {activeTab === "equations" && (
         <div className="space-y-3">
-          <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an equation to see variables &amp; units.</p>
+          <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tap an equation to see variables & units.</p>
           {N5_CHEM_EQUATIONS.map(eq => {
             const isSelected = selectedEquation?.id === eq.id
             const colourClass = topicColours[eq.topic] ?? "border-slate-300 bg-slate-50"
