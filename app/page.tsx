@@ -4763,23 +4763,30 @@ function AssignmentMode({
                           {section.criterion}
                         </p>
 
-                        {/* Mark buttons */}
-                        <div className="flex flex-wrap gap-2">
+                        {/* Mark buttons with descriptions */}
+                        <div className="space-y-1.5">
                           {Array.from({ length: section.maxMarks + 1 }, (_, i) => i).map((v) => (
                             <button
                               key={v}
                               onClick={() =>
                                 setUserSectionScores((prev) => ({ ...prev, [section.id]: v }))
                               }
-                              className={`w-9 h-9 rounded-xl font-black text-sm border-2 transition-all ${
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border-2 text-left transition-all ${
                                 userScore === v
-                                  ? "bg-[#800000] text-white border-[#800000] scale-110 shadow"
+                                  ? "bg-[#800000] text-white border-[#800000] shadow"
                                   : isDarkMode
                                     ? "border-slate-600 hover:border-slate-400 text-slate-300"
                                     : "border-slate-200 hover:border-[#800000] text-slate-700"
                               }`}
                             >
-                              {v}
+                              <span className={`w-7 h-7 flex-shrink-0 rounded-lg font-black text-sm flex items-center justify-center ${
+                                userScore === v
+                                  ? "bg-white/20 text-white"
+                                  : isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"
+                              }`}>{v}</span>
+                              <span className="text-xs leading-snug">
+                                {section.markDescriptions[v] ?? `${v} mark${v !== 1 ? "s" : ""}`}
+                              </span>
                             </button>
                           ))}
                         </div>

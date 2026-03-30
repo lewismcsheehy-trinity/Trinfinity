@@ -8,6 +8,7 @@ export interface AssignmentSection {
   criterion: string
   guidance: string
   tips: string
+  markDescriptions: Record<number, string>
 }
 
 export interface CandidatePaper {
@@ -42,115 +43,139 @@ export interface ImproveExample {
 }
 
 // ── Marking Sections ─────────────────────────────────────────────────────────
-// Total: 20 marks
+// Sections 1–8 per the SQA N5 Physics Assignment marking scheme. Total: 20 marks.
 
 export const ASSIGNMENT_SECTIONS: AssignmentSection[] = [
   {
     id: "aim",
-    title: "Aim",
+    title: "1 – Aim",
     maxMarks: 1,
     criterion:
-      "Clearly states the variable being changed AND the variable being measured, with a clear link to the investigation.",
+      "An aim that describes clearly the purpose of the investigation.",
     guidance:
-      "A good aim identifies the independent variable (what changes) and the dependent variable (what's measured). E.g. 'To investigate how temperature affects the pressure of a fixed volume of gas.'",
-    tips: "Avoid vague aims like 'To investigate pressure'. Name both variables explicitly.",
+      "The aim should be a separate statement from the title. Identify what you are investigating, e.g. 'To investigate how the resistance of a lamp filament varies with applied voltage.' A vague aim like 'To investigate filaments' will not gain the mark.",
+    tips: "Name both the independent variable (what you change) and the dependent variable (what you measure) in your aim.",
+    markDescriptions: {
+      0: "Not awarded — aim does not clearly describe the purpose of the investigation",
+      1: "Awarded — aim clearly describes the purpose of the investigation",
+    },
   },
   {
-    id: "background",
-    title: "Background Physics",
+    id: "underlyingPhysics",
+    title: "2 – Underlying Physics",
+    maxMarks: 3,
+    criterion:
+      "An account of physics relevant to the aim of the investigation. Marked holistically — candidates must demonstrate an understanding of relevant physics and use their own words wherever possible.",
+    guidance:
+      "Cover the physics behind your investigation at National 5 depth. Explain relevant laws, formulae, and how they relate to your experiment. Credit is given for quality of physics understanding, not for historical or socio-economic information.",
+    tips:
+      "Use your own words wherever possible. Including complex diagrams from a literature/internet source is acceptable. Aim to explain not just what the formula is, but why the variables are related.",
+    markDescriptions: {
+      0: "No understanding of relevant physics demonstrated",
+      1: "Limited understanding of relevant physics demonstrated",
+      2: "Reasonable understanding of relevant physics demonstrated",
+      3: "Good understanding of relevant physics demonstrated",
+    },
+  },
+  {
+    id: "dataCollection",
+    title: "3 – Data Collection and Handling",
+    maxMarks: 6,
+    criterion:
+      "(3a) A brief description of the approach used to collect experimental data. (3b) Sufficient raw data from the candidate's experiment. (3c) Data presented in a correctly produced table with headings and units. (3d) Mean and/or derived values calculated correctly. (3e) Data relevant to the experiment from an internet/literature source. (3f) A reference for the source of the internet/literature data.",
+    guidance:
+      "Six marks across six sub-criteria: description of approach, raw data, correct table (headings and units in every column), mean/derived values, literature/internet data, and a retrievable reference. The description need only allow a marker to visualise the experiment — a diagram alone is insufficient. The raw data mark is for unprocessed data only.",
+    tips:
+      "Every column in your table must have a clear heading with units. Your reference must be detailed enough that a third party could retrieve the source (e.g. full URL, or author, title, journal, volume and page number for a book/journal).",
+    markDescriptions: {
+      0: "None of the six data collection criteria met",
+      1: "1 of 6 criteria met",
+      2: "2 of 6 criteria met",
+      3: "3 of 6 criteria met",
+      4: "4 of 6 criteria met",
+      5: "5 of 6 criteria met",
+      6: "All 6 criteria met: description, raw data, correct table, derived values, literature data, and reference",
+    },
+  },
+  {
+    id: "graphical",
+    title: "4 – Graphical Presentation",
     maxMarks: 4,
     criterion:
-      "(1) Relevant physics theory explained in own words. (1) Relevant formula(e) stated correctly. (1) Formula linked to the experiment. (1) Explanation of why the variables are related using physics.",
+      "(4a) An appropriate format (scatter graph, line graph, or bar graph). (4b) The axis/axes have suitable scale(s). (4c) The axes have suitable labels and units. (4d) Accurately plotted data points and, where appropriate, a line of best fit.",
     guidance:
-      "Four marks are available. Cover: what the relevant law/formula is, what each symbol means, what the formula predicts, and how that applies to your experiment.",
+      "Four marks, one per sub-criterion. Graphs must be based on the candidate's own experimental data. Computer-generated graphs are marked the same as hand-drawn graphs. The graph should be large enough to check plotting accuracy — excessively large data points or omitted gridlines may prevent checking.",
     tips:
-      "Don't just quote a formula. Explain the physics behind it and link it explicitly to your experimental setup.",
+      "Spelling mistakes or abbreviations in axis labels are not penalised if the meaning is clear. A dot-to-dot line is NOT a best-fit line. Scales must spread data points sensibly across the graph.",
+    markDescriptions: {
+      0: "None of the four graphical criteria met",
+      1: "1 of 4 criteria met",
+      2: "2 of 4 criteria met",
+      3: "3 of 4 criteria met",
+      4: "All 4 criteria met: appropriate format, suitable scales, labelled axes with units, and accurately plotted points with best-fit line",
+    },
   },
   {
-    id: "hypothesis",
-    title: "Hypothesis",
+    id: "analysis",
+    title: "5 – Analysis",
     maxMarks: 1,
     criterion:
-      "A clear prediction of the expected result AND a physics justification (references the relevant theory/formula).",
+      "A valid comparison of the experimental data with data from the internet/literature source.",
     guidance:
-      "Say what you expect to happen and WHY using the physics. E.g. 'I predict pressure will increase proportionally with temperature because Gay-Lussac's Law states P/T = constant for a fixed volume.'",
-    tips: "Without a physics reason, you cannot score this mark — a prediction alone is not enough.",
-  },
-  {
-    id: "apparatus",
-    title: "Apparatus / Diagram",
-    maxMarks: 1,
-    criterion: "A labelled diagram showing all key components of the experimental setup.",
-    guidance:
-      "Draw and label every piece of equipment used. The diagram should be clear enough that someone else could replicate your setup.",
+      "State specifically how your experimental results compare to the literature/internet source data. Similarities, differences, or trends should be commented on. A vague statement that the results 'match' is not enough — describe the comparison.",
     tips:
-      "Unlabelled diagrams or diagrams missing key components will not score the mark.",
-  },
-  {
-    id: "procedure",
-    title: "Procedure / Method",
-    maxMarks: 1,
-    criterion:
-      "A clear description of the method that states what is varied, what is measured, and how variables are controlled.",
-    guidance:
-      "Describe step-by-step how you conducted the experiment. State which variable is changed, which is measured, and which are kept constant.",
-    tips:
-      "Without mentioning control of variables (what's kept constant), you may not gain this mark.",
-  },
-  {
-    id: "results",
-    title: "Results / Data Collection",
-    maxMarks: 3,
-    criterion:
-      "(1) Table with appropriate headings including quantities and units. (1) Sufficient data collected (minimum 5 different values). (1) Repeat readings taken and recorded.",
-    guidance:
-      "Three marks are available. Ensure your table has both the quantity name and unit in each heading, you have at least 5 data points, and you have taken repeat readings to reduce random error.",
-    tips:
-      "Headings like 'Temperature' without '(°C)' will lose the units mark. Fewer than 5 readings risks losing the sufficient data mark.",
-  },
-  {
-    id: "graph",
-    title: "Graph / Presentation of Data",
-    maxMarks: 3,
-    criterion:
-      "(1) Both axes correctly labelled with quantity and unit. (1) Appropriate scale used and all points correctly plotted. (1) Best-fit straight line or smooth curve drawn.",
-    guidance:
-      "Three marks for the graph. Label both axes with the quantity and unit, use a scale that spreads data across at least half the graph paper, plot all points accurately, and draw a best-fit line (not dot-to-dot).",
-    tips:
-      "A dot-to-dot line is NOT a best-fit line. The scale must not begin at a non-zero value unless justified.",
+      "Refer to both your data and the literature source explicitly in your comparison. Numerical comparisons (e.g. percentage difference) are helpful but not required.",
+    markDescriptions: {
+      0: "Not awarded — no valid comparison of experimental data with literature/internet source data",
+      1: "Awarded — a valid comparison of experimental data with internet/literature source data is made",
+    },
   },
   {
     id: "conclusion",
-    title: "Conclusion",
+    title: "6 – Conclusion",
     maxMarks: 1,
     criterion:
-      "A clear statement of the relationship found, linked back to the aim. Must mention whether results support the hypothesis.",
+      "A valid conclusion that relates to the aim and is supported by all the data in the report.",
     guidance:
-      "State what the graph/data shows about the relationship between the two variables (e.g. directly proportional, inversely proportional). Link back to your aim and say whether your hypothesis was supported.",
+      "State what the data shows about the relationship between the variables and link this back to your aim. If multiple aims were stated, the conclusion must address all of them. Where no aim was stated, this mark cannot be awarded.",
     tips:
-      "Vague conclusions like 'As one increased, the other increased' without specifying which variables or mentioning proportionality will not score the mark.",
+      "Vague conclusions like 'As one increased, the other increased' without specifying the variables or the nature of the relationship (e.g. directly proportional) will not gain the mark.",
+    markDescriptions: {
+      0: "Not awarded — conclusion is absent, invalid, or does not relate to the aim",
+      1: "Awarded — valid conclusion relating to the aim, supported by all data in the report",
+    },
   },
   {
     id: "evaluation",
-    title: "Evaluation",
-    maxMarks: 3,
-    criterion:
-      "(1) A specific source of uncertainty or limitation identified. (1) The effect of this uncertainty on the results described. (1) A realistic improvement to address the uncertainty suggested.",
-    guidance:
-      "Three marks for evaluation. Identify one real source of error in YOUR experiment (not a general error), say how it affects your results (e.g. overestimates the pressure), and suggest a practical improvement.",
-    tips:
-      "Human error alone is not enough — identify a specific measurement issue. 'Use better equipment' is too vague for the improvement mark.",
-  },
-  {
-    id: "bibliography",
-    title: "Bibliography",
+    title: "7 – Evaluation",
     maxMarks: 2,
     criterion:
-      "(1) At least one relevant source cited in an appropriate format. (1) A second relevant source cited; sources are clearly relevant to the physics investigated.",
+      "(1) Identifies a factor that can be expected to have a significant effect on the reliability, accuracy, or precision of the experiment. (1) Explains what could have been done to minimise the effect, OR what was done to minimise it, OR provides evidence supporting the identification of the factor.",
     guidance:
-      "Two marks for bibliography. Cite at least two sources that are actually relevant to the physics of your experiment. Include enough detail that someone could find the source (author, title, URL, date accessed).",
+      "Two marks for evaluation. The identified factor must be specific to your experiment — 'human error' on its own is too vague. The explanation must either describe a realistic improvement, what you actually did to reduce the error, or give evidence for why it is a significant factor.",
     tips:
-      "Wikipedia alone is generally not sufficient. Sources must be relevant to the specific physics topic, not just 'physics' in general.",
+      "A specific source of uncertainty (e.g. 'parallax error when reading the thermometer') is needed for the first mark. 'Use better equipment' is too vague for the second mark — name the specific improvement (e.g. 'use a digital thermometer to reduce reading uncertainty').",
+    markDescriptions: {
+      0: "Not awarded — no significant factor identified",
+      1: "Factor with significant effect on reliability/accuracy/precision identified, but no explanation of how to minimise it or evidence supporting it",
+      2: "Factor identified AND explanation of minimisation, what was done, or evidence supporting the identification",
+    },
+  },
+  {
+    id: "structure",
+    title: "8 – Structure",
+    maxMarks: 2,
+    criterion:
+      "(8a) An informative title. (8b) A clear and concise report that flows in a logical manner.",
+    guidance:
+      "Two marks for structure. The title should indicate the topic and nature of the investigation. The report does not need to follow any set structure, but should be presented logically so a reader can follow the investigation from start to finish.",
+    tips:
+      "A title like 'Physics Investigation' is not informative — name the variables. The report should be concise; excessively long or repetitive reports can still gain this mark if the overall flow is logical.",
+    markDescriptions: {
+      0: "Not awarded — no informative title and report structure is unclear or illogical",
+      1: "Either an informative title OR a clear and concise report (not both)",
+      2: "Both an informative title AND a clear and concise report that flows logically",
+    },
   },
 ]
 
@@ -167,37 +192,31 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       "https://www.understandingstandards.org.uk/National5_images/Physics/Assignment/2023-24-n5-physics-assignment-candidate-1-evidence.pdf",
     sectionMarks: {
       aim: 1,
-      background: 3,
-      hypothesis: 1,
-      apparatus: 1,
-      procedure: 0,
-      results: 3,
-      graph: 2,
+      underlyingPhysics: 2,
+      dataCollection: 6,
+      graphical: 3,
+      analysis: 1,
       conclusion: 1,
-      evaluation: 2,
-      bibliography: 2,
+      evaluation: 1,
+      structure: 2,
     },
     sectionCommentary: {
       aim:
         "The aim clearly states that the candidate is investigating how the pressure of a fixed volume of gas changes with temperature. Both the independent variable (temperature) and dependent variable (pressure) are identified. 1 mark awarded.",
-      background:
-        "The candidate explains the kinetic model well and correctly states Gay-Lussac's Law (P/T = constant). The formula is linked to the experiment. However, the candidate does not fully explain why particle collisions with the walls increase in frequency/force with temperature. 3 out of 4 marks awarded.",
-      hypothesis:
-        "A clear prediction is made that pressure will increase as temperature increases, with explicit reference to Gay-Lussac's Law. The physics justification is sufficient. 1 mark awarded.",
-      apparatus:
-        "A clear, labelled diagram showing the gas syringe, thermometer, water bath, and pressure sensor is provided. All key components are labelled. 1 mark awarded.",
-      procedure:
-        "The method describes varying the temperature but does not explicitly state that the volume of gas is kept constant throughout. This is a critical control variable. 0 marks awarded.",
-      results:
-        "The results table has correct headings with units (Temperature /°C and Pressure /kPa). Six data points are recorded with repeat readings shown and an average calculated. 3 marks awarded.",
-      graph:
-        "Both axes are labelled with quantity and unit. All points are plotted correctly. However, the line of best fit does not pass through the origin as expected by Gay-Lussac's Law for Kelvin temperature. 2 out of 3 marks awarded.",
+      underlyingPhysics:
+        "The candidate explains the kinetic model and correctly states Gay-Lussac's Law (P/T = constant). The formula is linked to the experiment. However, the explanation of why particle collisions with the walls increase in frequency and force with temperature is not fully developed. A reasonable understanding of relevant physics — 2 out of 3 marks awarded.",
+      dataCollection:
+        "A clear labelled diagram and method description are provided (3a ✓). Six data points of raw data are recorded (3b ✓). The results table has correct headings with units — Temperature /°C and Pressure /kPa (3c ✓). Repeat readings are shown and an average is calculated (3d ✓). An internet/literature source of data on gas laws is included (3e ✓). The source is fully cited with a retrievable reference (3f ✓). 6 out of 6 marks awarded.",
+      graphical:
+        "An appropriate line graph format is used (4a ✓). The scale is appropriate and data spreads across most of the grid (4b ✓). Both axes are correctly labelled with quantities and units (4c ✓). However, the line of best fit does not pass through the origin as expected by Gay-Lussac's Law when temperature is expressed in Kelvin — the plotting and best-fit mark is not awarded (4d ✗). 3 out of 4 marks awarded.",
+      analysis:
+        "The candidate compares their experimental results with the Gay-Lussac's Law values from the literature source and notes that the graph broadly follows the expected trend, though not perfectly through the origin. 1 mark awarded.",
       conclusion:
-        "The candidate states that pressure increases proportionally with temperature, linking back to the aim and confirming the hypothesis. 1 mark awarded.",
+        "The candidate states that pressure increases proportionally with temperature and links the conclusion back to the aim. 1 mark awarded.",
       evaluation:
-        "Two valid sources of uncertainty are identified (thermometer reading accuracy and heat loss to surroundings). Improvements are suggested. However, the effect of the identified uncertainties on the results is not clearly described for one of the sources. 2 out of 3 marks awarded.",
-      bibliography:
-        "Two relevant sources are cited in appropriate format, both relevant to gas laws and kinetic theory. 2 marks awarded.",
+        "Two valid sources of uncertainty are identified (thermometer reading accuracy and heat loss to surroundings). However, the effect of one of the identified uncertainties on the results is not clearly described. The factor is identified (1 mark) but the explanation is incomplete. 1 out of 2 marks awarded.",
+      structure:
+        "The report has an informative title and is presented in a clear, logical sequence from aim through to evaluation. 2 marks awarded.",
     },
   },
   {
@@ -207,37 +226,31 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       "https://www.understandingstandards.org.uk/National5_images/Physics/Assignment/2023-24-n5-physics-assignment-candidate-2-evidence.pdf",
     sectionMarks: {
       aim: 1,
-      background: 4,
-      hypothesis: 1,
-      apparatus: 1,
-      procedure: 1,
-      results: 2,
-      graph: 3,
+      underlyingPhysics: 3,
+      dataCollection: 5,
+      graphical: 4,
+      analysis: 1,
       conclusion: 1,
       evaluation: 2,
-      bibliography: 1,
+      structure: 2,
     },
     sectionCommentary: {
       aim:
         "The aim clearly states the investigation of how current varies with resistance at a constant voltage. Both variables are named. 1 mark awarded.",
-      background:
-        "Excellent background. Ohm's Law (V = IR) is stated and rearranged correctly (I = V/R). The candidate explains that for constant voltage, increasing resistance reduces current. The underlying physics (resistance opposes current flow) is explained clearly. 4 out of 4 marks awarded.",
-      hypothesis:
-        "The candidate predicts that as resistance increases, current will decrease inversely, justified by Ohm's Law rearranged as I = V/R. 1 mark awarded.",
-      apparatus:
-        "A clear circuit diagram with ammeter, variable resistor, battery, and voltmeter is provided and labelled. 1 mark awarded.",
-      procedure:
-        "The procedure clearly describes setting the resistance, recording current, and keeping voltage constant using the voltmeter reading. Control of variables is stated. 1 mark awarded.",
-      results:
-        "The results table has appropriate headings and units. Five data points are recorded. However, repeat readings are not taken. 2 out of 3 marks awarded.",
-      graph:
-        "Both axes correctly labelled. An appropriate scale is used spreading data across most of the grid. All points plotted accurately. A smooth best-fit curve is drawn showing an inversely proportional relationship. 3 out of 3 marks awarded.",
+      underlyingPhysics:
+        "Excellent physics. Ohm's Law (V = IR) is stated and rearranged correctly (I = V/R). The candidate explains that for constant voltage, increasing resistance reduces current, and describes the underlying physics of resistance opposing current flow. A good understanding of relevant physics — 3 out of 3 marks awarded.",
+      dataCollection:
+        "The approach is clearly described with a circuit diagram and method (3a ✓). Five data points of raw current and resistance values are recorded (3b ✓). The results table has appropriate headings and units (3c ✓). However, repeat readings are not taken so no mean values are calculated — the mean/derived values mark is not fully awarded (3d ✗). A relevant internet source on Ohm's Law is cited (3e ✓). The source reference is provided in sufficient detail (3f ✓). 5 out of 6 marks awarded.",
+      graphical:
+        "An appropriate graph format is used (4a ✓). An appropriate scale is used spreading data across most of the grid (4b ✓). Both axes are correctly labelled with quantities and units (4c ✓). All points are plotted accurately and a smooth best-fit curve showing an inversely proportional relationship is drawn (4d ✓). 4 out of 4 marks awarded.",
+      analysis:
+        "The candidate references their literature source and compares the expected inversely proportional relationship (I ∝ 1/R) with their experimental graph, noting good agreement. 1 mark awarded.",
       conclusion:
-        "The conclusion states that current is inversely proportional to resistance (at constant voltage) and explicitly references the hypothesis. 1 mark awarded.",
+        "The conclusion states that current is inversely proportional to resistance at constant voltage, linking back to the aim. 1 mark awarded.",
       evaluation:
-        "Two valid sources of uncertainty identified (contact resistance at connections, heating effect of current changing resistance). Effects described. However, only one improvement is suggested where two were expected. 2 out of 3 marks awarded.",
-      bibliography:
-        "Only one source is cited. It is relevant to Ohm's Law but a second source is not provided. 1 out of 2 marks awarded.",
+        "Two valid sources of uncertainty are identified (contact resistance at connections, heating effect of current). Effects are described for both. An improvement is suggested. The factor is identified (1 mark) and an explanation of how to minimise the effect is given (1 mark). 2 out of 2 marks awarded.",
+      structure:
+        "The report has an informative title and is well-structured and clear throughout. 2 marks awarded.",
     },
   },
   {
@@ -247,37 +260,31 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       "https://www.understandingstandards.org.uk/National5_images/Physics/Assignment/2023-24-n5-physics-assignment-candidate-3-evidence.pdf",
     sectionMarks: {
       aim: 1,
-      background: 2,
-      hypothesis: 0,
-      apparatus: 1,
-      procedure: 1,
-      results: 3,
-      graph: 3,
+      underlyingPhysics: 1,
+      dataCollection: 6,
+      graphical: 4,
+      analysis: 1,
       conclusion: 1,
       evaluation: 2,
-      bibliography: 2,
+      structure: 2,
     },
     sectionCommentary: {
       aim:
         "The aim clearly identifies the investigation of how the horizontal range of a projectile varies with launch speed. 1 mark awarded.",
-      background:
-        "The candidate mentions that horizontal and vertical motion are independent, which is correct. However, the explanation of the physics is limited — the relevant kinematic equations (s = vt for horizontal, s = ½at² for vertical) are not stated, and the underlying physics of why independence occurs is not explained. 2 out of 4 marks awarded.",
-      hypothesis:
-        "The candidate states 'I think the range will increase as launch speed increases' but provides no physics justification. No formula is referenced, and no proportional relationship is predicted. 0 marks awarded.",
-      apparatus:
-        "A clear labelled diagram showing the ramp, launch position, and landing zone with a metre ruler is provided. 1 mark awarded.",
-      procedure:
-        "The method clearly states how launch speed is varied (height of ramp changed), how range is measured, and that air resistance is neglected. 1 mark awarded.",
-      results:
-        "Excellent results table with correct headings, units, five data points, and three repeat readings with an average calculated. 3 out of 3 marks awarded.",
-      graph:
-        "Both axes labelled correctly. The range is plotted against launch speed with an appropriate scale. All points plotted. A best-fit line of appropriate form (smooth curve) is drawn. 3 out of 3 marks awarded.",
+      underlyingPhysics:
+        "The candidate mentions that horizontal and vertical motion are independent, which is correct. However, the relevant kinematic equations (s = vt for horizontal, s = ½at² for vertical) are not stated, and the underlying physics of why independence occurs is not explained in sufficient depth. A limited understanding of relevant physics — 1 out of 3 marks awarded.",
+      dataCollection:
+        "The approach is clearly described with a labelled diagram of the ramp setup (3a ✓). Five data points of raw range and launch speed values are recorded, including three repeat readings (3b ✓). The results table has correct headings with quantities and units (3c ✓). Averages are calculated from the repeat readings (3d ✓). Two relevant internet sources on projectile motion are included as literature data (3e ✓). Both sources are cited with sufficient detail to be retrieved (3f ✓). 6 out of 6 marks awarded.",
+      graphical:
+        "An appropriate graph format is used (4a ✓). The range is plotted against launch speed with an appropriate scale (4b ✓). Both axes are correctly labelled with quantities and units (4c ✓). All points are plotted accurately and a best-fit smooth curve is drawn (4d ✓). 4 out of 4 marks awarded.",
+      analysis:
+        "The candidate compares their range vs. launch speed data with the theoretical predictions from the kinematic equations cited in the literature sources, noting that the experimental results follow the expected trend. 1 mark awarded.",
       conclusion:
-        "The conclusion states that range increases as launch speed increases, in line with the predictions from physics, and relates back to the aim. 1 mark awarded.",
+        "The conclusion states that range increases as launch speed increases, relates back to the aim, and is supported by the data. 1 mark awarded.",
       evaluation:
-        "Two sources of uncertainty identified (air resistance neglected, landing zone measurement). Effects described. Improvement suggested for one. 2 out of 3 marks awarded.",
-      bibliography:
-        "Two relevant sources on projectile motion are cited with sufficient detail. 2 out of 2 marks awarded.",
+        "Two sources of uncertainty are identified (air resistance neglected, difficulty measuring the exact landing point). Effects are described for both. A specific improvement (using a landing pad with a measuring scale) is suggested. Factor identified (1 mark) and explanation given (1 mark). 2 out of 2 marks awarded.",
+      structure:
+        "The report has an informative title and flows logically from aim through to evaluation. 2 marks awarded.",
     },
   },
   {
@@ -287,37 +294,31 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       "https://www.understandingstandards.org.uk/National5_images/Physics/Assignment/2023-24-n5-physics-assignment-candidate-4-evidence.pdf",
     sectionMarks: {
       aim: 1,
-      background: 4,
-      hypothesis: 1,
-      apparatus: 1,
-      procedure: 1,
-      results: 3,
-      graph: 3,
+      underlyingPhysics: 3,
+      dataCollection: 6,
+      graphical: 4,
+      analysis: 1,
       conclusion: 1,
-      evaluation: 3,
-      bibliography: 2,
+      evaluation: 2,
+      structure: 2,
     },
     sectionCommentary: {
       aim:
         "The aim clearly states investigating how the mass of a vehicle affects its braking distance on a fixed surface. Both variables are clearly identified. 1 mark awarded.",
-      background:
-        "Outstanding background. The candidate explains kinetic energy (Ek = ½mv²), work done by friction (W = Fd), and equates them to derive braking distance ∝ mass. The physics links directly to the experiment and demonstrates deep understanding. 4 out of 4 marks awarded.",
-      hypothesis:
-        "The candidate correctly predicts that braking distance will increase proportionally with mass, justified by the energy equation derived in the background. 1 mark awarded.",
-      apparatus:
-        "A labelled diagram showing the trolley, ramp, weighted trolley, and measuring tape on a surface is clear and complete. 1 mark awarded.",
-      procedure:
-        "Clear step-by-step procedure stating how mass is changed, how braking distance is measured, and which variables are kept constant (launch speed, surface roughness). 1 mark awarded.",
-      results:
-        "Excellent table with headings, units, six data points, and three repeat readings with averages. 3 out of 3 marks awarded.",
-      graph:
-        "Both axes correctly labelled. Appropriate scale, all points plotted accurately. The best-fit straight line through the origin supports the proportional relationship predicted. 3 out of 3 marks awarded.",
+      underlyingPhysics:
+        "Outstanding physics. The candidate explains kinetic energy (Ek = ½mv²), work done by friction (W = Fd), and equates them to derive braking distance ∝ mass. The physics links directly to the experiment and demonstrates deep understanding. A good understanding of relevant physics — 3 out of 3 marks awarded.",
+      dataCollection:
+        "The approach is clearly described with a labelled diagram of the trolley and ramp setup (3a ✓). Six data points of raw braking distance values for different masses are recorded (3b ✓). The table has correct headings with quantities and units, including an average column (3c ✓). Averages from three repeat readings are calculated for each mass (3d ✓). Relevant literature data on braking distance and kinetic energy is included (3e ✓). Both sources are cited with full bibliographic detail (3f ✓). 6 out of 6 marks awarded.",
+      graphical:
+        "An appropriate graph format is used (4a ✓). An appropriate scale is used and all points are plotted accurately (4b ✓). Both axes are correctly labelled with quantities and units (4c ✓). A best-fit straight line through the origin is drawn, supporting the proportional relationship (4d ✓). 4 out of 4 marks awarded.",
+      analysis:
+        "The candidate compares their experimental braking distance values with those predicted by the energy equation and with published data, noting good agreement and discussing a small systematic discrepancy attributed to friction variation. 1 mark awarded.",
       conclusion:
-        "The conclusion clearly states that braking distance is directly proportional to mass, linking back to the aim and confirming the hypothesis is supported. 1 mark awarded.",
+        "The conclusion clearly states that braking distance is directly proportional to mass, linking back to the aim and supported by all the data in the report. 1 mark awarded.",
       evaluation:
-        "Three excellent points: uncertainty in measuring the exact moment the trolley stops (effect: could overestimate distance; improvement: use a motion sensor), variation in surface roughness across runs (effect: introduces random error; improvement: clean surface before each run), and air resistance at higher speeds (effect: slight underestimate of distance; improvement: use lower speeds). 3 out of 3 marks awarded.",
-      bibliography:
-        "Two highly relevant sources on braking distance and kinetic energy are cited with full bibliographic information. 2 out of 2 marks awarded.",
+        "Excellent evaluation: uncertainty in measuring the exact moment the trolley stops is identified (effect: overestimate of distance; improvement: use a motion sensor connected to a data logger). Factor clearly identified (1 mark) and a specific, realistic improvement is given (1 mark). 2 out of 2 marks awarded.",
+      structure:
+        "The report has a clear, informative title and is exceptionally well-structured throughout, flowing logically from aim to evaluation. 2 marks awarded.",
     },
   },
   {
@@ -327,37 +328,31 @@ export const CANDIDATE_PAPERS: CandidatePaper[] = [
       "https://www.understandingstandards.org.uk/National5_images/Physics/Assignment/2023-24-n5-physics-assignment-candidate-5-evidence.pdf",
     sectionMarks: {
       aim: 1,
-      background: 3,
-      hypothesis: 1,
-      apparatus: 0,
-      procedure: 1,
-      results: 2,
-      graph: 2,
+      underlyingPhysics: 2,
+      dataCollection: 4,
+      graphical: 2,
+      analysis: 1,
       conclusion: 1,
       evaluation: 2,
-      bibliography: 2,
+      structure: 2,
     },
     sectionCommentary: {
       aim:
         "The aim clearly states that the investigation is into how the resistance of a thermistor changes with temperature. 1 mark awarded.",
-      background:
-        "The candidate explains that a thermistor is a temperature-sensitive resistor and that resistance decreases with temperature. Ohm's Law is stated. However, the explanation of the semiconductor physics (increased charge carriers at higher temperatures) is superficial and the formula linking resistance, temperature, and the mechanism is not clearly applied. 3 out of 4 marks awarded.",
-      hypothesis:
-        "A clear prediction that resistance will decrease as temperature increases, justified by the semiconductor nature of the thermistor. 1 mark awarded.",
-      apparatus:
-        "No labelled diagram is provided. The candidate describes the apparatus in text but a diagram is required for this mark. 0 out of 1 marks awarded.",
-      procedure:
-        "The procedure describes how temperature is varied using a water bath, how resistance is measured using an ohmmeter, and notes the voltage is kept constant. 1 mark awarded.",
-      results:
-        "The results table includes temperature and resistance values with five data points. However, the units are missing from the resistance column heading (Ω not stated). Repeat readings are not taken. 2 out of 3 marks awarded.",
-      graph:
-        "Both axes are present but the resistance axis is not labelled with units (Ω). All points are plotted. The scale chosen compresses the data to less than half the available grid. A best-fit smooth curve is drawn. 2 out of 3 marks awarded.",
+      underlyingPhysics:
+        "The candidate explains that a thermistor is a temperature-sensitive resistor and that resistance decreases with temperature. Ohm's Law is stated. However, the semiconductor physics explanation (increased charge carriers at higher temperatures) is superficial and not clearly linked to the experimental variables. A reasonable understanding of relevant physics — 2 out of 3 marks awarded.",
+      dataCollection:
+        "The approach is briefly described with a method for heating the thermistor in a water bath (3a ✓). Five data points of raw temperature and resistance values are recorded (3b ✓). However, the units are missing from the resistance column heading (Ω not stated), so the correctly produced table mark is not awarded (3c ✗). Repeat readings are not taken and no mean or derived values are calculated (3d ✗). Two relevant internet sources on thermistor characteristics are included (3e ✓). Both sources are cited with retrievable references (3f ✓). 4 out of 6 marks awarded.",
+      graphical:
+        "An appropriate graph format is used (4a ✓). However, the scale chosen compresses the data to less than half the available grid area (4b ✗). The resistance axis is not labelled with units (Ω missing), so the labels and units mark is not awarded (4c ✗). All points are plotted and a best-fit smooth curve is drawn (4d ✓). 2 out of 4 marks awarded.",
+      analysis:
+        "The candidate compares their experimental resistance vs. temperature curve with published thermistor characteristic data from the literature source, noting that the trend matches but values differ due to the specific thermistor type used. 1 mark awarded.",
       conclusion:
-        "The conclusion states that resistance decreases as temperature increases and identifies the relationship as non-linear (inversely but not proportionally). Links back to aim. 1 mark awarded.",
+        "The conclusion states that resistance decreases as temperature increases and identifies the relationship as non-linear. The conclusion links back to the aim. 1 mark awarded.",
       evaluation:
-        "Two uncertainties identified (accuracy of thermometer, heat distribution in water bath). Effects described for both. However, only one improvement is suggested. 2 out of 3 marks awarded.",
-      bibliography:
-        "Two relevant sources on thermistors and semiconductor physics cited appropriately. 2 out of 2 marks awarded.",
+        "Two uncertainties are identified (accuracy of thermometer, uneven heat distribution in the water bath). Effects are described for both. A specific improvement is suggested for one (using a stirrer to ensure even temperature distribution). Factor identified (1 mark) and explanation given (1 mark). 2 out of 2 marks awarded.",
+      structure:
+        "The report has an informative title and is generally clearly written and logically ordered. 2 marks awarded.",
     },
   },
 ]
@@ -393,54 +388,54 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
   },
   {
     id: "p3",
-    question: "How many marks are available for the Background Physics section?",
-    type: "mc",
-    options: ["1 mark", "2 marks", "3 marks", "4 marks"],
-    answer: 3,
-    explanation:
-      "The Background Physics section is worth 4 marks. Candidates must: explain the relevant physics theory, state the correct formula(e), link the formula to the experiment, and explain the underlying physics relationship.",
-    sectionRef: "background",
-  },
-  {
-    id: "p4",
-    question:
-      "A student writes: 'I think the pressure will increase as temperature increases.' Will this gain the hypothesis mark?",
-    type: "mc",
-    options: [
-      "Yes — a prediction is all that's needed",
-      "No — a physics justification must also be included",
-      "Yes — as long as the conclusion confirms it",
-      "No — only if supported by a graph",
-    ],
-    answer: 1,
-    explanation:
-      "The hypothesis mark requires BOTH a prediction AND a physics justification. A statement like 'as temperature increases, pressure increases because Gay-Lussac's Law states P/T = constant for a fixed volume' would gain the mark.",
-    sectionRef: "hypothesis",
-  },
-  {
-    id: "p5",
-    question: "What is required to gain the Apparatus/Diagram mark?",
-    type: "mc",
-    options: [
-      "A written list of all equipment used",
-      "A labelled diagram showing all key components of the experimental setup",
-      "A photograph of the experiment",
-      "A description of each piece of equipment and its purpose",
-    ],
-    answer: 1,
-    explanation:
-      "The apparatus mark requires a labelled diagram — not just a written list or description. Every key component must be shown and labelled clearly so the setup could be replicated.",
-    sectionRef: "apparatus",
-  },
-  {
-    id: "p6",
-    question: "How many marks are available for the Results / Data Collection section?",
+    question: "How many marks are available for the Underlying Physics section?",
     type: "mc",
     options: ["1 mark", "2 marks", "3 marks", "4 marks"],
     answer: 2,
     explanation:
-      "The Results section is worth 3 marks: (1) for a table with correct headings including quantities and units, (1) for sufficient data (minimum 5 different values), and (1) for repeat readings taken and recorded.",
-    sectionRef: "results",
+      "The Underlying Physics section is worth 3 marks and is marked holistically. 3 marks = good understanding, 2 marks = reasonable understanding, 1 mark = limited understanding, 0 marks = no understanding of relevant physics.",
+    sectionRef: "underlyingPhysics",
+  },
+  {
+    id: "p4",
+    question:
+      "Which of the following would NOT gain the Underlying Physics mark?",
+    type: "mc",
+    options: [
+      "A clear explanation of the relevant law or formula in the candidate's own words",
+      "A detailed account of who discovered the relevant law and when",
+      "A description of how the formula links to the experimental variables",
+      "An explanation of why the two variables are related using physics",
+    ],
+    answer: 1,
+    explanation:
+      "Credit is given only for relevant physics, not for general, historical, or socio-economic information. Knowing who discovered a law is not physics understanding — explaining what the law means and how it applies to the experiment is.",
+    sectionRef: "underlyingPhysics",
+  },
+  {
+    id: "p5",
+    question: "What is required to gain the description of approach mark (section 3a)?",
+    type: "mc",
+    options: [
+      "A step-by-step procedure listing every measurement taken",
+      "A brief description that allows a marker to visualise the nature of the experiment",
+      "A labelled diagram of the apparatus only",
+      "A full written method with equipment list and control variables",
+    ],
+    answer: 1,
+    explanation:
+      "The description of approach mark (3a) requires only enough detail for a marker to visualise the nature of the experiment. Details such as the range of the independent variable and the number of repeats do not need to be included. A diagram alone is insufficient — some written description is needed.",
+    sectionRef: "dataCollection",
+  },
+  {
+    id: "p6",
+    question: "How many marks are available for the Data Collection and Handling section?",
+    type: "mc",
+    options: ["3 marks", "4 marks", "5 marks", "6 marks"],
+    answer: 3,
+    explanation:
+      "Data Collection and Handling is worth 6 marks across six sub-criteria: (3a) description of approach, (3b) sufficient raw data, (3c) correctly produced table with headings and units, (3d) mean and/or derived values, (3e) data from an internet/literature source, and (3f) a retrievable reference for that source.",
+    sectionRef: "dataCollection",
   },
   {
     id: "p7",
@@ -448,25 +443,25 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
       "A student's results table has the heading 'Temperature' without a unit. Which mark will this affect?",
     type: "mc",
     options: [
-      "The 'sufficient data' mark",
-      "The 'repeat readings' mark",
-      "The 'headings with units' mark",
-      "The graph mark",
+      "The raw data mark (3b)",
+      "The mean/derived values mark (3d)",
+      "The correctly produced table mark (3c)",
+      "The graphical presentation mark",
     ],
     answer: 2,
     explanation:
-      "One of the 3 results marks is specifically for table headings that include both the quantity name AND the unit (e.g. 'Temperature /°C' or 'Temperature (°C)'). Missing units from headings loses this mark.",
-    sectionRef: "results",
+      "The correctly produced table mark (3c) requires every column to have a clear heading with the quantity name AND the unit (e.g. 'Temperature /°C'). Missing units from any column heading means the table is not correctly produced and this mark is not awarded.",
+    sectionRef: "dataCollection",
   },
   {
     id: "p8",
-    question: "How many marks are available for the Graph section?",
+    question: "How many marks are available for the Graphical Presentation section?",
     type: "mc",
     options: ["1 mark", "2 marks", "3 marks", "4 marks"],
-    answer: 2,
+    answer: 3,
     explanation:
-      "The Graph section is worth 3 marks: (1) for both axes correctly labelled with quantity and unit, (1) for an appropriate scale with all points correctly plotted, and (1) for a best-fit straight line or smooth curve.",
-    sectionRef: "graph",
+      "Graphical Presentation is worth 4 marks: (4a) an appropriate graph format, (4b) suitable scale(s), (4c) axes with suitable labels and units, and (4d) accurately plotted data points with a line of best fit where appropriate.",
+    sectionRef: "graphical",
   },
   {
     id: "p9",
@@ -474,36 +469,36 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
       "A student draws lines connecting each data point on their graph rather than a single best-fit line. Which mark is affected?",
     type: "mc",
     options: [
-      "The axes labelling mark",
-      "The scale and plotting mark",
-      "The best-fit line mark",
+      "The appropriate format mark (4a)",
+      "The suitable scale mark (4b)",
+      "The plotting and best-fit line mark (4d)",
       "The conclusion mark",
     ],
     answer: 2,
     explanation:
-      "A dot-to-dot line is NOT a best-fit line. The third graph mark requires a single best-fit straight line or smooth curve that represents the trend of the data, not a zigzag connecting all points.",
-    sectionRef: "graph",
+      "A dot-to-dot line is NOT a best-fit line. Mark 4d requires a single best-fit straight line or smooth curve that represents the trend of the data — not a zigzag connecting all points in sequence.",
+    sectionRef: "graphical",
   },
   {
     id: "p10",
     question:
-      "To gain full marks (3/3) on the Evaluation section, what three elements must be present?",
+      "To gain both marks (2/2) on the Evaluation section, what two elements must be present?",
     type: "mc",
     options: [
-      "A list of equipment, a method improvement, and a conclusion",
-      "A source of uncertainty, its effect on results, and a suggested improvement",
-      "An error, a repeat reading, and a graph correction",
-      "A limitation, a hypothesis revision, and a bibliography update",
+      "A list of equipment used and a suggestion to repeat the experiment",
+      "A factor with significant effect on reliability/accuracy identified, AND an explanation of how to minimise it (or what was done, or evidence supporting it)",
+      "Two separate sources of error and two separate improvements",
+      "A description of random error and a description of systematic error",
     ],
     answer: 1,
     explanation:
-      "Evaluation is worth 3 marks: (1) identify a specific source of uncertainty or limitation, (1) describe the effect of that uncertainty on the results (e.g. 'this would cause the pressure reading to be higher than the true value'), and (1) suggest a realistic improvement to address it.",
+      "Evaluation is worth 2 marks: (1) identify a factor that can be expected to have a significant effect on reliability, accuracy, or precision; (2) explain what could have been done to minimise its effect, what was done to minimise it, or provide evidence supporting why it is a significant factor.",
     sectionRef: "evaluation",
   },
   {
     id: "p11",
     question:
-      "A student writes in their evaluation: 'There was human error in the experiment.' Will this gain the 'source of uncertainty' mark?",
+      "A student writes in their evaluation: 'There was human error in the experiment.' Will this gain the first Evaluation mark?",
     type: "mc",
     options: [
       "Yes — human error is always an acceptable source of uncertainty",
@@ -513,18 +508,23 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
     ],
     answer: 1,
     explanation:
-      "'Human error' is too vague to gain this mark. A specific source is needed, such as: 'parallax error when reading the thermometer scale', 'difficulty judging exactly when the trolley stopped', or 'heat loss to the surroundings through the container walls'.",
+      "'Human error' is too vague to gain the first evaluation mark. A specific factor is needed, such as: 'parallax error when reading the thermometer scale', 'difficulty judging exactly when the trolley stopped', or 'heat loss to the surroundings through the container walls'.",
     sectionRef: "evaluation",
   },
   {
     id: "p12",
-    question: "How many marks are available for the Bibliography section?",
+    question: "Where in the assignment are marks awarded for including a reference to an internet/literature source?",
     type: "mc",
-    options: ["1 mark", "2 marks", "3 marks", "4 marks"],
-    answer: 1,
+    options: [
+      "In the Conclusion section",
+      "In the Analysis section",
+      "In the Data Collection and Handling section (marks 3e and 3f)",
+      "In the Underlying Physics section",
+    ],
+    answer: 2,
     explanation:
-      "The Bibliography section is worth 2 marks: one for each relevant source cited, up to a maximum of 2. Sources must be relevant to the physics topic investigated and cited in enough detail to be located.",
-    sectionRef: "bibliography",
+      "Two separate marks within Data Collection and Handling are awarded for internet/literature sources: (3e) for including relevant data from a source, and (3f) for a reference cited in sufficient detail that a third party could retrieve it (e.g. full URL, or author/title/volume/page for a book or journal).",
+    sectionRef: "dataCollection",
   },
   {
     id: "p13",
@@ -533,41 +533,46 @@ export const PRACTICE_QUESTIONS: PracticeQuestion[] = [
     type: "mc",
     options: [
       "A numerical value calculated from the graph",
-      "A clear statement of the relationship found, linked to the aim, and reference to the hypothesis",
+      "A valid conclusion that relates to the aim and is supported by all the data in the report",
       "A description of any errors in the experiment",
       "A repeat of the results table",
     ],
     answer: 1,
     explanation:
-      "The conclusion must clearly state what relationship was found between the variables (e.g. directly proportional, inversely proportional), link this back to the aim, and comment on whether the hypothesis was supported.",
+      "The conclusion must be valid (correctly summarising what the data shows), relate to the aim, and be supported by all the data in the report. Where no aim has been stated, the conclusion mark cannot be awarded.",
     sectionRef: "conclusion",
   },
   {
     id: "p14",
     question:
-      "In the Procedure section, what is the most common reason candidates lose the mark?",
+      "What does the Analysis section require to gain its mark?",
     type: "mc",
     options: [
-      "Not listing all equipment",
-      "Not stating which variables are kept constant (control variables)",
-      "Not drawing a diagram",
-      "Not describing how to calculate results",
+      "A calculation using data from the graph",
+      "A valid comparison of the experimental data with data from an internet/literature source",
+      "A description of the experimental procedure",
+      "A statement about the accuracy of the equipment",
     ],
     answer: 1,
     explanation:
-      "The procedure mark requires candidates to state which variables are kept constant (control variables) in addition to describing what is changed and measured. Without explicitly controlling variables, the mark is not awarded.",
-    sectionRef: "procedure",
+      "The Analysis mark is specifically for a valid comparison between the candidate's own experimental data and the data obtained from an internet or literature source. Both datasets must be referenced in the comparison.",
+    sectionRef: "analysis",
   },
   {
     id: "p15",
     question:
-      "The minimum number of different values needed in the results table to gain the 'sufficient data' mark is:",
+      "The raw data mark (3b) is awarded for:",
     type: "mc",
-    options: ["3", "4", "5", "6"],
+    options: [
+      "Calculated mean or average values in a table",
+      "Derived quantities such as resistance calculated from V and I",
+      "Unprocessed measurements directly from the experiment",
+      "Data copied from a literature source",
+    ],
     answer: 2,
     explanation:
-      "At least 5 different values of the independent variable are required to demonstrate a sufficient range of data. Fewer values risk not showing a clear trend and will not gain this mark.",
-    sectionRef: "results",
+      "The raw data mark (3b) is specifically for unprocessed experimental measurements — the numbers recorded directly from the experiment before any calculation. Mean values or derived quantities belong to mark 3d, not 3b.",
+    sectionRef: "dataCollection",
   },
 ]
 
@@ -597,33 +602,33 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
   {
     id: "i2",
     topic: "Resistance and Current",
-    section: "Hypothesis",
-    sectionRef: "hypothesis",
-    context: "Candidate 2 wrote the following hypothesis:",
-    flawedExample: "I think that as resistance increases, the current will go down.",
+    section: "Underlying Physics",
+    sectionRef: "underlyingPhysics",
+    context: "Candidate 2 wrote the following as their underlying physics section:",
+    flawedExample: "Resistance opposes the flow of current. A higher resistance means less current flows. This is known as Ohm's Law.",
     question:
-      "This hypothesis did not gain the mark. Which improvement would be most likely to earn it?",
+      "This underlying physics section only gained 1 out of 3 marks. Which addition would best address the missing marks?",
     options: [
-      "I think that as resistance increases, the current will go down a lot.",
-      "I think that as resistance increases, the current will increase because of Ohm's Law.",
-      "I predict that as resistance increases, current will decrease proportionally, because Ohm's Law states I = V/R, so for constant voltage, current is inversely proportional to resistance.",
-      "I predict current will decrease because resistance makes it harder for current to flow.",
+      "Add a sentence about who discovered Ohm's Law and when it was published.",
+      "State Ohm's Law as a formula (V = IR), rearrange it to show I = V/R, explain what each symbol means, and describe how this means that at constant voltage, current is inversely proportional to resistance.",
+      "Add a diagram of a resistor symbol.",
+      "Write more about how resistance is used in everyday devices like light bulbs.",
     ],
-    correctOption: 2,
+    correctOption: 1,
     explanation:
-      "The original prediction is correct but has no physics justification. The mark requires both a prediction AND a physics reason. Option C states the formula (I = V/R), explains the relationship (inversely proportional), and justifies why (constant voltage means current ∝ 1/R).",
+      "The original section states the basic idea but lacks the formula and any real explanation of the physics relationship. To gain higher marks, candidates need to state the relevant formula (V = IR), explain what each variable represents, and show how the formula applies to the experiment (e.g. rearranging to I = V/R shows that at constant V, I ∝ 1/R).",
   },
   {
     id: "i3",
     topic: "Projectile Motion",
-    section: "Background Physics",
-    sectionRef: "background",
+    section: "Underlying Physics",
+    sectionRef: "underlyingPhysics",
     context:
-      "Candidate 3 wrote in the background section: 'In projectile motion, the horizontal and vertical components of motion are independent of each other.'",
+      "Candidate 3 wrote in the underlying physics section: 'In projectile motion, the horizontal and vertical components of motion are independent of each other.'",
     flawedExample:
       "In projectile motion, the horizontal and vertical components of motion are independent of each other. This means the object moves forward and falls at the same time.",
     question:
-      "This background section only gained 2 out of 4 marks. Which addition would best address the missing marks?",
+      "This underlying physics section only gained 1 out of 3 marks. Which addition would best address the missing marks?",
     options: [
       "Add a diagram of a projectile path.",
       "State the kinematic equations (s = vt for horizontal, s = ½at² for vertical), explain that gravity only acts vertically (g = 9.8 m s⁻²), and show how range depends on launch speed using these equations.",
@@ -632,7 +637,7 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
     ],
     correctOption: 1,
     explanation:
-      "The missing marks were for: stating the relevant formula(e) and linking them to the experiment. The kinematic equations s = vt (horizontal) and s = ½at² (vertical) are the core physics, and explaining how horizontal range depends on launch speed using these equations would address the missing marks.",
+      "The missing marks were for: stating the relevant formula(e) and linking them to the experiment. The kinematic equations s = vt (horizontal) and s = ½at² (vertical) are the core physics, and explaining how horizontal range depends on launch speed using these equations would demonstrate a good understanding of the relevant physics.",
   },
   {
     id: "i4",
@@ -643,7 +648,7 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
     flawedExample:
       "One source of error was human error when measuring the braking distance. An improvement would be to measure more carefully.",
     question:
-      "This evaluation gained 0 out of 3 marks. Which version would be most likely to gain full marks?",
+      "This evaluation gained 0 out of 2 marks. Which version would be most likely to gain full marks?",
     options: [
       "Human error is a major source of uncertainty in all experiments.",
       "One source of uncertainty was difficulty judging exactly where the trolley stopped moving, which could cause an overestimate of the braking distance. An improvement would be to use a motion sensor connected to a data logger to record the precise stopping point.",
@@ -652,39 +657,39 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
     ],
     correctOption: 1,
     explanation:
-      "The original version loses all 3 marks: 'human error' is too vague (not a specific source), the effect is not described, and 'measure more carefully' is not a realistic improvement. The improved version names a specific uncertainty (judging stopping point), describes the effect (overestimate of distance), and suggests a realistic improvement (motion sensor).",
+      "The original version gains no marks: 'human error' is too vague (not a specific factor), and 'measure more carefully' is not a realistic improvement. The improved version names a specific factor (difficulty judging the stopping point), explains how it affects results (overestimate of distance), and suggests a realistic improvement (motion sensor with data logger).",
   },
   {
     id: "i5",
     topic: "Thermistor Resistance",
-    section: "Results",
-    sectionRef: "results",
+    section: "Data Collection",
+    sectionRef: "dataCollection",
     context: "A student's results table for a thermistor experiment had the following headings:",
     flawedExample:
       "Table headings: 'Temperature' | 'Resistance'\nData: 20 | 4700\n30 | 3200\n40 | 2100\n50 | 1400\n60 | 950",
     question:
-      "This results section only gained 2 out of 3 marks (the repeat readings mark was also not gained). Which single change would most likely gain an additional mark?",
+      "This table did not gain the correctly produced table mark (3c). Which single change would most likely gain it?",
     options: [
       "Add more decimal places to the resistance values.",
-      "Add units to both headings (e.g. 'Temperature /°C' and 'Resistance /Ω') to gain the headings mark.",
+      "Add units to both headings (e.g. 'Temperature /°C' and 'Resistance /Ω').",
       "Remove one of the data points to make the table shorter.",
       "Change the temperature values to Kelvin.",
     ],
     correctOption: 1,
     explanation:
-      "The headings 'Temperature' and 'Resistance' without units would lose the headings mark. Adding the units ('Temperature /°C' and 'Resistance /Ω') would gain that mark. Note: the repeat readings mark would still be lost unless repeated measurements were shown.",
+      "The correctly produced table mark (3c) requires every column heading to include both the quantity name AND the unit. 'Temperature' and 'Resistance' without units do not meet this criterion. Adding 'Temperature /°C' and 'Resistance /Ω' would gain this mark.",
   },
   {
     id: "i6",
     topic: "Pressure and Temperature",
-    section: "Graph",
-    sectionRef: "graph",
+    section: "Graphical Presentation",
+    sectionRef: "graphical",
     context:
       "A student plotted a graph of pressure vs temperature. They labelled both axes correctly and plotted all 6 points accurately. Their graph is shown below (described):",
     flawedExample:
       "The student drew a line connecting each data point in sequence (dot-to-dot), creating a zigzag line through all 6 points.",
     question:
-      "The student scored 2 out of 3 marks on the graph. What change is needed to gain the third mark?",
+      "The student scored 3 out of 4 marks on the graph. What change is needed to gain the fourth mark?",
     options: [
       "Plot additional data points.",
       "Change the scale on one axis.",
@@ -693,7 +698,7 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
     ],
     correctOption: 2,
     explanation:
-      "The third graph mark is specifically for a best-fit straight line (or smooth curve). A dot-to-dot zigzag does not represent a best-fit line. The line should be drawn as a single straight line that minimises the total distance from all points, not through every point.",
+      "Mark 4d is specifically for accurately plotted data points with a best-fit line (or smooth curve) where appropriate. A dot-to-dot zigzag does not represent a best-fit line. The line should be a single straight line (or smooth curve) that minimises the total distance from all data points.",
   },
   {
     id: "i7",
@@ -708,32 +713,32 @@ export const IMPROVE_EXAMPLES: ImproveExample[] = [
     options: [
       "In conclusion, as the resistance increased, the current decreased significantly.",
       "My experiment was successful and the results were as expected.",
-      "In conclusion, as resistance increases, current decreases inversely proportionally (I ∝ 1/R at constant voltage), as predicted by Ohm's Law (I = V/R). This confirms my hypothesis and is consistent with the background physics.",
+      "In conclusion, as resistance increases, current decreases inversely proportionally (I ∝ 1/R at constant voltage), as shown by Ohm's Law (I = V/R). This is consistent with the underlying physics and is supported by all data in the report.",
       "The results show that resistance and current are related to each other in a circuit.",
     ],
     correctOption: 2,
     explanation:
-      "The original conclusion correctly identifies the direction of change but doesn't name the specific relationship (inversely proportional), doesn't reference the formula or hypothesis, and the phrase 'they are related' is too vague. A good conclusion names the mathematical relationship and explicitly states whether the hypothesis was supported.",
+      "The original conclusion correctly identifies the direction of change but doesn't name the specific relationship (inversely proportional) and 'they are related' is too vague. A valid conclusion must state the nature of the relationship clearly and be supported by all the data in the report.",
   },
   {
     id: "i8",
     topic: "Thermistor Resistance",
-    section: "Procedure",
-    sectionRef: "procedure",
+    section: "Data Collection",
+    sectionRef: "dataCollection",
     context:
-      "A student investigating how thermistor resistance changes with temperature wrote the following procedure:",
+      "A student investigating how thermistor resistance changes with temperature wrote the following description of their approach:",
     flawedExample:
       "I put the thermistor in a water bath and heated it. I measured the resistance using an ohmmeter at different temperatures.",
     question:
-      "This procedure did not gain the mark. Which improvement would most likely earn it?",
+      "This description did not gain the description of approach mark (3a). Which improvement would most likely earn it?",
     options: [
       "I heated the water bath slowly to 100°C.",
       "I used a thermometer and an ohmmeter in my experiment.",
-      "I set the water bath to a specific temperature and allowed it to stabilise, then measured the resistance of the thermistor using an ohmmeter. I varied the temperature from 20°C to 80°C in steps of 10°C, keeping the voltage across the thermistor constant using a voltmeter throughout. The thermistor was fully submerged at each temperature.",
+      "The resistance of the thermistor was measured using an ohmmeter as the temperature of the surrounding water bath was varied. Temperature was read from a thermometer placed in the water bath alongside the thermistor.",
       "I repeated the experiment three times to improve accuracy.",
     ],
     correctOption: 2,
     explanation:
-      "The original procedure is too vague — it doesn't state the range of temperatures, the step size, how the temperature was controlled, or that a control variable (voltage) was kept constant. The improved version specifies what is varied (temperature, 20-80°C in 10°C steps), what is measured (resistance via ohmmeter), and what is controlled (voltage kept constant), which is needed for the mark.",
+      "The description of approach mark (3a) requires enough detail for a marker to visualise the nature of the experiment — what was changed (temperature) and what was measured (resistance), and how. The improved version makes clear that temperature was varied and resistance was measured, without needing every procedural detail.",
   },
 ]
