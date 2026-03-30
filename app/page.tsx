@@ -7,15 +7,23 @@ import * as n5_2023_s2 from "@/data/past-papers/n5-2023-section2"
 import * as n5_2024_s2 from "@/data/past-papers/n5-2024-section2"
 import * as n5_2025_s2 from "@/data/past-papers/n5-2025-section2"
 import {
-  ASSIGNMENT_SECTIONS,
-  CANDIDATE_PAPERS,
-  COMMENTARY_PDF_URL,
-  PRACTICE_QUESTIONS,
-  IMPROVE_EXAMPLES,
-  ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
+  ASSIGNMENT_SECTIONS as PHYSICS_ASSIGNMENT_SECTIONS,
+  CANDIDATE_PAPERS as PHYSICS_CANDIDATE_PAPERS,
+  COMMENTARY_PDF_URL as PHYSICS_COMMENTARY_PDF_URL,
+  PRACTICE_QUESTIONS as PHYSICS_PRACTICE_QUESTIONS,
+  IMPROVE_EXAMPLES as PHYSICS_IMPROVE_EXAMPLES,
+  ASSIGNMENT_CUSTOM_QUESTIONS_KEY as PHYSICS_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
   type CandidatePaper,
   type PracticeQuestion,
 } from "@/data/n5-physics-assignment"
+import {
+  ASSIGNMENT_SECTIONS as CHEMISTRY_ASSIGNMENT_SECTIONS,
+  CANDIDATE_PAPERS as CHEMISTRY_CANDIDATE_PAPERS,
+  COMMENTARY_PDF_URL as CHEMISTRY_COMMENTARY_PDF_URL,
+  PRACTICE_QUESTIONS as CHEMISTRY_PRACTICE_QUESTIONS,
+  IMPROVE_EXAMPLES as CHEMISTRY_IMPROVE_EXAMPLES,
+  ASSIGNMENT_CUSTOM_QUESTIONS_KEY as CHEMISTRY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
+} from "@/data/n5-chemistry-assignment"
 import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
 import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_Elements_1_20.json"
 import {
@@ -4310,17 +4318,27 @@ function CalculationsMode({
 
 function AssignmentMode({
   selectedLevel,
+  selectedSubject,
   onBack,
   isDarkMode,
   currentUser,
 }: {
   selectedLevel: string
+  selectedSubject?: string
   onBack: () => void
   isDarkMode: boolean
   currentUser?: UserAccount | null
 }) {
   type AssignPhase = "hub" | "practice" | "mark" | "review" | "improve"
   type MarkPhase = "select-paper" | "marking" | "submitted"
+
+  const isChemistry = selectedSubject === "Chemistry"
+  const ASSIGNMENT_SECTIONS = isChemistry ? CHEMISTRY_ASSIGNMENT_SECTIONS : PHYSICS_ASSIGNMENT_SECTIONS
+  const CANDIDATE_PAPERS = isChemistry ? CHEMISTRY_CANDIDATE_PAPERS : PHYSICS_CANDIDATE_PAPERS
+  const COMMENTARY_PDF_URL = isChemistry ? CHEMISTRY_COMMENTARY_PDF_URL : PHYSICS_COMMENTARY_PDF_URL
+  const PRACTICE_QUESTIONS = isChemistry ? CHEMISTRY_PRACTICE_QUESTIONS : PHYSICS_PRACTICE_QUESTIONS
+  const IMPROVE_EXAMPLES = isChemistry ? CHEMISTRY_IMPROVE_EXAMPLES : PHYSICS_IMPROVE_EXAMPLES
+  const ASSIGNMENT_CUSTOM_QUESTIONS_KEY = isChemistry ? CHEMISTRY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY : PHYSICS_ASSIGNMENT_CUSTOM_QUESTIONS_KEY
 
   const [phase, setPhase] = useState<AssignPhase>("hub")
 
@@ -4462,7 +4480,7 @@ function AssignmentMode({
               <span className="text-[#800000]">Assignment</span> Practice
             </h2>
             <p className={`text-lg ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
-              National 5 Physics — 2023-24 Understanding Standards
+              National 5 {isChemistry ? "Chemistry" : "Physics"} — 2023-24 Understanding Standards
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
@@ -4781,7 +4799,7 @@ function AssignmentMode({
             </div>
             <h2 className="text-3xl font-black mb-2">Mark a Candidate Paper</h2>
             <p className={`text-sm mb-8 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Choose one of the 5 real 2023-24 N5 Physics Assignment candidate papers. You will award marks section by section, then see the actual marks awarded and the official commentary.
+              Choose one of the {CANDIDATE_PAPERS.length} real 2023-24 N5 {isChemistry ? "Chemistry" : "Physics"} Assignment candidate papers. You will award marks section by section, then see the actual marks awarded and the official commentary.
             </p>
 
             <div className="grid md:grid-cols-2 gap-4 lg:grid-cols-3">
@@ -4879,7 +4897,7 @@ function AssignmentMode({
               <div className="flex flex-col gap-4">
                 <div className={`rounded-3xl border-2 p-5 ${cardBase}`}>
                   <p className="text-xs font-black uppercase tracking-widest text-[#800000] mb-1">
-                    Marking Rubric — N5 Physics Assignment
+                  Marking Rubric — N5 {isChemistry ? "Chemistry" : "Physics"} Assignment
                   </p>
                   <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                     Award marks for each section. For sub-criteria sections, tick each criterion independently. Submit when done to see the actual marks and commentary.
@@ -5200,7 +5218,7 @@ function AssignmentMode({
 
           <h2 className="text-3xl font-black mb-2">Review Marking Scheme</h2>
           <p className={`text-sm mb-6 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-            Explore the official SQA marking commentary for the 2023-24 N5 Physics Assignment. Click a section below for the marking criteria, or view the full commentary PDF.
+            Explore the official SQA marking commentary for the 2023-24 N5 {isChemistry ? "Chemistry" : "Physics"} Assignment. Click a section below for the marking criteria, or view the full commentary PDF.
           </p>
 
           {/* Candidate total marks overview */}
@@ -11636,6 +11654,7 @@ export default function App() {
         {view === "assignment" && (
           <AssignmentMode
             selectedLevel={selectedLevel}
+            selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
             currentUser={currentUser}
