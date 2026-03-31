@@ -33,7 +33,7 @@ Respond in JSON format: { "score": <number>, "feedback": "<feedback text>" }`
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
-        max_tokens: 500,
+        max_tokens: 900,
         temperature: 0.3,
       }),
     })
@@ -44,7 +44,7 @@ Respond in JSON format: { "score": <number>, "feedback": "<feedback text>" }`
       const parsed = JSON.parse(content)
       const rawScore = Number(parsed.score)
       if (isNaN(rawScore)) {
-        return NextResponse.json({ feedback: parsed.feedback || "Marking complete.", score: null })
+        return NextResponse.json({ feedback: parsed.feedback || "Could not determine score — please review the feedback and self-assess.", score: null })
       }
       return NextResponse.json({
         score: Math.min(Math.max(0, Math.round(rawScore)), maxMarks),

@@ -8722,7 +8722,7 @@ function SetupView({
                     <p className="font-black text-sm text-slate-800 dark:text-white">Retrieval</p>
                     <p className="text-xs text-slate-500">Auto-select topics from your Coverage — great for spaced recall</p>
                   </div>
-                  <input type="checkbox" checked={isRetrievalToggle} onChange={(e) => { setIsRetrievalToggle(e.target.checked); if (e.target.checked) setIsPracticeToggle(false) }} className="w-5 h-5 rounded accent-[#800000]" />
+                  <input type="checkbox" checked={isRetrievalToggle} onChange={(e) => { setIsRetrievalToggle(e.target.checked); if (e.target.checked) { setIsPracticeToggle(false); setIsMCToggle(false) } }} className="w-5 h-5 rounded accent-[#800000]" />
                 </label>
                 {isRetrievalToggle && (
                   <div className={`ml-4 px-4 py-3 rounded-xl border text-xs flex items-start gap-2 ${isDarkMode ? "border-amber-700/50 bg-amber-900/20 text-amber-300" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
@@ -8735,7 +8735,7 @@ function SetupView({
                     <p className="font-black text-sm text-slate-800 dark:text-white">Practice</p>
                     <p className="text-xs text-slate-500">Auto-select topics where your score is below 50% — focuses on weak areas</p>
                   </div>
-                  <input type="checkbox" checked={isPracticeToggle} onChange={(e) => { setIsPracticeToggle(e.target.checked); if (e.target.checked) setIsRetrievalToggle(false) }} className="w-5 h-5 rounded accent-[#800000]" />
+                  <input type="checkbox" checked={isPracticeToggle} onChange={(e) => { setIsPracticeToggle(e.target.checked); if (e.target.checked) { setIsRetrievalToggle(false); setIsMCToggle(false) } }} className="w-5 h-5 rounded accent-[#800000]" />
                 </label>
               </div>
             </section>
@@ -11298,12 +11298,11 @@ function FloatingMenu({
 }) {
 const [isOpen, setIsOpen] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(false)
-  const showSyllabus = view === "mode" || view === "setup"
-  const showProgress = view !== "landing"
   const isTeacher = currentUser?.accountType === "teacher"
   const isPupil = !isTeacher
-  const showOutcomes = isPupil && view !== "landing" && view !== "subject-select"
-  const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool" || view === "experimental-techniques" || view === "bio-maths"
+  const showMyLearning = isPupil && view !== "landing" && view !== "subject-select"
+  const showTeacherProgress = isTeacher && view !== "landing"
+  const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool" || view === "experimental-techniques" || view === "bio-maths" || view === "open-ended"
   const showDataBooklet = selectedSubject === "Chemistry" && view !== "landing" && view !== "subject-select"
   
   return (
@@ -11313,7 +11312,23 @@ const [isOpen, setIsOpen] = useState(false)
   )}
   {isOpen && (
   <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
-  {showProgress && (
+  {/* Pupils: single "My Learning" button combining progress, coverage & outcomes */}
+  {showMyLearning && (
+  <button
+  onClick={() => {
+  openModal("my-learning")
+  setIsOpen(false)
+  }}
+  className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+  >
+  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+  <Award className="w-5 h-5 text-amber-600" />
+  </div>
+  <span className="text-sm font-black uppercase tracking-widest">My Learning</span>
+  </button>
+  )}
+  {/* Teachers: separate progress button (class management) */}
+  {showTeacherProgress && (
   <button
   onClick={() => {
   openModal("progress")
@@ -11326,20 +11341,6 @@ const [isOpen, setIsOpen] = useState(false)
   </div>
   <span className="text-sm font-black uppercase tracking-widest">Progress</span>
   </button>
-  )}
-  {showOutcomes && (
-    <button
-      onClick={() => {
-        openModal("outcomes")
-        setIsOpen(false)
-      }}
-      className="bg-white dark:bg-slate-800 shadow-xl border-2 border-violet-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-    >
-      <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-        <Target className="w-5 h-5 text-violet-600" />
-      </div>
-      <span className="text-sm font-black uppercase tracking-widest">Outcomes</span>
-    </button>
   )}
   {showDataBooklet && (
     <button
@@ -11355,21 +11356,7 @@ const [isOpen, setIsOpen] = useState(false)
       <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
     </button>
   )}
-  {showSyllabus && (
-            <button
-              onClick={() => {
-                openModal("coverage")
-                setIsOpen(false)
-              }}
-              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-[#800000] p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-            >
-              <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                <Table2 className="w-5 h-5 text-amber-600" />
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest">Syllabus</span>
-            </button>
-          )}
-          {isTeacher && (
+  {isTeacher && (
             <button
               onClick={() => {
                 openModal("question-banks")
@@ -12155,6 +12142,7 @@ function GenericModal({
     currentUser ? loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel) : {}
   )
   const [expandedOutcomeId, setExpandedOutcomeId] = useState<string | null>(null)
+  const [myLearningTab, setMyLearningTab] = useState<"progress" | "coverage" | "outcomes">("progress")
 
   // Reload ratings when the modal opens or subject/level changes
   useEffect(() => {
@@ -12162,6 +12150,11 @@ function GenericModal({
     setOutcomeRatings(loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeModal, currentUser?.id, selectedSubject, selectedLevel])
+
+  // Reset to progress tab when my-learning modal opens
+  useEffect(() => {
+    if (activeModal === "my-learning") setMyLearningTab("progress")
+  }, [activeModal])
 
   if (!activeModal) return null
 
@@ -12300,6 +12293,8 @@ function GenericModal({
                       ? (selectedClass?.name ?? "Class")
                       : "Class Progress"
                   : "My Progress"
+                : activeModal === "my-learning"
+                  ? "My Learning"
                 : activeModal === "question-banks"
                   ? "Question Banks"
                   : activeModal === "assessment-sheets"
@@ -12847,7 +12842,202 @@ function GenericModal({
             </div>
           )}
 
-          {/* ── Coverage view ──────────────────────────────────────────────── */}
+          {/* ── Combined "My Learning" view (pupil — Progress + Coverage + Outcomes) ── */}
+          {activeModal === "my-learning" && !isTeacher && (
+            <div>
+              {/* Tabs */}
+              <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                {(["progress", "coverage", "outcomes"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setMyLearningTab(tab)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                      myLearningTab === tab
+                        ? "bg-[#800000] text-white shadow-md"
+                        : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {tab === "progress" ? "Progress" : tab === "coverage" ? "Coverage" : "Outcomes"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Progress tab */}
+              {myLearningTab === "progress" && (
+                <div className="space-y-6">
+                  <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-3xl font-black text-[#800000]">{overallPercentage}%</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Overall</p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-amber-600">{totalQuestions}</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Questions</p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-emerald-600">{topicsAttempted}</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Topics</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Topic Breakdown</p>
+                    {subtopics.map((topic) => {
+                      const perf = topicPerformance[topic]
+                      const score = perf && perf.total > 0 ? Math.round((perf.correct / perf.total) * 100) : null
+                      const hasData = perf && perf.total > 0
+                      return (
+                        <div key={topic} className={`p-4 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-bold">{topic}</span>
+                            {hasData ? (
+                              <span className={`text-sm font-black ${score! >= 70 ? "text-emerald-600" : score! >= 50 ? "text-amber-600" : "text-red-600"}`}>{score}%</span>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">Not attempted</span>
+                            )}
+                          </div>
+                          {hasData && (
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${score! >= 70 ? "bg-emerald-500" : score! >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${score}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Coverage tab */}
+              {myLearningTab === "coverage" && (
+                <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+                  <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"} mb-3`}>
+                    Toggle topics you have <strong>covered in class</strong>. This drives the Retrieval toggle in Paper mode.
+                  </p>
+                  {subtopics.map((t) => (
+                    <div key={t} className={`flex justify-between items-center p-4 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"}`}>
+                      <span className="text-sm font-bold">{t}</span>
+                      <button
+                        onClick={() => onToggleTopic(t)}
+                        className={`w-12 h-7 rounded-full relative transition-colors ${userCoverage[t] ? "bg-amber-500" : isDarkMode ? "bg-slate-600" : "bg-slate-300"}`}
+                      >
+                        <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${userCoverage[t] ? "translate-x-5" : ""}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Outcomes tab */}
+              {myLearningTab === "outcomes" && (() => {
+                const outcomes: Outcome[] = SUBJECT_LEVEL_OUTCOMES[selectedSubject]?.[selectedLevel] ?? []
+                const ratingLabels: [string, string][] = [["", "Not rated"], ["🔴", "Needs work"], ["🟡", "Getting there"], ["🟢", "Confident"], ["⭐", "Mastered"]]
+
+                function setRating(outcomeId: string, rating: OutcomeRating) {
+                  const updated = { ...outcomeRatings, [outcomeId]: rating }
+                  setOutcomeRatings(updated)
+                  if (currentUser) saveOutcomeRatings(currentUser.id, selectedSubject, selectedLevel, updated)
+                }
+
+                function outcomeProgress(outcome: Outcome): { correct: number; total: number } | null {
+                  let correct = 0; let total = 0
+                  outcome.linkedTopics.forEach((t) => {
+                    const p = topicPerformance[t]
+                    if (p && p.total > 0) { correct += p.correct; total += p.total }
+                  })
+                  return total > 0 ? { correct, total } : null
+                }
+
+                if (outcomes.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <Target className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                      <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No outcomes defined yet for {selectedSubject} — {selectedLevel}.</p>
+                    </div>
+                  )
+                }
+
+                const rated = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) > 0).length
+                return (
+                  <div className="space-y-5">
+                    <p className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{selectedSubject} — {selectedLevel} ({rated}/{outcomes.length} rated)</p>
+                    <div className="space-y-3 max-h-[48vh] overflow-y-auto pr-1">
+                      {outcomes.map((outcome) => {
+                        const rating = (outcomeRatings[outcome.id] ?? 0) as OutcomeRating
+                        const prog = outcomeProgress(outcome)
+                        const pct2 = prog ? Math.round((prog.correct / prog.total) * 100) : null
+                        const isExpanded = expandedOutcomeId === outcome.id
+                        const ratingColors: string[] = [
+                          isDarkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200",
+                          "bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700",
+                          "bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700",
+                          "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700",
+                          "bg-violet-50 border-violet-300 dark:bg-violet-900/20 dark:border-violet-700",
+                        ]
+                        return (
+                          <div key={outcome.id} className={`rounded-2xl border-2 transition-all ${ratingColors[rating]}`}>
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? "bg-slate-600 text-slate-300" : "bg-slate-200 text-slate-600"}`}>{outcome.code}</span>
+                                  </div>
+                                  <p className="font-black text-sm leading-snug">{outcome.title}</p>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  {ratingLabels.slice(1).map(([emoji, label], idx) => {
+                                    const val = (idx + 1) as OutcomeRating
+                                    return (
+                                      <button key={val} title={label} onClick={() => setRating(outcome.id, rating === val ? 0 : val)} className={`w-7 h-7 rounded-full text-base flex items-center justify-center transition-all hover:scale-110 ${rating === val ? "ring-2 ring-offset-1 ring-violet-400 scale-110" : "opacity-40 hover:opacity-100"}`}>{emoji}</button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                              {pct2 !== null && (
+                                <div className="mt-2">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className={`text-[10px] font-bold uppercase ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Practice Score</span>
+                                    <span className={`text-xs font-black ${pct2 >= 70 ? "text-emerald-600" : pct2 >= 50 ? "text-amber-600" : "text-red-600"}`}>{pct2}% ({prog!.correct}/{prog!.total})</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${pct2 >= 70 ? "bg-emerald-500" : pct2 >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct2}%` }} />
+                                  </div>
+                                </div>
+                              )}
+                              <button onClick={() => setExpandedOutcomeId(isExpanded ? null : outcome.id)} className={`mt-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors ${isDarkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}>
+                                <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                {isExpanded ? "Hide detail" : "Show detail"}
+                              </button>
+                            </div>
+                            {isExpanded && (
+                              <div className={`px-4 pb-4 border-t ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
+                                <p className={`text-xs leading-relaxed mt-3 mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{outcome.description}</p>
+                                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Linked Topics</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {outcome.linkedTopics.map((t) => {
+                                    const tp = topicPerformance[t]
+                                    const tPct = tp && tp.total > 0 ? Math.round((tp.correct / tp.total) * 100) : null
+                                    return (
+                                      <span key={t} className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${tPct !== null ? tPct >= 70 ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-400" : tPct >= 50 ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400" : "bg-red-100 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400" : isDarkMode ? "bg-slate-700 border-slate-600 text-slate-300" : "bg-slate-100 border-slate-300 text-slate-600"}`}>
+                                        {t}{tPct !== null && <span className="font-black">{tPct}%</span>}
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* ── Coverage view (standalone — kept for backwards compatibility) ── */}
           {activeModal === "coverage" && (
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               {subtopics.map((t) => (
