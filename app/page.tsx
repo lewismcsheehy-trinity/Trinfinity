@@ -8589,6 +8589,17 @@ function SetupView({
         <div className="w-20" />
       </div>
 
+      {/* Notice when no past-paper questions are available for this subject/level */}
+      {availablePastPapers.length === 0 && (
+        <div className={`mb-6 p-5 rounded-2xl border flex items-start gap-3 ${isDarkMode ? "border-amber-700/50 bg-amber-900/20 text-amber-300" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-sm mb-1">Past-paper questions not yet available</p>
+            <p className="text-xs">Written exam questions are currently only available for N5 Physics. Questions for this subject and level are coming soon.</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-8 pb-32">
         <div className="lg:col-span-2 space-y-8">
           {/* Paper mode toggle options */}
@@ -8926,10 +8937,10 @@ function SetupView({
 
       <div className="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-50">
         <button
-          disabled={selectedTopics.length === 0}
+          disabled={selectedTopics.length === 0 || availablePastPapers.length === 0}
           onClick={() => onGenerate(selectedTopics.join(","))}
           className={`pointer-events-auto px-12 py-5 rounded-full font-black text-xl shadow-2xl transition-all flex items-center gap-3 border-4 ${
-            selectedTopics.length > 0
+            selectedTopics.length > 0 && availablePastPapers.length > 0
               ? "bg-[#800000] text-white border-amber-500 hover:scale-105 active:scale-95"
               : "bg-slate-200 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50"
           }`}
@@ -14185,10 +14196,8 @@ export default function App() {
   }
 
   const generateQuestions = async (topicString: string) => {
-    // Effective question type: if MC toggle is on in paper mode, use MC generation; otherwise use paper
-    const effectiveMode = (appMode === "paper" && isMCToggle) ? "mc" : appMode
-    // Load from all past paper banks when in paper mode (non-MC)
-    if (appMode === "paper" && !isMCToggle) {
+    // Load from all past paper banks when in paper mode (MC or non-MC)
+    if (appMode === "paper") {
       const banks = PAST_PAPER_BANKS[selectedLevel] || []
       const allPaperQuestions = banks.flatMap((bank) =>
         bank.questions.map((q) => ({ ...q, sourcePaperId: bank.id }))
@@ -14269,70 +14278,9 @@ export default function App() {
         setVisibleAnswers({})
         setView("quiz")
       }
+      // No past-paper questions available for this subject/level – nothing to show yet
       return
     }
-
-    setIsGenerating(false)
-
-    // Use demo questions for MC mode
-    setCurrentQuestions(
-      effectiveMode === "mc"
-        ? [
-            {
-              type: "mc",
-              topic: "Dynamics",
-              subtopic: "Newton's Laws",
-              question: "Calculate the acceleration of a 5 kg mass acted on by a 20 N force.",
-              options: ["2 ms⁻²", "4 ms⁻²", "5 ms⁻²", "100 ms⁻²"],
-              answer: 1,
-              explanation: "a = F/m = 20/5 = 4 ms⁻²",
-            },
-            {
-              type: "mc",
-              topic: "Dynamics",
-              subtopic: "Newton's Laws",
-              question: "Which of Newton's laws states that for every action there is an equal and opposite reaction?",
-              options: ["First Law", "Second Law", "Third Law", "Law of Gravitation"],
-              answer: 2,
-              explanation: "Newton's Third Law states that forces always occur in pairs - action and reaction.",
-            },
-            {
-              type: "mc",
-              topic: "Waves",
-              subtopic: "Wave properties",
-              question: "A wave has a frequency of 50 Hz and a wavelength of 2 m. What is its speed?",
-              options: ["25 ms⁻¹", "52 ms⁻¹", "100 ms⁻¹", "0.04 ms⁻¹"],
-              answer: 2,
-              explanation: "v = fλ = 50 × 2 = 100 ms⁻¹",
-            },
-          ]
-        : [
-            {
-              type: "paper",
-              topic: "Dynamics",
-              subtopic: "Gravity",
-              question: "A ball is dropped from a height of 20 m.",
-              parts: [
-                {
-                  id: "a",
-                  text: "Calculate the time taken for the ball to hit the ground.",
-                  marks: 3,
-                  answer: "2.02 s",
-                  markingScheme:
-                    "Using s = ut + ½at², with u = 0, s = 20 m, a = 9.8 ms⁻². 20 = 0 + ½(9.8)t². t² = 4.08, t = 2.02 s",
-                },
-                {
-                  id: "b",
-                  text: "Calculate the velocity of the ball just before it hits the ground.",
-                  marks: 2,
-                  answer: "19.8 ms⁻¹",
-                  markingScheme: "Using v = u + at = 0 + 9.8 × 2.02 = 19.8 ms⁻¹",
-                },
-              ],
-            },
-          ]
-    )
-    setView("quiz")
   }
 
   // Subject-based accent colours
