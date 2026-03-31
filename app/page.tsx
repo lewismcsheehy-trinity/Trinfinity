@@ -1396,37 +1396,6 @@ function saveOutcomeRatings(userId: string, subject: string, level: string, rati
   } catch {}
 }
 
-// ── Question bank document helpers ──────────────────────────────────────────
-
-interface CalcDocumentEntry {
-  fileName: string
-  content: string
-  uploadedAt: number
-}
-
-function loadCalcDocument(equationId: string): CalcDocumentEntry | null {
-  try {
-    if (typeof window === "undefined") return null
-    const saved = localStorage.getItem(`trinfinity_calc_doc_${equationId}`)
-    if (!saved) return null
-    return JSON.parse(saved)
-  } catch { return null }
-}
-
-function saveCalcDocument(equationId: string, entry: CalcDocumentEntry): void {
-  try {
-    if (typeof window === "undefined") return
-    localStorage.setItem(`trinfinity_calc_doc_${equationId}`, JSON.stringify(entry))
-  } catch {}
-}
-
-function removeCalcDocument(equationId: string): void {
-  try {
-    if (typeof window === "undefined") return
-    localStorage.removeItem(`trinfinity_calc_doc_${equationId}`)
-  } catch {}
-}
-
 // ── Assessment Sheet helpers (relationship sheet / data sheet per subject+level) ──
 
 type SheetType = "relationship" | "data"
@@ -1466,58 +1435,6 @@ function removeAssessmentSheet(sheetType: SheetType, subject: string, level: str
     if (typeof window === "undefined") return
     localStorage.removeItem(assessmentSheetKey(sheetType, subject, level))
   } catch {}
-}
-
-interface AICalcQuestionsCache {
-  questions: CalcQuestion[]
-  generatedAt: number
-}
-
-const AI_QUESTIONS_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
-
-function loadAICalcQuestions(equationId: string, difficulty: string): CalcQuestion[] | null {
-  try {
-    if (typeof window === "undefined") return null
-    const saved = localStorage.getItem(`trinfinity_ai_calc_${equationId}_${difficulty}`)
-    if (!saved) return null
-    const cache: AICalcQuestionsCache = JSON.parse(saved)
-    if (Date.now() - cache.generatedAt > AI_QUESTIONS_TTL_MS) return null
-    return cache.questions
-  } catch { return null }
-}
-
-function saveAICalcQuestions(equationId: string, difficulty: string, questions: CalcQuestion[]): void {
-  try {
-    if (typeof window === "undefined") return
-    const cache: AICalcQuestionsCache = { questions, generatedAt: Date.now() }
-    localStorage.setItem(`trinfinity_ai_calc_${equationId}_${difficulty}`, JSON.stringify(cache))
-  } catch {}
-}
-
-async function generateAndCacheCalcQuestions(
-  equationId: string,
-  equationFormula: string,
-  equationDescription: string,
-  difficulty: string,
-): Promise<CalcQuestion[]> {
-  const docEntry = loadCalcDocument(equationId)
-  const body = {
-    equationId,
-    equationFormula,
-    equationDescription,
-    difficulty,
-    documentContext: docEntry?.content ?? null,
-  }
-  const res = await fetch("/api/generate-calc-questions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error("Generation failed")
-  const data = await res.json()
-  if (!data.questions) throw new Error("No questions returned")
-  saveAICalcQuestions(equationId, difficulty, data.questions)
-  return data.questions
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -4160,7 +4077,6 @@ function CalculationsMode({
   const [submitted, setSubmitted] = useState(false)
   const [hotspotChoice, setHotspotChoice] = useState<Record<number, number>>({})
   const [currentStepIdx, setCurrentStepIdx] = useState(0)
-  const [isPreparingQuestions, setIsPreparingQuestions] = useState(false)
   const [calcProgress, setCalcProgress] = useState<CalcProgress>(() =>
     currentUserId ? loadUserCalcProgress(currentUserId, selectedLevel) : defaultCalcProgress()
   )
@@ -4294,7 +4210,7 @@ function CalculationsMode({
 
   const cardBase = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-xl"
 
-  const startEquationQuiz = async (equationId: string, difficulty: CalcDifficulty) => {
+  const startEquationQuiz = (equationId: string, difficulty: CalcDifficulty) => {
     setSelectedEquationId(equationId)
     setSubMode(difficulty)
     setCurrentIdx(0)
@@ -4303,31 +4219,8 @@ function CalculationsMode({
     setSubmitted(false)
     setHotspotChoice({})
 
-    // Check for cached AI-generated questions first
-    const cached = loadAICalcQuestions(equationId, difficulty)
-    if (cached && cached.length > 0) {
-      setQuestions(cached)
-      setPhase("quiz")
-      // Generate fresh batch in background for next session
-      const eqInfo = SQA_EQUATIONS.find((e) => e.id === equationId)
-      if (eqInfo) {
-        generateAndCacheCalcQuestions(equationId, eqInfo.formula, eqInfo.description, difficulty).catch(() => {})
-      }
-      return
-    }
-
-    // No cache: show static questions immediately then generate in background
     setQuestions(getEquationQuestions(equationId, difficulty))
     setPhase("quiz")
-
-    // Trigger AI generation in background (results cached for next session)
-    const eqInfo = SQA_EQUATIONS.find((e) => e.id === equationId)
-    if (eqInfo) {
-      setIsPreparingQuestions(true)
-      generateAndCacheCalcQuestions(equationId, eqInfo.formula, eqInfo.description, difficulty)
-        .catch(() => {})
-        .finally(() => setIsPreparingQuestions(false))
-    }
   }
 
   const startExamLevel = () => {
@@ -8468,7 +8361,7 @@ function ModeSelection({
 
   const allModes = [
     { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems with MC, retrieval & practice toggles", comingSoon: false },
-    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with AI marking", comingSoon: false },
+    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with self-assessment", comingSoon: false },
     { id: "definitions" as const, icon: BookMarked, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
@@ -8487,7 +8380,7 @@ function ModeSelection({
 
   const electronicsModes = [
     { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems with MC & practice toggles", comingSoon: false },
-    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with AI marking", comingSoon: false },
+    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with self-assessment", comingSoon: false },
     { id: "exam-paper" as const, icon: Award, title: "Past Papers", desc: "Full past paper under timed conditions", comingSoon: false },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
     ...ELECTRONICS_TOOL_MODES.map((m) => ({ ...m, comingSoon: false })),
@@ -8607,8 +8500,6 @@ function SetupView({
   setTimingMode,
   numberOfQuestions,
   setNumberOfQuestions,
-  questionSource,
-  setQuestionSource,
   availablePastPapers,
 }: {
   selectedLevel: string
@@ -8635,8 +8526,6 @@ function SetupView({
   setTimingMode: (val: TimingMode) => void
   numberOfQuestions: number
   setNumberOfQuestions: (val: number) => void
-  questionSource: string
-  setQuestionSource: (val: string) => void
   availablePastPapers: PastPaperMeta[]
 }) {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
@@ -11356,20 +11245,6 @@ const [isOpen, setIsOpen] = useState(false)
       <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
     </button>
   )}
-  {isTeacher && (
-            <button
-              onClick={() => {
-                openModal("question-banks")
-                setIsOpen(false)
-              }}
-              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-emerald-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-            >
-              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                <BookMarked className="w-5 h-5 text-emerald-600" />
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest">Question Banks</span>
-            </button>
-          )}
           {isTeacher && (
             <button
               onClick={() => {
@@ -12132,8 +12007,6 @@ function GenericModal({
 }) {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
   const [selectedPupilId, setSelectedPupilId] = useState<string | null>(null)
-  const [docUploadStatus, setDocUploadStatus] = useState<Record<string, "uploading" | "done" | "error" | undefined>>({})
-  const [docRefresh, setDocRefresh] = useState(0)
   const [sheetSubject, setSheetSubject] = useState<string>(SUBJECTS[0].id)
   const [sheetLevel, setSheetLevel] = useState<string>("National 5")
   const [sheetUploadStatus, setSheetUploadStatus] = useState<Record<string, "uploading" | "done" | "error" | undefined>>({})
@@ -12295,9 +12168,7 @@ function GenericModal({
                   : "My Progress"
                 : activeModal === "my-learning"
                   ? "My Learning"
-                : activeModal === "question-banks"
-                  ? "Question Banks"
-                  : activeModal === "assessment-sheets"
+                : activeModal === "assessment-sheets"
                     ? "Assessment Sheets"
                     : activeModal === "outcomes"
                       ? "My Outcomes"
@@ -13065,138 +12936,6 @@ function GenericModal({
             </div>
           )}
 
-          {/* ── Question Banks view (teacher only) ─────────────────────────── */}
-          {activeModal === "question-banks" && isTeacher && (
-            <div className="space-y-4">
-              <div className={`p-4 rounded-2xl border ${cardBg}`}>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex-shrink-0">
-                    <BookMarked className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-black text-sm">Upload Calculation Documents</p>
-                    <p className={`text-xs mt-1 leading-relaxed ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      Upload a PDF or text document of worked examples for each equation. When pupils start a session,
-                      the AI will automatically generate 15 fresh questions based on your document — creating an
-                      almost-infinite variety so questions never repeat.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <p className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                SQA Equations
-              </p>
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-                {SQA_EQUATIONS.map((eq) => {
-                  const doc = loadCalcDocument(eq.id)
-                  const status = docUploadStatus[eq.id]
-                  return (
-                    <div
-                      key={`${eq.id}-${docRefresh}`}
-                      className={`p-4 rounded-2xl border ${cardBg}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-black text-sm font-mono truncate">{eq.formula}</p>
-                          <p className={`text-xs truncate ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                            {eq.description}
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                              eq.sqaLevel === "N5" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                              eq.sqaLevel === "Higher" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                              "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                            }`}>{eq.sqaLevel}</span>
-                          </p>
-                          {doc && (
-                            <p className={`text-[11px] mt-1 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>
-                              ✓ {doc.fileName} · {new Date(doc.uploadedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {status === "uploading" && (
-                            <RefreshCw className="w-4 h-4 animate-spin text-emerald-500" />
-                          )}
-                          {status === "done" && (
-                            <span className="text-emerald-500 text-xs font-bold">Saved!</span>
-                          )}
-                          {status === "error" && (
-                            <span className="text-red-500 text-xs font-bold">Error</span>
-                          )}
-                          {doc && (
-                            <button
-                              onClick={() => {
-                                removeCalcDocument(eq.id)
-                                setDocRefresh((n) => n + 1)
-                              }}
-                              className={`p-1.5 rounded-lg text-xs font-bold transition-colors ${
-                                isDarkMode ? "text-red-400 hover:bg-red-900/30" : "text-red-500 hover:bg-red-50"
-                              }`}
-                              title="Remove document"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <label className={`cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
-                            doc
-                              ? isDarkMode ? "bg-slate-700 hover:bg-slate-600 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-                              : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                          }`}>
-                            <Upload className="w-3.5 h-3.5" />
-                            {doc ? "Replace" : "Upload"}
-                            <input
-                              type="file"
-                              accept=".txt,.pdf,.doc,.docx"
-                              className="hidden"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0]
-                                if (!file) return
-                                setDocUploadStatus((s) => ({ ...s, [eq.id]: "uploading" }))
-                                try {
-                                  let content = ""
-                                  if (file.type === "application/pdf") {
-                                    // PDF binary is decoded as latin1 (ISO-8859-1) to preserve all byte values
-                                    // intact before extracting text tokens from the raw PDF stream
-                                    const arrayBuffer = await file.arrayBuffer()
-                                    const uint8Array = new Uint8Array(arrayBuffer)
-                                    const text = new TextDecoder("latin1").decode(uint8Array)
-                                    // PDF text is stored in parenthesised strings: (text token)
-                                    // Limit each token to 200 chars to skip binary blobs masquerading as text
-                                    const PDF_TOKEN_MAX_CHARS = 200
-                                    const matches = text.match(new RegExp(`\\(([^)]{2,${PDF_TOKEN_MAX_CHARS}})\\)`, "g")) ?? []
-                                    content = matches
-                                      .map((m) => m.slice(1, -1))
-                                      .filter((s) => /[a-zA-Z]/.test(s))
-                                      .join(" ")
-                                    if (content.length < 20) {
-                                      content = `Document: ${file.name}\n[PDF content — use as context for generating physics calculation questions about ${eq.description} using the formula ${eq.formula}]`
-                                    }
-                                  } else {
-                                    content = await file.text()
-                                  }
-                                  saveCalcDocument(eq.id, {
-                                    fileName: file.name,
-                                    content,
-                                    uploadedAt: Date.now(),
-                                  })
-                                  setDocUploadStatus((s) => ({ ...s, [eq.id]: "done" }))
-                                  setDocRefresh((n) => n + 1)
-                                  setTimeout(() => setDocUploadStatus((s) => ({ ...s, [eq.id]: undefined })), 2000)
-                                } catch {
-                                  setDocUploadStatus((s) => ({ ...s, [eq.id]: "error" }))
-                                }
-                                // Reset input so same file can be re-uploaded
-                                e.target.value = ""
-                              }}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
           {/* ── Assessment Sheets view (teacher only) ──────────────────────── */}
           {activeModal === "assessment-sheets" && isTeacher && (
             <div key={sheetRefresh} className="space-y-4">
@@ -14022,46 +13761,13 @@ function OpenEndedMode({
   const [questions, setQuestions] = useState<PaperQuestion[]>([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [aiFeedback, setAiFeedback] = useState<Record<string, string>>({})
-  const [aiScores, setAiScores] = useState<Record<string, number | null>>({})
-  const [markingInProgress, setMarkingInProgress] = useState<Record<string, boolean>>({})
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [selfScores, setSelfScores] = useState<Record<string, number | null>>({})
 
   const toggleTopic = (t: string) =>
     setSelectedTopics((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t])
 
-  async function handleStart() {
-    setIsGenerating(true)
-    try {
-      const response = await fetch("/api/generate-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "paper",
-          level: selectedLevel,
-          topics: selectedTopics.join(","),
-          includeOpenEnded: true,
-          openEndedOnly: true,
-          numberOfQuestions: 3,
-        }),
-      })
-      const data = await response.json()
-      if (data.questions && data.questions.length > 0) {
-        const oeQuestions: PaperQuestion[] = (data.questions as PaperQuestion[]).filter(
-          (q) => q.type === "paper" && q.parts.some((p: PaperPart) => p.featureTag === "open-ended")
-        )
-        if (oeQuestions.length > 0) {
-          setQuestions(oeQuestions)
-          setPhase("quiz")
-          setIsGenerating(false)
-          return
-        }
-      }
-    } catch {
-      // Fall through to demo questions
-    }
-
-    // Demo open-ended questions
+  function handleStart() {
+    // Generate demo open-ended questions for selected topics
     const demoQuestions: PaperQuestion[] = selectedTopics.slice(0, 3).map((topic, i) => ({
       type: "paper",
       topic,
@@ -14079,25 +13785,6 @@ function OpenEndedMode({
     }))
     setQuestions(demoQuestions)
     setPhase("quiz")
-    setIsGenerating(false)
-  }
-
-  async function handleMarkWithAI(partId: string, questionText: string, answerText: string, markingScheme: string, maxMarks: number) {
-    if (!answerText.trim()) return
-    setMarkingInProgress((prev) => ({ ...prev, [partId]: true }))
-    try {
-      const response = await fetch("/api/mark-open-ended", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: questionText, answer: answerText, markingScheme, maxMarks }),
-      })
-      const data = await response.json()
-      setAiFeedback((prev) => ({ ...prev, [partId]: data.feedback || "Marking complete." }))
-      setAiScores((prev) => ({ ...prev, [partId]: data.score ?? null }))
-    } catch {
-      setAiFeedback((prev) => ({ ...prev, [partId]: "AI marking is unavailable. Please self-assess using the marking scheme." }))
-    }
-    setMarkingInProgress((prev) => ({ ...prev, [partId]: false }))
   }
 
   if (phase === "hub") {
@@ -14116,7 +13803,7 @@ function OpenEndedMode({
           <Lightbulb className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-sm mb-1">Extended Response Questions</p>
-            <p className="text-xs">Open-ended questions require detailed, multi-point answers. AI will mark your response against the marking scheme and provide feedback.</p>
+            <p className="text-xs">Open-ended questions require detailed, multi-point answers. Use the marking scheme to self-assess your response.</p>
           </div>
         </div>
 
@@ -14150,16 +13837,16 @@ function OpenEndedMode({
 
         <div className="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-50">
           <button
-            disabled={selectedTopics.length === 0 || isGenerating}
+            disabled={selectedTopics.length === 0}
             onClick={handleStart}
             className={`pointer-events-auto px-12 py-5 rounded-full font-black text-xl shadow-2xl transition-all flex items-center gap-3 border-4 ${
-              selectedTopics.length > 0 && !isGenerating
+              selectedTopics.length > 0
                 ? "bg-[#800000] text-white border-amber-500 hover:scale-105 active:scale-95"
                 : "bg-slate-200 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50"
             }`}
           >
-            {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Pencil className="w-6 h-6" />}
-            {isGenerating ? "Loading Questions..." : "Start Open Ended"}
+            <Pencil className="w-6 h-6" />
+            Start Open Ended
           </button>
         </div>
       </div>
@@ -14192,8 +13879,7 @@ function OpenEndedMode({
 
           {openParts.map((part) => {
             const partKey = part.id
-            const feedback = aiFeedback[partKey]
-            const score = aiScores[partKey]
+            const score = selfScores[partKey]
             return (
               <div key={partKey} className={`mb-6 p-6 rounded-2xl border ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
                 <p className="text-sm font-bold mb-1">{part.text}</p>
@@ -14205,22 +13891,6 @@ function OpenEndedMode({
                   placeholder="Write your answer here..."
                   className={`w-full px-4 py-3 rounded-xl border text-sm transition-colors resize-none ${isDarkMode ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]" : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"} outline-none focus:ring-2 focus:ring-[#800000]/20`}
                 />
-                <button
-                  onClick={() => handleMarkWithAI(partKey, part.text, answers[partKey] || "", part.markingScheme, part.marks)}
-                  disabled={!answers[partKey]?.trim() || markingInProgress[partKey]}
-                  className={`mt-3 px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${!answers[partKey]?.trim() || markingInProgress[partKey] ? "opacity-50 cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700" : "bg-[#800000] hover:bg-[#600000] text-white"}`}
-                >
-                  {markingInProgress[partKey] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {markingInProgress[partKey] ? "Marking..." : "Mark with AI"}
-                </button>
-                {feedback && (
-                  <div className={`mt-4 p-4 rounded-xl border ${isDarkMode ? "bg-emerald-900/20 border-emerald-700/50 text-emerald-300" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
-                    {score !== null && score !== undefined && (
-                      <p className="font-black text-lg mb-2">{score}/{part.marks} marks</p>
-                    )}
-                    <p className="text-sm">{feedback}</p>
-                  </div>
-                )}
                 <details className="mt-3">
                   <summary className={`text-xs font-bold cursor-pointer select-none ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                     View marking scheme
@@ -14229,6 +13899,20 @@ function OpenEndedMode({
                     {part.markingScheme}
                   </div>
                 </details>
+                <div className="mt-3">
+                  <p className={`text-xs font-bold mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Self-assess (marks out of {part.marks}):</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {Array.from({ length: part.marks + 1 }, (_, n) => (
+                      <button
+                        key={n}
+                        onClick={() => setSelfScores((prev) => ({ ...prev, [partKey]: n }))}
+                        className={`w-9 h-9 rounded-lg font-black text-sm border-2 transition-all ${score === n ? "bg-[#800000] text-white border-amber-500" : isDarkMode ? "bg-slate-800 border-slate-600 hover:border-amber-500" : "bg-white border-slate-200 hover:border-[#800000]"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )
           })}
@@ -14264,7 +13948,7 @@ function OpenEndedMode({
 
   // Results phase
   const totalMarks = questions.reduce((sum, q) => sum + q.parts.filter((p) => p.featureTag === "open-ended").reduce((s, p) => s + p.marks, 0), 0)
-  const earnedMarks = Object.entries(aiScores).reduce((sum, [, score]) => sum + (score ?? 0), 0)
+  const earnedMarks = Object.entries(selfScores).reduce((sum, [, score]) => sum + (score ?? 0), 0)
 
   return (
     <div className="pt-24 max-w-3xl mx-auto p-6 animate-in fade-in">
@@ -14275,7 +13959,7 @@ function OpenEndedMode({
         <h2 className="text-4xl font-black mb-2">Session Complete</h2>
         {totalMarks > 0 && (
           <p className={`text-xl font-bold ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
-            AI Score: <span className="text-[#800000]">{earnedMarks}</span> / {totalMarks}
+            Self-assessed: <span className="text-[#800000]">{earnedMarks}</span> / {totalMarks}
           </p>
         )}
       </div>
@@ -14283,8 +13967,7 @@ function OpenEndedMode({
         {questions.map((q, qi) =>
           q.parts.filter((p) => p.featureTag === "open-ended").map((part) => {
             const partKey = part.id
-            const score = aiScores[partKey]
-            const feedback = aiFeedback[partKey]
+            const score = selfScores[partKey]
             return (
               <div key={partKey} className={`p-6 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
                 <p className="font-bold text-sm mb-1">Q{qi + 1}: {part.text}</p>
@@ -14293,7 +13976,6 @@ function OpenEndedMode({
                     {score}/{part.marks} marks
                   </p>
                 )}
-                {feedback && <p className="text-xs text-slate-500">{feedback}</p>}
               </div>
             )
           })
@@ -14301,7 +13983,7 @@ function OpenEndedMode({
       </div>
       <div className="flex gap-4">
         <button
-          onClick={() => { setPhase("hub"); setAnswers({}); setAiFeedback({}); setAiScores({}); setQuestions([]) }}
+          onClick={() => { setPhase("hub"); setAnswers({}); setSelfScores({}); setQuestions([]) }}
           className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${isDarkMode ? "border-slate-600 hover:border-slate-400 text-white" : "border-slate-300 hover:border-slate-500 text-slate-700"}`}
         >
           New Session
@@ -14340,7 +14022,6 @@ export default function App() {
   const [topicPerformance, setTopicPerformance] = useState<Record<string, { correct: number; total: number }>>({})
   const [timingMode, setTimingMode] = useState<TimingMode>("none")
   const [numberOfQuestions, setNumberOfQuestions] = useState(5)
-  const [questionSource, setQuestionSource] = useState<string>("ai")
   // "Wrong place" popup for "not sitting" subjects
   const [wrongPlaceSubject, setWrongPlaceSubject] = useState<SubjectId | null>(null)
 
@@ -14407,7 +14088,6 @@ export default function App() {
       if (level) {
         // Skip landing page - go directly to mode selection with pre-set level
         setSelectedLevel(level)
-        setQuestionSource("ai")
         setView("mode")
         return
       }
@@ -14417,13 +14097,11 @@ export default function App() {
 
   const handleLevelSelect = (level: string) => {
     setSelectedLevel(level)
-    setQuestionSource("ai")
     setView("mode")
   }
 
   const handleModeSelect = (mode: AppMode) => {
     setAppMode(mode)
-    setQuestionSource("ai")
     // Reset paper mode toggles when changing mode
     setIsMCToggle(false)
     setIsRetrievalToggle(false)
@@ -14594,102 +14272,67 @@ export default function App() {
       return
     }
 
-    setIsGenerating(true)
+    setIsGenerating(false)
 
-    try {
-      const response = await fetch("/api/generate-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: effectiveMode,
-          level: selectedLevel,
-          topics: topicString,
-          includeALevel,
-          includeMultiTopic,
-          numberOfQuestions,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.questions) {
-        const allQuestions = Array.isArray(data.questions) ? data.questions : [data.questions]
-        const limitedQuestions = numberOfQuestions > 0 ? allQuestions.slice(0, numberOfQuestions) : allQuestions
-        setCurrentQuestions(limitedQuestions)
-        setCurrentQuestionIdx(0)
-        setUserSelections({})
-        setPaperAnswers({})
-        setPaperMarks({})
-        setVisibleAnswers({})
-        setIsGenerating(false)
-        setView("quiz")
-      } else {
-        throw new Error("No questions returned")
-      }
-    } catch (error) {
-      console.error("AI Generation failed:", error)
-      setIsGenerating(false)
-
-      // Demo Fallback
-      setCurrentQuestions(
-        effectiveMode === "mc"
-          ? [
-              {
-                type: "mc",
-                topic: "Dynamics",
-                subtopic: "Newton's Laws",
-                question: "Calculate the acceleration of a 5 kg mass acted on by a 20 N force.",
-                options: ["2 ms⁻²", "4 ms⁻²", "5 ms⁻²", "100 ms⁻²"],
-                answer: 1,
-                explanation: "a = F/m = 20/5 = 4 ms⁻²",
-              },
-              {
-                type: "mc",
-                topic: "Dynamics",
-                subtopic: "Newton's Laws",
-                question: "Which of Newton's laws states that for every action there is an equal and opposite reaction?",
-                options: ["First Law", "Second Law", "Third Law", "Law of Gravitation"],
-                answer: 2,
-                explanation: "Newton's Third Law states that forces always occur in pairs - action and reaction.",
-              },
-              {
-                type: "mc",
-                topic: "Waves",
-                subtopic: "Wave properties",
-                question: "A wave has a frequency of 50 Hz and a wavelength of 2 m. What is its speed?",
-                options: ["25 ms⁻¹", "52 ms⁻¹", "100 ms⁻¹", "0.04 ms⁻¹"],
-                answer: 2,
-                explanation: "v = fλ = 50 × 2 = 100 ms⁻¹",
-              },
-            ]
-          : [
-              {
-                type: "paper",
-                topic: "Dynamics",
-                subtopic: "Gravity",
-                question: "A ball is dropped from a height of 20 m.",
-                parts: [
-                  {
-                    id: "a",
-                    text: "Calculate the time taken for the ball to hit the ground.",
-                    marks: 3,
-                    answer: "2.02 s",
-                    markingScheme:
-                      "Using s = ut + ½at², with u = 0, s = 20 m, a = 9.8 ms⁻². 20 = 0 + ½(9.8)t². t² = 4.08, t = 2.02 s",
-                  },
-                  {
-                    id: "b",
-                    text: "Calculate the velocity of the ball just before it hits the ground.",
-                    marks: 2,
-                    answer: "19.8 ms⁻¹",
-                    markingScheme: "Using v = u + at = 0 + 9.8 × 2.02 = 19.8 ms⁻¹",
-                  },
-                ],
-              },
-            ]
-      )
-      setView("quiz")
-    }
+    // Use demo questions for MC mode
+    setCurrentQuestions(
+      effectiveMode === "mc"
+        ? [
+            {
+              type: "mc",
+              topic: "Dynamics",
+              subtopic: "Newton's Laws",
+              question: "Calculate the acceleration of a 5 kg mass acted on by a 20 N force.",
+              options: ["2 ms⁻²", "4 ms⁻²", "5 ms⁻²", "100 ms⁻²"],
+              answer: 1,
+              explanation: "a = F/m = 20/5 = 4 ms⁻²",
+            },
+            {
+              type: "mc",
+              topic: "Dynamics",
+              subtopic: "Newton's Laws",
+              question: "Which of Newton's laws states that for every action there is an equal and opposite reaction?",
+              options: ["First Law", "Second Law", "Third Law", "Law of Gravitation"],
+              answer: 2,
+              explanation: "Newton's Third Law states that forces always occur in pairs - action and reaction.",
+            },
+            {
+              type: "mc",
+              topic: "Waves",
+              subtopic: "Wave properties",
+              question: "A wave has a frequency of 50 Hz and a wavelength of 2 m. What is its speed?",
+              options: ["25 ms⁻¹", "52 ms⁻¹", "100 ms⁻¹", "0.04 ms⁻¹"],
+              answer: 2,
+              explanation: "v = fλ = 50 × 2 = 100 ms⁻¹",
+            },
+          ]
+        : [
+            {
+              type: "paper",
+              topic: "Dynamics",
+              subtopic: "Gravity",
+              question: "A ball is dropped from a height of 20 m.",
+              parts: [
+                {
+                  id: "a",
+                  text: "Calculate the time taken for the ball to hit the ground.",
+                  marks: 3,
+                  answer: "2.02 s",
+                  markingScheme:
+                    "Using s = ut + ½at², with u = 0, s = 20 m, a = 9.8 ms⁻². 20 = 0 + ½(9.8)t². t² = 4.08, t = 2.02 s",
+                },
+                {
+                  id: "b",
+                  text: "Calculate the velocity of the ball just before it hits the ground.",
+                  marks: 2,
+                  answer: "19.8 ms⁻¹",
+                  markingScheme: "Using v = u + at = 0 + 9.8 × 2.02 = 19.8 ms⁻¹",
+                },
+              ],
+            },
+          ]
+    )
+    setView("quiz")
   }
 
   // Subject-based accent colours
@@ -14778,8 +14421,6 @@ export default function App() {
             setTimingMode={setTimingMode}
             numberOfQuestions={numberOfQuestions}
             setNumberOfQuestions={setNumberOfQuestions}
-            questionSource={questionSource}
-            setQuestionSource={setQuestionSource}
             availablePastPapers={PAST_PAPER_BANKS[selectedLevel] || []}
           />
         )}
