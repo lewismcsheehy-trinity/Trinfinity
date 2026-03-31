@@ -195,9 +195,9 @@ const QA_SUBTOPICS: Record<string, string[]> = {
   ],
 }
 
-type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | "experimental-techniques" | "bio-maths" | null
+type AppMode = "mc" | "paper" | "retrieval" | "definitions" | "calculations" | "problem-solving" | "essay" | "assignment" | "practice" | "exam-paper" | "stripboarding" | "block-diagrams" | "logic-gates" | "testing" | "symbols" | "costing" | "experimental-techniques" | "bio-maths" | "open-ended" | null
 type TimingMode = "relaxed" | "exam" | "none"
-type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool" | "experimental-techniques" | "bio-maths"
+type ViewType = "subject-select" | "landing" | "mode" | "setup" | "quiz" | "results" | "definitions" | "calculations" | "assignment" | "exam-paper" | "electronics-tool" | "experimental-techniques" | "bio-maths" | "open-ended"
 
 type SubjectId = "Physics" | "Biology" | "Chemistry" | "Practical Electronics"
 
@@ -331,6 +331,7 @@ interface UserAccount {
 // Password format "test:<plaintext>" is recognised by verifyPassword below.
 const TEST_ACCOUNT_PASSWORD = "Trinfinity1"
 const TEST_ACCOUNTS: UserAccount[] = [
+  // ── Test Pupils (all sit all subjects at National 5; pupils 1-3 have Teacher 1's classroom) ──
   {
     id: "test-pupil-1",
     name: "Test Pupil One",
@@ -338,7 +339,7 @@ const TEST_ACCOUNTS: UserAccount[] = [
     accountType: "pupil",
     password: `test:${TEST_ACCOUNT_PASSWORD}`,
     isTestAccount: true,
-    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "not sitting", "Practical Electronics": "not sitting" },
+    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
   },
   {
     id: "test-pupil-2",
@@ -347,8 +348,36 @@ const TEST_ACCOUNTS: UserAccount[] = [
     accountType: "pupil",
     password: `test:${TEST_ACCOUNT_PASSWORD}`,
     isTestAccount: true,
-    subjectLevels: { Physics: "Higher", Biology: "not sitting", Chemistry: "Higher", "Practical Electronics": "National 5" },
+    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
   },
+  {
+    id: "test-pupil-3",
+    name: "Test Pupil Three",
+    email: "testpupil3@trinfinity.test",
+    accountType: "pupil",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
+  },
+  {
+    id: "test-pupil-4",
+    name: "Test Pupil Four",
+    email: "testpupil4@trinfinity.test",
+    accountType: "pupil",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+    subjectLevels: { Physics: "Higher", Biology: "National 5", Chemistry: "not sitting", "Practical Electronics": "not sitting" },
+  },
+  {
+    id: "test-pupil-5",
+    name: "Test Pupil Five",
+    email: "testpupil5@trinfinity.test",
+    accountType: "pupil",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+    subjectLevels: { Physics: "not sitting", Biology: "Higher", Chemistry: "National 5", "Practical Electronics": "National 5" },
+  },
+  // ── Test Teachers ──
   {
     id: "test-teacher-1",
     name: "Test Teacher One",
@@ -364,6 +393,62 @@ const TEST_ACCOUNTS: UserAccount[] = [
     accountType: "teacher",
     password: `test:${TEST_ACCOUNT_PASSWORD}`,
     isTestAccount: true,
+  },
+  {
+    id: "test-teacher-3",
+    name: "Test Teacher Three",
+    email: "testteacher3@trinfinity.test",
+    accountType: "teacher",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+  },
+  {
+    id: "test-teacher-4",
+    name: "Test Teacher Four",
+    email: "testteacher4@trinfinity.test",
+    accountType: "teacher",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+  },
+  {
+    id: "test-teacher-5",
+    name: "Test Teacher Five",
+    email: "testteacher5@trinfinity.test",
+    accountType: "teacher",
+    password: `test:${TEST_ACCOUNT_PASSWORD}`,
+    isTestAccount: true,
+  },
+]
+
+// Hardcoded test class groups — always injected alongside test accounts.
+const TEST_CLASS_GROUPS: ClassGroup[] = [
+  {
+    id: "test-class-physics",
+    name: "Teacher 1 — Physics N5",
+    teacherId: "test-teacher-1",
+    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
+    code: "PHYS01",
+  },
+  {
+    id: "test-class-biology",
+    name: "Teacher 1 — Biology N5",
+    teacherId: "test-teacher-1",
+    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
+    code: "BIO001",
+  },
+  {
+    id: "test-class-chemistry",
+    name: "Teacher 1 — Chemistry N5",
+    teacherId: "test-teacher-1",
+    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
+    code: "CHEM01",
+  },
+  {
+    id: "test-class-electronics",
+    name: "Teacher 1 — Electronics N5",
+    teacherId: "test-teacher-1",
+    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
+    code: "ELEC01",
   },
 ]
 
@@ -478,17 +563,22 @@ function saveCurrentUser(user: UserAccount | null): void {
 }
 
 function loadClassGroups(): ClassGroup[] {
-  if (typeof window === "undefined") return []
+  if (typeof window === "undefined") return TEST_CLASS_GROUPS
   try {
-    return JSON.parse(localStorage.getItem("trinfinity_class_groups") || "[]")
+    const stored: ClassGroup[] = JSON.parse(localStorage.getItem("trinfinity_class_groups") || "[]")
+    // Always include hardcoded test class groups, then any user-created groups
+    const userGroups = stored.filter((g) => !TEST_CLASS_GROUPS.some((t) => t.id === g.id))
+    return [...TEST_CLASS_GROUPS, ...userGroups]
   } catch {
-    return []
+    return TEST_CLASS_GROUPS
   }
 }
 
 function saveClassGroups(groups: ClassGroup[]): void {
   if (typeof window === "undefined") return
-  localStorage.setItem("trinfinity_class_groups", JSON.stringify(groups))
+  // Never persist test class groups — they are always injected at load time
+  const userGroups = groups.filter((g) => !TEST_CLASS_GROUPS.some((t) => t.id === g.id))
+  localStorage.setItem("trinfinity_class_groups", JSON.stringify(userGroups))
 }
 
 // --- Definitions Mode Types & Data ---
@@ -6606,29 +6696,18 @@ function AuthModal({
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — Sign-up is disabled; accounts are managed by administrators */}
         <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
           <button
             onClick={() => { setTab("signin"); setError(""); }}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
-              tab === "signin"
-                ? "bg-[#800000] text-white shadow-md"
-                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
-            }`}
+            className="flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all bg-[#800000] text-white shadow-md"
           >
             Sign In
           </button>
-          <button
-            onClick={() => { setTab("signup"); setError(""); }}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
-              tab === "signup"
-                ? "bg-[#800000] text-white shadow-md"
-                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Create Account
-          </button>
         </div>
+        <p className={`-mt-3 mb-4 text-xs text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
+          New accounts are created by your teacher. Use a demo account below to explore.
+        </p>
 
         {tab === "signin" ? (
           <form onSubmit={handleSignIn} className="flex flex-col gap-4">
@@ -8388,31 +8467,27 @@ function ModeSelection({
   const [comingSoonMode, setComingSoonMode] = React.useState<string | null>(null)
 
   const allModes = [
-    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
-    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems", comingSoon: false },
-    { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice", comingSoon: false },
-    { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
+    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems with MC, retrieval & practice toggles", comingSoon: false },
+    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with AI marking", comingSoon: false },
+    { id: "definitions" as const, icon: BookMarked, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
-    { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
     { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions", comingSoon: false },
   ]
 
   const biologyModes = [
-    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
-    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems", comingSoon: false },
-    { id: "retrieval" as const, icon: Sparkles, title: "Retrieval", desc: "Active recall practice", comingSoon: false },
-    { id: "definitions" as const, icon: FileText, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
+    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems with MC, retrieval & practice toggles", comingSoon: false },
+    { id: "definitions" as const, icon: BookMarked, title: "Definitions", desc: "Key terms and concepts", comingSoon: false },
     { id: "experimental-techniques" as const, icon: FlaskConical, title: "Experimental Techniques", desc: "Apparatus and practical techniques", comingSoon: false },
     { id: "bio-maths" as const, icon: Sigma, title: "Maths Skills", desc: "Percentages, averages, ratios & graphs", comingSoon: false },
     { id: "essay" as const, icon: Pencil, title: "Essay Questions", desc: "Structured essay writing practice", comingSoon: true },
     { id: "assignment" as const, icon: ClipboardList, title: "Assignment", desc: "Structured task practice", comingSoon: false },
-    { id: "practice" as const, icon: BookOpen, title: "Practice", desc: "Progress-based adaptive practice", comingSoon: false },
     { id: "exam-paper" as const, icon: Award, title: "Exam Mode", desc: "Full past paper under timed conditions", comingSoon: false },
   ]
 
   const electronicsModes = [
-    { id: "mc" as const, icon: MousePointer2, title: "Multiple Choice", desc: "Quick-fire recall testing", comingSoon: false },
+    { id: "paper" as const, icon: FileText, title: "Paper Questions", desc: "Exam-style written problems with MC & practice toggles", comingSoon: false },
+    { id: "open-ended" as const, icon: Pencil, title: "Open Ended", desc: "Extended response questions with AI marking", comingSoon: false },
     { id: "exam-paper" as const, icon: Award, title: "Past Papers", desc: "Full past paper under timed conditions", comingSoon: false },
     { id: "calculations" as const, icon: Zap, title: "Calculations", desc: "Numerical problem solving", comingSoon: false },
     ...ELECTRONICS_TOOL_MODES.map((m) => ({ ...m, comingSoon: false })),
@@ -8516,10 +8591,14 @@ function SetupView({
   onBack,
   includeALevel,
   setIncludeALevel,
-  includeOpenEnded,
-  setIncludeOpenEnded,
   includeMultiTopic,
   setIncludeMultiTopic,
+  isMCToggle,
+  setIsMCToggle,
+  isRetrievalToggle,
+  setIsRetrievalToggle,
+  isPracticeToggle,
+  setIsPracticeToggle,
   isDarkMode,
   weakTopics,
   userCoverage,
@@ -8540,10 +8619,14 @@ function SetupView({
   onBack: () => void
   includeALevel: boolean
   setIncludeALevel: (val: boolean) => void
-  includeOpenEnded: boolean
-  setIncludeOpenEnded: (val: boolean) => void
   includeMultiTopic: boolean
   setIncludeMultiTopic: (val: boolean) => void
+  isMCToggle: boolean
+  setIsMCToggle: (val: boolean) => void
+  isRetrievalToggle: boolean
+  setIsRetrievalToggle: (val: boolean) => void
+  isPracticeToggle: boolean
+  setIsPracticeToggle: (val: boolean) => void
   isDarkMode: boolean
   weakTopics: WeakTopic[]
   userCoverage: Record<string, boolean>
@@ -8558,7 +8641,7 @@ function SetupView({
 }) {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const subtopics = getSubtopics(selectedSubject, selectedLevel)
-  const isPracticeOrMC = appMode === "mc" || appMode === "practice"
+  const isAutoTopics = isRetrievalToggle || isPracticeToggle
   const topicsToShow = subtopics
 
   const timingOptions: { value: TimingMode; label: string; desc: string }[] =
@@ -8579,17 +8662,17 @@ function SetupView({
           { value: "exam", label: "Exam Conditions", desc: "0.9 marks per minute (~67 sec/mark)" },
         ]
 
-  // Auto-select topics from coverage for retrieval mode
+  // Auto-select topics from coverage for retrieval toggle
   useEffect(() => {
-    if (appMode === "retrieval") {
+    if (isRetrievalToggle) {
       const selectedFromCoverage = subtopics.filter(t => userCoverage[t])
       setSelectedTopics(selectedFromCoverage)
     }
-  }, [appMode, subtopics, userCoverage])
+  }, [isRetrievalToggle, subtopics, userCoverage])
 
-  // Auto-select topics for practice mode based on performance < 50%
+  // Auto-select topics for practice toggle based on performance < 50%
   useEffect(() => {
-    if (appMode === "practice") {
+    if (isPracticeToggle) {
       const practiceTopics = subtopics.filter(t => {
         const perf = topicPerformance[t]
         if (!perf || perf.total === 0) return true
@@ -8597,7 +8680,7 @@ function SetupView({
       })
       setSelectedTopics(practiceTopics.length > 0 ? practiceTopics : subtopics)
     }
-  }, [appMode, subtopics, topicPerformance])
+  }, [isPracticeToggle, subtopics, topicPerformance])
 
   const toggleTopic = (topic: string) => {
     setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
@@ -8619,7 +8702,46 @@ function SetupView({
 
       <div className="grid lg:grid-cols-3 gap-8 pb-32">
         <div className="lg:col-span-2 space-y-8">
-          {appMode !== "retrieval" && appMode !== "practice" && (
+          {/* Paper mode toggle options */}
+          {appMode === "paper" && (
+            <section className={`p-8 rounded-3xl shadow-sm border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-amber-500" />
+                Mode Options
+              </h3>
+              <div className="space-y-3">
+                <label className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-colors border ${isMCToggle ? "border-[#800000] bg-red-50 dark:bg-red-950/20" : isDarkMode ? "border-slate-700 bg-slate-900 hover:border-slate-600" : "border-slate-100 bg-slate-50 hover:border-slate-200"}`}>
+                  <div>
+                    <p className="font-black text-sm text-slate-800 dark:text-white">Multiple Choice</p>
+                    <p className="text-xs text-slate-500">Use quick-fire MC questions instead of written paper questions</p>
+                  </div>
+                  <input type="checkbox" checked={isMCToggle} onChange={(e) => { setIsMCToggle(e.target.checked); if (e.target.checked) { setIsRetrievalToggle(false); setIsPracticeToggle(false) } }} className="w-5 h-5 rounded accent-[#800000]" />
+                </label>
+                <label className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-colors border ${isRetrievalToggle ? "border-[#800000] bg-red-50 dark:bg-red-950/20" : isDarkMode ? "border-slate-700 bg-slate-900 hover:border-slate-600" : "border-slate-100 bg-slate-50 hover:border-slate-200"}`}>
+                  <div>
+                    <p className="font-black text-sm text-slate-800 dark:text-white">Retrieval</p>
+                    <p className="text-xs text-slate-500">Auto-select topics from your Coverage — great for spaced recall</p>
+                  </div>
+                  <input type="checkbox" checked={isRetrievalToggle} onChange={(e) => { setIsRetrievalToggle(e.target.checked); if (e.target.checked) { setIsPracticeToggle(false); setIsMCToggle(false) } }} className="w-5 h-5 rounded accent-[#800000]" />
+                </label>
+                {isRetrievalToggle && (
+                  <div className={`ml-4 px-4 py-3 rounded-xl border text-xs flex items-start gap-2 ${isDarkMode ? "border-amber-700/50 bg-amber-900/20 text-amber-300" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>Please check your <strong>Coverage</strong> is up to date before starting — topics are selected based on what you&apos;ve marked as covered.</span>
+                  </div>
+                )}
+                <label className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-colors border ${isPracticeToggle ? "border-[#800000] bg-red-50 dark:bg-red-950/20" : isDarkMode ? "border-slate-700 bg-slate-900 hover:border-slate-600" : "border-slate-100 bg-slate-50 hover:border-slate-200"}`}>
+                  <div>
+                    <p className="font-black text-sm text-slate-800 dark:text-white">Practice</p>
+                    <p className="text-xs text-slate-500">Auto-select topics where your score is below 50% — focuses on weak areas</p>
+                  </div>
+                  <input type="checkbox" checked={isPracticeToggle} onChange={(e) => { setIsPracticeToggle(e.target.checked); if (e.target.checked) { setIsRetrievalToggle(false); setIsMCToggle(false) } }} className="w-5 h-5 rounded accent-[#800000]" />
+                </label>
+              </div>
+            </section>
+          )}
+
+          {!isAutoTopics && (
             <section
               className={`p-8 rounded-3xl shadow-sm border ${
                 isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -8658,7 +8780,7 @@ function SetupView({
               </div>
             </section>
           )}
-          {appMode === "retrieval" && (
+          {isRetrievalToggle && (
             <section className={`p-8 rounded-3xl shadow-sm border ${
               isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
             }`}>
@@ -8666,7 +8788,7 @@ function SetupView({
                 <Sparkles className="w-5 h-5 text-amber-500" />
                 Topics from Coverage
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Topics are automatically selected from your Coverage settings below.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Topics are automatically selected from your Coverage settings.</p>
               <div className="flex flex-wrap gap-2">
                 {selectedTopics.map((topic) => (
                   <span
@@ -8677,12 +8799,12 @@ function SetupView({
                   </span>
                 ))}
                 {selectedTopics.length === 0 && (
-                  <p className="text-sm text-slate-500 italic">Select topics from Coverage below to begin</p>
+                  <p className="text-sm text-slate-500 italic">No covered topics found — update your Coverage first.</p>
                 )}
               </div>
             </section>
           )}
-          {appMode === "practice" && (
+          {isPracticeToggle && (
             <section className={`p-8 rounded-3xl shadow-sm border ${
               isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
             }`}>
@@ -8720,7 +8842,7 @@ function SetupView({
             <div className="space-y-4">
               <label
                 className={`group flex items-center justify-between p-5 rounded-2xl ${
-                  isPracticeOrMC ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                  isMCToggle ? "cursor-not-allowed opacity-50" : "cursor-pointer"
                 } transition-colors border border-transparent ${
                   isDarkMode
                     ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
@@ -8730,49 +8852,22 @@ function SetupView({
                 <div>
                   <p className="font-black text-slate-800 dark:text-white">A-Level Challenge</p>
                   <p className="text-xs text-slate-500">
-                    {isPracticeOrMC
-                      ? "Not applicable in this mode"
+                    {isMCToggle
+                      ? "Not applicable in Multiple Choice mode"
                       : "Include challenge questions beyond core syllabus"}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={isPracticeOrMC ? false : includeALevel}
-                  onChange={(e) => !isPracticeOrMC && setIncludeALevel(e.target.checked)}
-                  disabled={isPracticeOrMC}
+                  checked={isMCToggle ? false : includeALevel}
+                  onChange={(e) => !isMCToggle && setIncludeALevel(e.target.checked)}
+                  disabled={isMCToggle}
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
-              {selectedSubject !== "Biology" && (
               <label
                 className={`group flex items-center justify-between p-5 rounded-2xl ${
-                  isPracticeOrMC ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-                } transition-colors border border-transparent ${
-                  isDarkMode
-                    ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
-                    : "bg-slate-50 hover:bg-red-50 hover:border-[#800000]/20"
-                }`}
-              >
-                <div>
-                  <p className="font-black text-slate-800 dark:text-white">Open Ended</p>
-                  <p className="text-xs text-slate-500">
-                    {isPracticeOrMC
-                      ? "Not applicable in this mode"
-                      : "Include open-ended problem solving questions"}
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isPracticeOrMC ? false : includeOpenEnded}
-                  onChange={(e) => !isPracticeOrMC && setIncludeOpenEnded(e.target.checked)}
-                  disabled={isPracticeOrMC}
-                  className="w-6 h-6 rounded-lg accent-[#800000]"
-                />
-              </label>
-              )}
-              <label
-                className={`group flex items-center justify-between p-5 rounded-2xl ${
-                  appMode === "retrieval" || isPracticeOrMC ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                  isRetrievalToggle || isMCToggle ? "cursor-not-allowed opacity-50" : "cursor-pointer"
                 } transition-colors border border-transparent ${
                   isDarkMode
                     ? "bg-slate-900 hover:bg-red-950/20 hover:border-[#800000]/20"
@@ -8782,18 +8877,18 @@ function SetupView({
                 <div>
                   <p className="font-black text-slate-800 dark:text-white">Multi-topic</p>
                   <p className="text-xs text-slate-500">
-                    {appMode === "retrieval"
+                    {isRetrievalToggle
                       ? "Automatically enabled for Retrieval practice"
-                      : isPracticeOrMC
-                      ? "Not applicable in this mode"
+                      : isMCToggle
+                      ? "Not applicable in Multiple Choice mode"
                       : "Cross-topic application and problem solving"}
                   </p>
                 </div>
                 <input
                   type="checkbox"
-                  checked={appMode === "retrieval" ? true : !isPracticeOrMC && includeMultiTopic}
-                  onChange={(e) => appMode !== "retrieval" && !isPracticeOrMC && setIncludeMultiTopic(e.target.checked)}
-                  disabled={appMode === "retrieval" || isPracticeOrMC}
+                  checked={isRetrievalToggle ? true : !isMCToggle && includeMultiTopic}
+                  onChange={(e) => !isRetrievalToggle && !isMCToggle && setIncludeMultiTopic(e.target.checked)}
+                  disabled={isRetrievalToggle || isMCToggle}
                   className="w-6 h-6 rounded-lg accent-[#800000]"
                 />
               </label>
@@ -8869,7 +8964,7 @@ function SetupView({
         </div>
 
         <div className="space-y-6">
-          {appMode === "practice" ? (
+          {isPracticeToggle ? (
             <div className="bg-[#800000] text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-6">
@@ -11203,12 +11298,11 @@ function FloatingMenu({
 }) {
 const [isOpen, setIsOpen] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(false)
-  const showSyllabus = view === "mode" || view === "setup"
-  const showProgress = view !== "landing"
   const isTeacher = currentUser?.accountType === "teacher"
   const isPupil = !isTeacher
-  const showOutcomes = isPupil && view !== "landing" && view !== "subject-select"
-  const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool" || view === "experimental-techniques" || view === "bio-maths"
+  const showMyLearning = isPupil && view !== "landing" && view !== "subject-select"
+  const showTeacherProgress = isTeacher && view !== "landing"
+  const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool" || view === "experimental-techniques" || view === "bio-maths" || view === "open-ended"
   const showDataBooklet = selectedSubject === "Chemistry" && view !== "landing" && view !== "subject-select"
   
   return (
@@ -11218,7 +11312,23 @@ const [isOpen, setIsOpen] = useState(false)
   )}
   {isOpen && (
   <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
-  {showProgress && (
+  {/* Pupils: single "My Learning" button combining progress, coverage & outcomes */}
+  {showMyLearning && (
+  <button
+  onClick={() => {
+  openModal("my-learning")
+  setIsOpen(false)
+  }}
+  className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+  >
+  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+  <Award className="w-5 h-5 text-amber-600" />
+  </div>
+  <span className="text-sm font-black uppercase tracking-widest">My Learning</span>
+  </button>
+  )}
+  {/* Teachers: separate progress button (class management) */}
+  {showTeacherProgress && (
   <button
   onClick={() => {
   openModal("progress")
@@ -11231,20 +11341,6 @@ const [isOpen, setIsOpen] = useState(false)
   </div>
   <span className="text-sm font-black uppercase tracking-widest">Progress</span>
   </button>
-  )}
-  {showOutcomes && (
-    <button
-      onClick={() => {
-        openModal("outcomes")
-        setIsOpen(false)
-      }}
-      className="bg-white dark:bg-slate-800 shadow-xl border-2 border-violet-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-    >
-      <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-        <Target className="w-5 h-5 text-violet-600" />
-      </div>
-      <span className="text-sm font-black uppercase tracking-widest">Outcomes</span>
-    </button>
   )}
   {showDataBooklet && (
     <button
@@ -11260,21 +11356,7 @@ const [isOpen, setIsOpen] = useState(false)
       <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
     </button>
   )}
-  {showSyllabus && (
-            <button
-              onClick={() => {
-                openModal("coverage")
-                setIsOpen(false)
-              }}
-              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-[#800000] p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-            >
-              <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                <Table2 className="w-5 h-5 text-amber-600" />
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest">Syllabus</span>
-            </button>
-          )}
-          {isTeacher && (
+  {isTeacher && (
             <button
               onClick={() => {
                 openModal("question-banks")
@@ -12060,6 +12142,7 @@ function GenericModal({
     currentUser ? loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel) : {}
   )
   const [expandedOutcomeId, setExpandedOutcomeId] = useState<string | null>(null)
+  const [myLearningTab, setMyLearningTab] = useState<"progress" | "coverage" | "outcomes">("progress")
 
   // Reload ratings when the modal opens or subject/level changes
   useEffect(() => {
@@ -12067,6 +12150,11 @@ function GenericModal({
     setOutcomeRatings(loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeModal, currentUser?.id, selectedSubject, selectedLevel])
+
+  // Reset to progress tab when my-learning modal opens
+  useEffect(() => {
+    if (activeModal === "my-learning") setMyLearningTab("progress")
+  }, [activeModal])
 
   if (!activeModal) return null
 
@@ -12205,6 +12293,8 @@ function GenericModal({
                       ? (selectedClass?.name ?? "Class")
                       : "Class Progress"
                   : "My Progress"
+                : activeModal === "my-learning"
+                  ? "My Learning"
                 : activeModal === "question-banks"
                   ? "Question Banks"
                   : activeModal === "assessment-sheets"
@@ -12752,7 +12842,202 @@ function GenericModal({
             </div>
           )}
 
-          {/* ── Coverage view ──────────────────────────────────────────────── */}
+          {/* ── Combined "My Learning" view (pupil — Progress + Coverage + Outcomes) ── */}
+          {activeModal === "my-learning" && !isTeacher && (
+            <div>
+              {/* Tabs */}
+              <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
+                {(["progress", "coverage", "outcomes"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setMyLearningTab(tab)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                      myLearningTab === tab
+                        ? "bg-[#800000] text-white shadow-md"
+                        : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {tab === "progress" ? "Progress" : tab === "coverage" ? "Coverage" : "Outcomes"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Progress tab */}
+              {myLearningTab === "progress" && (
+                <div className="space-y-6">
+                  <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-3xl font-black text-[#800000]">{overallPercentage}%</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Overall</p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-amber-600">{totalQuestions}</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Questions</p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black text-emerald-600">{topicsAttempted}</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Topics</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Topic Breakdown</p>
+                    {subtopics.map((topic) => {
+                      const perf = topicPerformance[topic]
+                      const score = perf && perf.total > 0 ? Math.round((perf.correct / perf.total) * 100) : null
+                      const hasData = perf && perf.total > 0
+                      return (
+                        <div key={topic} className={`p-4 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-bold">{topic}</span>
+                            {hasData ? (
+                              <span className={`text-sm font-black ${score! >= 70 ? "text-emerald-600" : score! >= 50 ? "text-amber-600" : "text-red-600"}`}>{score}%</span>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">Not attempted</span>
+                            )}
+                          </div>
+                          {hasData && (
+                            <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${score! >= 70 ? "bg-emerald-500" : score! >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${score}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Coverage tab */}
+              {myLearningTab === "coverage" && (
+                <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+                  <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"} mb-3`}>
+                    Toggle topics you have <strong>covered in class</strong>. This drives the Retrieval toggle in Paper mode.
+                  </p>
+                  {subtopics.map((t) => (
+                    <div key={t} className={`flex justify-between items-center p-4 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-100"}`}>
+                      <span className="text-sm font-bold">{t}</span>
+                      <button
+                        onClick={() => onToggleTopic(t)}
+                        className={`w-12 h-7 rounded-full relative transition-colors ${userCoverage[t] ? "bg-amber-500" : isDarkMode ? "bg-slate-600" : "bg-slate-300"}`}
+                      >
+                        <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${userCoverage[t] ? "translate-x-5" : ""}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Outcomes tab */}
+              {myLearningTab === "outcomes" && (() => {
+                const outcomes: Outcome[] = SUBJECT_LEVEL_OUTCOMES[selectedSubject]?.[selectedLevel] ?? []
+                const ratingLabels: [string, string][] = [["", "Not rated"], ["🔴", "Needs work"], ["🟡", "Getting there"], ["🟢", "Confident"], ["⭐", "Mastered"]]
+
+                function setRating(outcomeId: string, rating: OutcomeRating) {
+                  const updated = { ...outcomeRatings, [outcomeId]: rating }
+                  setOutcomeRatings(updated)
+                  if (currentUser) saveOutcomeRatings(currentUser.id, selectedSubject, selectedLevel, updated)
+                }
+
+                function outcomeProgress(outcome: Outcome): { correct: number; total: number } | null {
+                  let correct = 0; let total = 0
+                  outcome.linkedTopics.forEach((t) => {
+                    const p = topicPerformance[t]
+                    if (p && p.total > 0) { correct += p.correct; total += p.total }
+                  })
+                  return total > 0 ? { correct, total } : null
+                }
+
+                if (outcomes.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <Target className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                      <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No outcomes defined yet for {selectedSubject} — {selectedLevel}.</p>
+                    </div>
+                  )
+                }
+
+                const rated = outcomes.filter((o) => (outcomeRatings[o.id] ?? 0) > 0).length
+                return (
+                  <div className="space-y-5">
+                    <p className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{selectedSubject} — {selectedLevel} ({rated}/{outcomes.length} rated)</p>
+                    <div className="space-y-3 max-h-[48vh] overflow-y-auto pr-1">
+                      {outcomes.map((outcome) => {
+                        const rating = (outcomeRatings[outcome.id] ?? 0) as OutcomeRating
+                        const prog = outcomeProgress(outcome)
+                        const pct2 = prog ? Math.round((prog.correct / prog.total) * 100) : null
+                        const isExpanded = expandedOutcomeId === outcome.id
+                        const ratingColors: string[] = [
+                          isDarkMode ? "bg-slate-700 border-slate-600" : "bg-slate-50 border-slate-200",
+                          "bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-700",
+                          "bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700",
+                          "bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700",
+                          "bg-violet-50 border-violet-300 dark:bg-violet-900/20 dark:border-violet-700",
+                        ]
+                        return (
+                          <div key={outcome.id} className={`rounded-2xl border-2 transition-all ${ratingColors[rating]}`}>
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? "bg-slate-600 text-slate-300" : "bg-slate-200 text-slate-600"}`}>{outcome.code}</span>
+                                  </div>
+                                  <p className="font-black text-sm leading-snug">{outcome.title}</p>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  {ratingLabels.slice(1).map(([emoji, label], idx) => {
+                                    const val = (idx + 1) as OutcomeRating
+                                    return (
+                                      <button key={val} title={label} onClick={() => setRating(outcome.id, rating === val ? 0 : val)} className={`w-7 h-7 rounded-full text-base flex items-center justify-center transition-all hover:scale-110 ${rating === val ? "ring-2 ring-offset-1 ring-violet-400 scale-110" : "opacity-40 hover:opacity-100"}`}>{emoji}</button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                              {pct2 !== null && (
+                                <div className="mt-2">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className={`text-[10px] font-bold uppercase ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Practice Score</span>
+                                    <span className={`text-xs font-black ${pct2 >= 70 ? "text-emerald-600" : pct2 >= 50 ? "text-amber-600" : "text-red-600"}`}>{pct2}% ({prog!.correct}/{prog!.total})</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${pct2 >= 70 ? "bg-emerald-500" : pct2 >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct2}%` }} />
+                                  </div>
+                                </div>
+                              )}
+                              <button onClick={() => setExpandedOutcomeId(isExpanded ? null : outcome.id)} className={`mt-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors ${isDarkMode ? "text-slate-400 hover:text-slate-200" : "text-slate-400 hover:text-slate-700"}`}>
+                                <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                {isExpanded ? "Hide detail" : "Show detail"}
+                              </button>
+                            </div>
+                            {isExpanded && (
+                              <div className={`px-4 pb-4 border-t ${isDarkMode ? "border-slate-700" : "border-slate-200"}`}>
+                                <p className={`text-xs leading-relaxed mt-3 mb-3 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{outcome.description}</p>
+                                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Linked Topics</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {outcome.linkedTopics.map((t) => {
+                                    const tp = topicPerformance[t]
+                                    const tPct = tp && tp.total > 0 ? Math.round((tp.correct / tp.total) * 100) : null
+                                    return (
+                                      <span key={t} className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${tPct !== null ? tPct >= 70 ? "bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-400" : tPct >= 50 ? "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400" : "bg-red-100 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400" : isDarkMode ? "bg-slate-700 border-slate-600 text-slate-300" : "bg-slate-100 border-slate-300 text-slate-600"}`}>
+                                        {t}{tPct !== null && <span className="font-black">{tPct}%</span>}
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* ── Coverage view (standalone — kept for backwards compatibility) ── */}
           {activeModal === "coverage" && (
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               {subtopics.map((t) => (
@@ -13715,6 +14000,323 @@ function ProfileModal({
   )
 }
 
+
+function OpenEndedMode({
+  selectedLevel,
+  selectedSubject,
+  onBack,
+  isDarkMode,
+  currentUser,
+  userCoverage,
+}: {
+  selectedLevel: string
+  selectedSubject: SubjectId
+  onBack: () => void
+  isDarkMode: boolean
+  currentUser: UserAccount | null
+  userCoverage: Record<string, boolean>
+}) {
+  const subtopics = getSubtopics(selectedSubject, selectedLevel)
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+  const [phase, setPhase] = useState<"hub" | "quiz" | "results">("hub")
+  const [questions, setQuestions] = useState<PaperQuestion[]>([])
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [aiFeedback, setAiFeedback] = useState<Record<string, string>>({})
+  const [aiScores, setAiScores] = useState<Record<string, number | null>>({})
+  const [markingInProgress, setMarkingInProgress] = useState<Record<string, boolean>>({})
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const toggleTopic = (t: string) =>
+    setSelectedTopics((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t])
+
+  async function handleStart() {
+    setIsGenerating(true)
+    try {
+      const response = await fetch("/api/generate-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "paper",
+          level: selectedLevel,
+          topics: selectedTopics.join(","),
+          includeOpenEnded: true,
+          openEndedOnly: true,
+          numberOfQuestions: 3,
+        }),
+      })
+      const data = await response.json()
+      if (data.questions && data.questions.length > 0) {
+        const oeQuestions: PaperQuestion[] = (data.questions as PaperQuestion[]).filter(
+          (q) => q.type === "paper" && q.parts.some((p: PaperPart) => p.featureTag === "open-ended")
+        )
+        if (oeQuestions.length > 0) {
+          setQuestions(oeQuestions)
+          setPhase("quiz")
+          setIsGenerating(false)
+          return
+        }
+      }
+    } catch {
+      // Fall through to demo questions
+    }
+
+    // Demo open-ended questions
+    const demoQuestions: PaperQuestion[] = selectedTopics.slice(0, 3).map((topic, i) => ({
+      type: "paper",
+      topic,
+      subtopic: topic,
+      question: `Open-ended question on ${topic}`,
+      parts: [{
+        id: `oe-${i}-a`,
+        text: `Discuss the key principles of ${topic} and their applications. Include relevant examples, equations, and explain how scientists use this knowledge.`,
+        marks: 6,
+        answer: `A comprehensive answer would cover: (1) core definition and principles, (2) relevant equations with worked examples, (3) real-world applications, (4) connections to other topics.`,
+        markingScheme: `Award 1 mark each for: relevant principle (×2), correct equation or example (×2), real-world application (×1), clear explanation (×1).`,
+        featureTag: "open-ended" as const,
+        topicTag: topic,
+      }],
+    }))
+    setQuestions(demoQuestions)
+    setPhase("quiz")
+    setIsGenerating(false)
+  }
+
+  async function handleMarkWithAI(partId: string, questionText: string, answerText: string, markingScheme: string, maxMarks: number) {
+    if (!answerText.trim()) return
+    setMarkingInProgress((prev) => ({ ...prev, [partId]: true }))
+    try {
+      const response = await fetch("/api/mark-open-ended", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: questionText, answer: answerText, markingScheme, maxMarks }),
+      })
+      const data = await response.json()
+      setAiFeedback((prev) => ({ ...prev, [partId]: data.feedback || "Marking complete." }))
+      setAiScores((prev) => ({ ...prev, [partId]: data.score ?? null }))
+    } catch {
+      setAiFeedback((prev) => ({ ...prev, [partId]: "AI marking is unavailable. Please self-assess using the marking scheme." }))
+    }
+    setMarkingInProgress((prev) => ({ ...prev, [partId]: false }))
+  }
+
+  if (phase === "hub") {
+    return (
+      <div className="pt-24 max-w-4xl mx-auto p-6 animate-in fade-in slide-in-from-right-4">
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs">
+            <ChevronLeft className="w-4 h-4" />
+            Mode selection
+          </button>
+          <h2 className="text-3xl font-black">Open Ended</h2>
+          <div className="w-20" />
+        </div>
+
+        <div className={`mb-6 p-5 rounded-2xl border flex items-start gap-3 ${isDarkMode ? "border-amber-700/50 bg-amber-900/20 text-amber-300" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
+          <Lightbulb className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-sm mb-1">Extended Response Questions</p>
+            <p className="text-xs">Open-ended questions require detailed, multi-point answers. AI will mark your response against the marking scheme and provide feedback.</p>
+          </div>
+        </div>
+
+        <section className={`p-8 rounded-3xl shadow-sm border mb-6 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+          <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            Select Topics
+          </h3>
+          <p className="text-sm text-slate-500 mb-4">Choose topics to generate open-ended questions from.</p>
+          <div className="flex flex-wrap gap-2">
+            {subtopics.map((topic) => {
+              const isSelected = selectedTopics.includes(topic)
+              return (
+                <button
+                  key={topic}
+                  onClick={() => toggleTopic(topic)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                    isSelected
+                      ? "border-[#800000] bg-[#800000] text-white shadow-lg"
+                      : isDarkMode
+                        ? "border-slate-700 hover:border-amber-500 hover:text-amber-600 bg-slate-900"
+                        : "border-slate-100 hover:border-amber-500 hover:text-amber-600 bg-white"
+                  }`}
+                >
+                  {topic}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <div className="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-50">
+          <button
+            disabled={selectedTopics.length === 0 || isGenerating}
+            onClick={handleStart}
+            className={`pointer-events-auto px-12 py-5 rounded-full font-black text-xl shadow-2xl transition-all flex items-center gap-3 border-4 ${
+              selectedTopics.length > 0 && !isGenerating
+                ? "bg-[#800000] text-white border-amber-500 hover:scale-105 active:scale-95"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-400 border-transparent cursor-not-allowed opacity-50"
+            }`}
+          >
+            {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Pencil className="w-6 h-6" />}
+            {isGenerating ? "Loading Questions..." : "Start Open Ended"}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "quiz") {
+    const q = questions[currentIdx]
+    if (!q) return null
+    const openParts = q.parts.filter((p) => p.featureTag === "open-ended")
+
+    return (
+      <div className="pt-24 max-w-3xl mx-auto p-6 animate-in fade-in">
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setPhase("hub")} className="flex items-center gap-2 text-slate-500 hover:text-[#800000] font-bold uppercase text-xs">
+            <ChevronLeft className="w-4 h-4" />
+            Topics
+          </button>
+          <span className={`text-sm font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+            Question {currentIdx + 1} of {questions.length}
+          </span>
+        </div>
+
+        <div className={`p-8 rounded-3xl border shadow-sm mb-6 ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${isDarkMode ? "bg-[#800000]/30 text-red-300" : "bg-red-50 text-[#800000]"}`}>
+            <Pencil className="w-3 h-3" />
+            {q.subtopic}
+          </div>
+          <p className="font-bold text-lg mb-6">{q.question}</p>
+
+          {openParts.map((part) => {
+            const partKey = part.id
+            const feedback = aiFeedback[partKey]
+            const score = aiScores[partKey]
+            return (
+              <div key={partKey} className={`mb-6 p-6 rounded-2xl border ${isDarkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                <p className="text-sm font-bold mb-1">{part.text}</p>
+                <p className={`text-xs mb-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{part.marks} marks</p>
+                <textarea
+                  value={answers[partKey] || ""}
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [partKey]: e.target.value }))}
+                  rows={6}
+                  placeholder="Write your answer here..."
+                  className={`w-full px-4 py-3 rounded-xl border text-sm transition-colors resize-none ${isDarkMode ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]" : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"} outline-none focus:ring-2 focus:ring-[#800000]/20`}
+                />
+                <button
+                  onClick={() => handleMarkWithAI(partKey, part.text, answers[partKey] || "", part.markingScheme, part.marks)}
+                  disabled={!answers[partKey]?.trim() || markingInProgress[partKey]}
+                  className={`mt-3 px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${!answers[partKey]?.trim() || markingInProgress[partKey] ? "opacity-50 cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-700" : "bg-[#800000] hover:bg-[#600000] text-white"}`}
+                >
+                  {markingInProgress[partKey] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {markingInProgress[partKey] ? "Marking..." : "Mark with AI"}
+                </button>
+                {feedback && (
+                  <div className={`mt-4 p-4 rounded-xl border ${isDarkMode ? "bg-emerald-900/20 border-emerald-700/50 text-emerald-300" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+                    {score !== null && score !== undefined && (
+                      <p className="font-black text-lg mb-2">{score}/{part.marks} marks</p>
+                    )}
+                    <p className="text-sm">{feedback}</p>
+                  </div>
+                )}
+                <details className="mt-3">
+                  <summary className={`text-xs font-bold cursor-pointer select-none ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    View marking scheme
+                  </summary>
+                  <div className={`mt-2 p-3 rounded-xl text-xs ${isDarkMode ? "bg-slate-800 text-slate-300" : "bg-white text-slate-700"}`}>
+                    {part.markingScheme}
+                  </div>
+                </details>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="flex justify-between gap-4">
+          <button
+            onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+            disabled={currentIdx === 0}
+            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${currentIdx === 0 ? "opacity-30 cursor-not-allowed border-slate-200" : isDarkMode ? "border-slate-600 hover:border-slate-400 text-white" : "border-slate-300 hover:border-slate-500 text-slate-700"}`}
+          >
+            ← Previous
+          </button>
+          {currentIdx < questions.length - 1 ? (
+            <button
+              onClick={() => setCurrentIdx((i) => i + 1)}
+              className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-all"
+            >
+              Next Question →
+            </button>
+          ) : (
+            <button
+              onClick={() => setPhase("results")}
+              className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-all"
+            >
+              Finish
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Results phase
+  const totalMarks = questions.reduce((sum, q) => sum + q.parts.filter((p) => p.featureTag === "open-ended").reduce((s, p) => s + p.marks, 0), 0)
+  const earnedMarks = Object.entries(aiScores).reduce((sum, [, score]) => sum + (score ?? 0), 0)
+
+  return (
+    <div className="pt-24 max-w-3xl mx-auto p-6 animate-in fade-in">
+      <div className="text-center mb-8">
+        <div className={`inline-flex p-6 rounded-3xl mb-4 ${isDarkMode ? "bg-slate-800" : "bg-white shadow-xl"}`}>
+          <Award className={`w-16 h-16 ${isDarkMode ? "text-amber-400" : "text-[#800000]"}`} />
+        </div>
+        <h2 className="text-4xl font-black mb-2">Session Complete</h2>
+        {totalMarks > 0 && (
+          <p className={`text-xl font-bold ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            AI Score: <span className="text-[#800000]">{earnedMarks}</span> / {totalMarks}
+          </p>
+        )}
+      </div>
+      <div className="space-y-4 mb-8">
+        {questions.map((q, qi) =>
+          q.parts.filter((p) => p.featureTag === "open-ended").map((part) => {
+            const partKey = part.id
+            const score = aiScores[partKey]
+            const feedback = aiFeedback[partKey]
+            return (
+              <div key={partKey} className={`p-6 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+                <p className="font-bold text-sm mb-1">Q{qi + 1}: {part.text}</p>
+                {score !== null && score !== undefined && (
+                  <p className={`text-xs font-bold mb-2 ${score >= part.marks * 0.7 ? "text-emerald-500" : score >= part.marks * 0.5 ? "text-amber-500" : "text-red-500"}`}>
+                    {score}/{part.marks} marks
+                  </p>
+                )}
+                {feedback && <p className="text-xs text-slate-500">{feedback}</p>}
+              </div>
+            )
+          })
+        )}
+      </div>
+      <div className="flex gap-4">
+        <button
+          onClick={() => { setPhase("hub"); setAnswers({}); setAiFeedback({}); setAiScores({}); setQuestions([]) }}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${isDarkMode ? "border-slate-600 hover:border-slate-400 text-white" : "border-slate-300 hover:border-slate-500 text-slate-700"}`}
+        >
+          New Session
+        </button>
+        <button
+          onClick={onBack}
+          className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-all"
+        >
+          Back to Modes
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [view, setView] = useState<ViewType>("subject-select")
   const [selectedLevel, setSelectedLevel] = useState("National 5")
@@ -13724,8 +14326,10 @@ export default function App() {
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [userCoverage, setUserCoverage] = useState<Record<string, boolean>>({})
   const [includeALevel, setIncludeALevel] = useState(false)
-  const [includeOpenEnded, setIncludeOpenEnded] = useState(false)
   const [includeMultiTopic, setIncludeMultiTopic] = useState(false)
+  const [isMCToggle, setIsMCToggle] = useState(false)
+  const [isRetrievalToggle, setIsRetrievalToggle] = useState(false)
+  const [isPracticeToggle, setIsPracticeToggle] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0)
@@ -13820,11 +14424,10 @@ export default function App() {
   const handleModeSelect = (mode: AppMode) => {
     setAppMode(mode)
     setQuestionSource("ai")
-    if (mode === "mc" || mode === "practice") {
-      setIncludeALevel(false)
-      setIncludeOpenEnded(false)
-      setIncludeMultiTopic(false)
-    }
+    // Reset paper mode toggles when changing mode
+    setIsMCToggle(false)
+    setIsRetrievalToggle(false)
+    setIsPracticeToggle(false)
     if (mode === "definitions") {
       setView("definitions")
     } else if (mode === "calculations") {
@@ -13846,6 +14449,8 @@ export default function App() {
       mode === "costing"
     ) {
       setView("electronics-tool")
+    } else if (mode === "open-ended") {
+      setView("open-ended")
     } else {
       setView("setup")
     }
@@ -13902,8 +14507,10 @@ export default function App() {
   }
 
   const generateQuestions = async (topicString: string) => {
-    // Load from all past paper banks when in paper mode
-    if (appMode === "paper") {
+    // Effective question type: if MC toggle is on in paper mode, use MC generation; otherwise use paper
+    const effectiveMode = (appMode === "paper" && isMCToggle) ? "mc" : appMode
+    // Load from all past paper banks when in paper mode (non-MC)
+    if (appMode === "paper" && !isMCToggle) {
       const banks = PAST_PAPER_BANKS[selectedLevel] || []
       const allPaperQuestions = banks.flatMap((bank) =>
         bank.questions.map((q) => ({ ...q, sourcePaperId: bank.id }))
@@ -13931,7 +14538,6 @@ export default function App() {
           // Step 2: filter by feature tag
           const byFeature = byTopic.filter((p) => {
             if (p.featureTag === "a-level" && !includeALevel) return false
-            if (p.featureTag === "open-ended" && !includeOpenEnded) return false
             return true
           })
           // Step 3: dependency filtering — remove parts whose dependsOn are not satisfied
@@ -13995,7 +14601,7 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode: appMode === "practice" ? "mc" : appMode,
+          mode: effectiveMode,
           level: selectedLevel,
           topics: topicString,
           includeALevel,
@@ -14026,7 +14632,7 @@ export default function App() {
 
       // Demo Fallback
       setCurrentQuestions(
-        appMode === "mc" || appMode === "practice"
+        effectiveMode === "mc"
           ? [
               {
                 type: "mc",
@@ -14089,8 +14695,8 @@ export default function App() {
   // Subject-based accent colours
   const subjectAccent = selectedSubject === "Biology"
     ? isDarkMode
-      ? "bg-gradient-to-br from-slate-950 via-yellow-950/20 to-lime-950/30"
-      : "bg-gradient-to-br from-lime-50 via-yellow-50 to-slate-50"
+      ? "bg-gradient-to-br from-slate-950 via-green-950/30 to-emerald-950/30"
+      : "bg-gradient-to-br from-green-50 via-emerald-50 to-slate-50"
     : selectedSubject === "Chemistry"
     ? isDarkMode
       ? "bg-gradient-to-br from-slate-950 via-fuchsia-950/20 to-pink-950/30"
@@ -14156,10 +14762,14 @@ export default function App() {
             onBack={() => setView("mode")}
             includeALevel={includeALevel}
             setIncludeALevel={setIncludeALevel}
-            includeOpenEnded={includeOpenEnded}
-            setIncludeOpenEnded={setIncludeOpenEnded}
             includeMultiTopic={includeMultiTopic}
             setIncludeMultiTopic={setIncludeMultiTopic}
+            isMCToggle={isMCToggle}
+            setIsMCToggle={setIsMCToggle}
+            isRetrievalToggle={isRetrievalToggle}
+            setIsRetrievalToggle={setIsRetrievalToggle}
+            isPracticeToggle={isPracticeToggle}
+            setIsPracticeToggle={setIsPracticeToggle}
             isDarkMode={isDarkMode}
             weakTopics={weakTopics}
             userCoverage={userCoverage}
@@ -14255,6 +14865,16 @@ export default function App() {
           <BioMathsMode
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
+          />
+        )}
+        {view === "open-ended" && (
+          <OpenEndedMode
+            selectedLevel={selectedLevel}
+            selectedSubject={selectedSubject}
+            onBack={() => setView("mode")}
+            isDarkMode={isDarkMode}
+            currentUser={currentUser}
+            userCoverage={userCoverage}
           />
         )}
       </main>
