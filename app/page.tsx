@@ -35,6 +35,15 @@ import {
 import { SUBJECT_LEVEL_OUTCOMES, type Outcome } from "@/data/outcomes"
 import N5_ELEMENTS_RAW from "@/data/N5_Chemistry_All_Elements.json"
 import {
+  FREQ_EASY_FNT,
+  FREQ_EASY_T1F,
+  FREQ_MEDIUM_FNT,
+  FREQ_MEDIUM_T1F,
+  FREQ_HARD_FNT,
+  FREQ_HARD_T1F,
+  FREQ_PERIOD_EXAM,
+} from "@/data/physics/n5/calculations/frequency-period"
+import {
   ChevronLeft,
   ChevronRight,
   Home,
@@ -3011,6 +3020,7 @@ function getDemoSingleEqQuestions(level: number): CalcQuestion[] {
 }
 
 const CALC_EXAM_QUESTIONS: CalcQuestion[] = [
+  ...FREQ_PERIOD_EXAM,
   {
     id: "exam-1",
     stem: "A ball is launched horizontally at 15 ms⁻¹ from a cliff. Use the following steps to find where it lands.",
@@ -3183,6 +3193,7 @@ const SQA_EQUATIONS: SQAEquation[] = [
   // National 5 — Waves
   { id: "v-fl",        formula: "v = fλ",               description: "Wave Equation",                            topic: "Waves",       sqaLevel: "N5" },
   { id: "T-1f",        formula: "T = 1/f",              description: "Period and Frequency",                     topic: "Waves",       sqaLevel: "N5" },
+  { id: "f-Nt",        formula: "f = N/t",              description: "Frequency from Wave Count",                topic: "Waves",       sqaLevel: "N5" },
   // National 5 — Radiation
   { id: "D-Em",        formula: "D = E/m",              description: "Absorbed Dose",                            topic: "Radiation",   sqaLevel: "N5" },
   { id: "H-DwR",       formula: "H = Dw_R",             description: "Equivalent Dose",                          topic: "Radiation",   sqaLevel: "N5" },
@@ -3447,21 +3458,16 @@ const EQUATION_QUESTION_BANKS: Record<string, { easy: CalcQuestion[]; medium: Ca
 
   // ── T = 1/f ────────────────────────────────────────────────────────────────
   "T-1f": {
-    easy: [
-      { id: "T1f-e1", stem: "A wave has frequency 5 Hz. Calculate its period.", equation: "T = 1/f", options: ["5 s", "0.2 s", "0.5 s", "25 s"], correctOption: 1, markScheme: "T = 1 ÷ 5 = 0.2 s" },
-      { id: "T1f-e2", stem: "A wave has period 0.25 s. Calculate its frequency.", equation: "T = 1/f  →  f = 1 ÷ T", options: ["4 Hz", "0.25 Hz", "25 Hz", "0.04 Hz"], correctOption: 0, markScheme: "f = 1 ÷ 0.25 = 4 Hz" },
-      { id: "T1f-e3", stem: "A wave has frequency 20 Hz. Calculate its period.", equation: "T = 1/f", options: ["20 s", "0.05 s", "0.5 s", "200 s"], correctOption: 1, markScheme: "T = 1 ÷ 20 = 0.05 s" },
-      { id: "T1f-e4", stem: "A pendulum has period 2 s. Calculate its frequency.", equation: "T = 1/f  →  f = 1 ÷ T", options: ["0.5 Hz", "2 Hz", "4 Hz", "0.25 Hz"], correctOption: 0, markScheme: "f = 1 ÷ 2 = 0.5 Hz" },
-    ],
-    medium: [
-      { id: "T1f-m1", stem: "A wave has frequency 250 Hz. Calculate its period.", equation: "T = 1/f", correctAnswer: "0.004 s", markScheme: "T = 1 ÷ 250 = 0.004 s (4 ms)" },
-      { id: "T1f-m2", stem: "A sound wave has period 0.0025 s. Calculate its frequency.", equation: "T = 1/f  →  f = 1 ÷ T", correctAnswer: "400 Hz", markScheme: "f = 1 ÷ 0.0025 = 400 Hz" },
-      { id: "T1f-m3", stem: "A light wave has frequency 6.0 × 10¹⁴ Hz. Calculate its period.", equation: "T = 1/f", correctAnswer: "1.67 × 10⁻¹⁵ s", markScheme: "T = 1 ÷ 6.0×10¹⁴ = 1.67×10⁻¹⁵ s" },
-    ],
-    hard: [
-      { id: "T1f-h1", stem: "A wave has frequency 5.0 kHz. Calculate its period.", equation: "T = 1/f", correctAnswer: "0.20 ms", markScheme: "f = 5 000 Hz;  T = 1 ÷ 5 000 = 2.0×10⁻⁴ s = 0.20 ms" },
-      { id: "T1f-h2", stem: "A microwave has period 1.25 ns. Calculate its frequency.", equation: "T = 1/f  →  f = 1 ÷ T", correctAnswer: "8.0 × 10⁸ Hz", markScheme: "T = 1.25×10⁻⁹ s;  f = 1 ÷ 1.25×10⁻⁹ = 8.0×10⁸ Hz (800 MHz)" },
-    ],
+    easy:   FREQ_EASY_T1F,
+    medium: FREQ_MEDIUM_T1F,
+    hard:   FREQ_HARD_T1F,
+  },
+
+  // ── f = N/t ────────────────────────────────────────────────────────────────
+  "f-Nt": {
+    easy:   FREQ_EASY_FNT,
+    medium: FREQ_MEDIUM_FNT,
+    hard:   FREQ_HARD_FNT,
   },
 
   // ── Eh = cmΔT ──────────────────────────────────────────────────────────────
