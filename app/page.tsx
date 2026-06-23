@@ -81,25 +81,19 @@ import {
   Clock,
   AlertTriangle,
   ArrowLeftRight,
-  Key,
   TrendingUp,
   TrendingDown,
   BarChart2,
   Lightbulb,
-  LogIn,
-  LogOut,
-  UserCircle,
-  Users,
-  GraduationCap,
   ChevronDown,
   Plus,
-  UserPlus,
   Copy,
   CheckCheck,
   Upload,
   BookMarked,
   RefreshCw,
   Keyboard,
+  Key,
   Target,
   LayoutGrid,
   Workflow,
@@ -108,7 +102,6 @@ import {
   Sigma,
   PoundSterling,
 } from "lucide-react"
-import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase-client"
 
 // Trinity High School Maroon: #800000
 // Trinity High School Gold: #D4AF37
@@ -323,655 +316,6 @@ const PAST_PAPER_BANKS: Record<string, PastPaperMeta[]> = {
       questions: n5_2021_s2.questions as unknown as Question[],
     },
   ],
-}
-
-// --- Auth Types & Helpers ---
-
-type AccountType = "pupil" | "teacher"
-
-interface UserAccount {
-  id: string
-  name: string
-  email: string
-  accountType: AccountType
-  password?: string
-  isTestAccount?: boolean
-  subjectLevels?: Partial<Record<SubjectId, string>>  // "National 5" | "Higher" | "Advanced Higher" | "not sitting"
-  lastLogin?: number  // timestamp in ms
-  totalSessions?: number  // number of times signed in
-  disableModeLocking?: boolean  // pupils only: opt-out of progressive mode locking
-}
-
-// Hardcoded test accounts — always available regardless of localStorage state.
-// Password format "test:<plaintext>" is recognised by verifyPassword below.
-const TEST_ACCOUNT_PASSWORD = "Trinfinity1"
-const TEST_ACCOUNTS: UserAccount[] = [
-  // ── Test Pupils (all sit all subjects at National 5; pupils 1-3 have Teacher 1's classroom) ──
-  {
-    id: "test-pupil-1",
-    name: "Test Pupil One",
-    email: "testpupil1@trinfinity.test",
-    accountType: "pupil",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
-  },
-  {
-    id: "test-pupil-2",
-    name: "Test Pupil Two",
-    email: "testpupil2@trinfinity.test",
-    accountType: "pupil",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
-  },
-  {
-    id: "test-pupil-3",
-    name: "Test Pupil Three",
-    email: "testpupil3@trinfinity.test",
-    accountType: "pupil",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-    subjectLevels: { Physics: "National 5", Biology: "National 5", Chemistry: "National 5", "Practical Electronics": "National 5" },
-  },
-  {
-    id: "test-pupil-4",
-    name: "Test Pupil Four",
-    email: "testpupil4@trinfinity.test",
-    accountType: "pupil",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-    subjectLevels: { Physics: "Higher", Biology: "National 5", Chemistry: "not sitting", "Practical Electronics": "not sitting" },
-  },
-  {
-    id: "test-pupil-5",
-    name: "Test Pupil Five",
-    email: "testpupil5@trinfinity.test",
-    accountType: "pupil",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-    subjectLevels: { Physics: "not sitting", Biology: "Higher", Chemistry: "National 5", "Practical Electronics": "National 5" },
-  },
-  // ── Test Teachers ──
-  {
-    id: "test-teacher-1",
-    name: "Test Teacher One",
-    email: "testteacher1@trinfinity.test",
-    accountType: "teacher",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-  },
-  {
-    id: "test-teacher-2",
-    name: "Test Teacher Two",
-    email: "testteacher2@trinfinity.test",
-    accountType: "teacher",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-  },
-  {
-    id: "test-teacher-3",
-    name: "Test Teacher Three",
-    email: "testteacher3@trinfinity.test",
-    accountType: "teacher",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-  },
-  {
-    id: "test-teacher-4",
-    name: "Test Teacher Four",
-    email: "testteacher4@trinfinity.test",
-    accountType: "teacher",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-  },
-  {
-    id: "test-teacher-5",
-    name: "Test Teacher Five",
-    email: "testteacher5@trinfinity.test",
-    accountType: "teacher",
-    password: `test:${TEST_ACCOUNT_PASSWORD}`,
-    isTestAccount: true,
-  },
-]
-
-// Hardcoded test class groups — always injected alongside test accounts.
-const TEST_CLASS_GROUPS: ClassGroup[] = [
-  {
-    id: "test-class-physics",
-    name: "Teacher 1 — Physics N5",
-    teacherId: "test-teacher-1",
-    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
-    code: "PHYS01",
-  },
-  {
-    id: "test-class-biology",
-    name: "Teacher 1 — Biology N5",
-    teacherId: "test-teacher-1",
-    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
-    code: "BIO001",
-  },
-  {
-    id: "test-class-chemistry",
-    name: "Teacher 1 — Chemistry N5",
-    teacherId: "test-teacher-1",
-    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
-    code: "CHEM01",
-  },
-  {
-    id: "test-class-electronics",
-    name: "Teacher 1 — Electronics N5",
-    teacherId: "test-teacher-1",
-    memberIds: ["test-pupil-1", "test-pupil-2", "test-pupil-3"],
-    code: "ELEC01",
-  },
-]
-
-interface ClassGroup {
-  id: string
-  name: string
-  teacherId: string
-  memberIds: string[]
-  code: string
-}
-
-function generateId(): string {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID()
-  }
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
-}
-
-async function hashPassword(password: string): Promise<string> {
-  if (typeof crypto === "undefined" || !crypto.subtle) {
-    throw new Error("Secure password hashing is not available in this environment.")
-  }
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const saltHex = Array.from(salt).map((b) => b.toString(16).padStart(2, "0")).join("")
-  const encoder = new TextEncoder()
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  )
-  const hashBuffer = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    256
-  )
-  const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("")
-  return `${saltHex}$${hashHex}`
-}
-
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  // Test accounts use a plain-text prefix instead of PBKDF2
-  if (stored.startsWith("test:")) {
-    return password === stored.slice(5)
-  }
-  if (typeof crypto === "undefined" || !crypto.subtle) {
-    throw new Error("Secure password verification is not available in this environment.")
-  }
-  const [saltHex, hashHex] = stored.split("$")
-  if (!saltHex || !hashHex) return false
-  const salt = new Uint8Array((saltHex.match(/.{2}/g) ?? []).map((b) => parseInt(b, 16)))
-  const encoder = new TextEncoder()
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  )
-  const hashBuffer = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    256
-  )
-  const computedHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("")
-  return computedHash === hashHex
-}
-
-function generateClassCode(): string {
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    const arr = new Uint8Array(4)
-    crypto.getRandomValues(arr)
-    return Array.from(arr, (b) => b.toString(36)).join("").slice(0, 6).toUpperCase()
-  }
-  return Math.random().toString(36).slice(2, 8).toUpperCase()
-}
-
-function loadAccounts(): UserAccount[] {
-  if (typeof window === "undefined") return TEST_ACCOUNTS
-  try {
-    const stored: UserAccount[] = JSON.parse(localStorage.getItem("trinfinity_accounts") || "[]")
-    // Always include the hardcoded test accounts, then any non-test user accounts
-    const userAccounts = stored.filter((a) => !a.isTestAccount)
-    return [...TEST_ACCOUNTS, ...userAccounts]
-  } catch {
-    return TEST_ACCOUNTS
-  }
-}
-
-function saveAccounts(accounts: UserAccount[]): void {
-  if (typeof window === "undefined") return
-  // Never persist test accounts to localStorage — they are always injected at load time
-  const userAccounts = accounts.filter((a) => !a.isTestAccount)
-  localStorage.setItem("trinfinity_accounts", JSON.stringify(userAccounts))
-}
-
-function loadCurrentUser(): UserAccount | null {
-  if (typeof window === "undefined") return null
-  try {
-    const raw = localStorage.getItem("trinfinity_current_user")
-    if (!raw) return null
-    const parsed: UserAccount = JSON.parse(raw)
-    if (!parsed) return null
-    return parsed.password ? { ...parsed, password: undefined } : parsed
-  } catch {
-    return null
-  }
-}
-
-function toSessionUser(user: UserAccount): UserAccount {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    accountType: user.accountType,
-    isTestAccount: user.isTestAccount,
-    subjectLevels: user.subjectLevels,
-    lastLogin: user.lastLogin,
-    totalSessions: user.totalSessions,
-    disableModeLocking: user.disableModeLocking,
-  }
-}
-
-function saveCurrentUser(user: UserAccount | null): void {
-  if (typeof window === "undefined") return
-  if (user) {
-    const sessionUser = toSessionUser(user)
-    localStorage.setItem("trinfinity_current_user", JSON.stringify(sessionUser))
-  }
-  else localStorage.removeItem("trinfinity_current_user")
-}
-
-function loadClassGroups(): ClassGroup[] {
-  if (typeof window === "undefined") return TEST_CLASS_GROUPS
-  try {
-    const stored: ClassGroup[] = JSON.parse(localStorage.getItem("trinfinity_class_groups") || "[]")
-    // Always include hardcoded test class groups, then any user-created groups
-    const userGroups = stored.filter((g) => !TEST_CLASS_GROUPS.some((t) => t.id === g.id))
-    return [...TEST_CLASS_GROUPS, ...userGroups]
-  } catch {
-    return TEST_CLASS_GROUPS
-  }
-}
-
-function saveClassGroups(groups: ClassGroup[]): void {
-  if (typeof window === "undefined") return
-  // Never persist test class groups — they are always injected at load time
-  const userGroups = groups.filter((g) => !TEST_CLASS_GROUPS.some((t) => t.id === g.id))
-  localStorage.setItem("trinfinity_class_groups", JSON.stringify(userGroups))
-}
-
-const SUPABASE_USER_MIGRATION_MARKER_PREFIX = "trinfinity_supabase_user_migrated_"
-const USER_PROGRESS_MIGRATION_LEVELS = ["National 5", "Higher", "Advanced Higher"] as const
-const ASSIGNMENT_CUSTOM_QUESTION_STORAGE_KEYS = [
-  PHYSICS_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
-  BIOLOGY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
-  CHEMISTRY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY,
-] as const
-
-function parseStoredJSON<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-function deriveSubjectFromCustomQuestionKey(storageKey: string): string {
-  if (storageKey === BIOLOGY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY) return "Biology"
-  if (storageKey === CHEMISTRY_ASSIGNMENT_CUSTOM_QUESTIONS_KEY) return "Chemistry"
-  return "Physics"
-}
-
-async function getSupabaseAuthedUserId(): Promise<string | null> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured()) return null
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data.user) return null
-  return data.user.id
-}
-
-async function upsertSupabaseProfileAndSettings(user: UserAccount): Promise<void> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured() || user.isTestAccount) return
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== user.id) return
-
-  const profilePayloads = [
-    {
-      id: user.id,
-      email: user.email,
-      full_name: user.name,
-      account_type: user.accountType,
-      last_login: user.lastLogin ?? null,
-      total_sessions: user.totalSessions ?? 0,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      account_type: user.accountType,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: user.id,
-      email: user.email,
-    },
-  ]
-
-  for (const payload of profilePayloads) {
-    const { error } = await (supabase.from("profiles") as any).upsert(payload, { onConflict: "id" })
-    if (!error) break
-  }
-
-  const settingsPayloads = [
-    {
-      user_id: user.id,
-      subject_levels: user.subjectLevels ?? {},
-      disable_mode_locking: Boolean(user.disableModeLocking),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      user_id: user.id,
-      settings: {
-        subjectLevels: user.subjectLevels ?? {},
-        disableModeLocking: Boolean(user.disableModeLocking),
-      },
-      updated_at: new Date().toISOString(),
-    },
-    {
-      user_id: user.id,
-    },
-  ]
-
-  for (const payload of settingsPayloads) {
-    const { error } = await (supabase.from("user_settings") as any).upsert(payload, { onConflict: "user_id" })
-    if (!error) break
-  }
-}
-
-async function persistUserProgressKeyToSupabase(userId: string, key: string, value: unknown): Promise<void> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured()) return
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== userId) return
-
-  await supabase.from("user_progress").delete().eq("user_id", userId).eq("item_key", key)
-
-  const payloads = [
-    {
-      user_id: userId,
-      mode: "local_storage",
-      item_key: key,
-      progress_data: value,
-      updated_at: new Date().toISOString(),
-    },
-    {
-      user_id: userId,
-      key,
-      data: value,
-      updated_at: new Date().toISOString(),
-    },
-  ]
-
-  for (const payload of payloads) {
-    const { error } = await (supabase.from("user_progress") as any).insert(payload)
-    if (!error) break
-  }
-}
-
-async function persistQuizAttemptsToSupabase(userId: string, level: string, progress: ExamProgress): Promise<void> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured()) return
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== userId) return
-
-  await supabase.from("quiz_attempts").delete().eq("user_id", userId).eq("mode", `exam-paper-${level}`)
-  const attempts = Object.entries(progress.pastPapers ?? {}).flatMap(([paperId, paperAttempts]) =>
-    paperAttempts.map((attempt) => ({
-      user_id: userId,
-      mode: `exam-paper-${level}`,
-      topic: paperId,
-      score: attempt.marksTotal > 0 ? Math.round((attempt.marksEarned / attempt.marksTotal) * 100) : 0,
-      total_questions: attempt.marksTotal,
-      attempt_data: attempt,
-      created_at: new Date(attempt.date).toISOString(),
-    })),
-  )
-  if (attempts.length === 0) return
-
-  const fallbackAttempts = attempts.map((attempt) => ({
-    user_id: attempt.user_id,
-    item_key: attempt.topic,
-    attempt_data: attempt.attempt_data,
-    created_at: attempt.created_at,
-  }))
-
-  const { error } = await supabase.from("quiz_attempts").insert(attempts)
-  if (error) {
-    await supabase.from("quiz_attempts").insert(fallbackAttempts)
-  }
-}
-
-async function persistCustomQuestionsToSupabase(userId: string, storageKey: string, questions: PracticeQuestion[]): Promise<void> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured()) return
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== userId) return
-
-  await supabase.from("custom_questions").delete().eq("user_id", userId).eq("storage_key", storageKey)
-  if (questions.length === 0) return
-
-  const rows = questions.map((question) => ({
-    user_id: userId,
-    subject: deriveSubjectFromCustomQuestionKey(storageKey),
-    storage_key: storageKey,
-    question_data: question,
-    updated_at: new Date().toISOString(),
-  }))
-  const fallbackRows = rows.map((row) => ({
-    user_id: row.user_id,
-    storage_key: row.storage_key,
-    question_data: row.question_data,
-    created_at: row.updated_at,
-  }))
-
-  const { error } = await supabase.from("custom_questions").insert(rows)
-  if (error) {
-    await supabase.from("custom_questions").insert(fallbackRows)
-  }
-}
-
-async function persistClassGroupsToSupabase(userId: string, groups: ClassGroup[]): Promise<void> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured()) return
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== userId) return
-
-  const ownedGroups = groups.filter((group) => group.teacherId === userId || group.memberIds.includes(userId))
-  const payloads = [
-    {
-      user_id: userId,
-      item_type: "class_groups",
-      item_key: "default",
-      item_data: ownedGroups,
-      created_at: new Date().toISOString(),
-    },
-    {
-      user_id: userId,
-      key: "class_groups",
-      data: ownedGroups,
-      created_at: new Date().toISOString(),
-    },
-  ]
-
-  for (const payload of payloads) {
-    const { error } = await (supabase.from("saved_items") as any).upsert(payload, {
-      onConflict: "user_id,item_type,item_key",
-    })
-    if (!error) break
-  }
-}
-
-function mirrorLegacyKeysToSupabaseUser(oldUserId: string, supabaseUserId: string): void {
-  if (typeof window === "undefined" || oldUserId === supabaseUserId) return
-  const keys = Object.keys(localStorage)
-  keys.forEach((key) => {
-    const token = `_${oldUserId}_`
-    if (!key.includes(token)) return
-    const migratedKey = key.replace(token, `_${supabaseUserId}_`)
-    if (localStorage.getItem(migratedKey) !== null) return
-    const value = localStorage.getItem(key)
-    if (value !== null) localStorage.setItem(migratedKey, value)
-  })
-}
-
-async function migrateAndHydrateSupabaseUserData(user: UserAccount, previousUserId: string | null): Promise<Partial<UserAccount>> {
-  const supabase = getSupabaseBrowserClient()
-  if (!supabase || !isSupabaseConfigured() || typeof window === "undefined") return {}
-  const authUserId = await getSupabaseAuthedUserId()
-  if (!authUserId || authUserId !== user.id) return {}
-
-  const migrationMarker = `${SUPABASE_USER_MIGRATION_MARKER_PREFIX}${authUserId}`
-  if (localStorage.getItem(migrationMarker) !== "done") {
-    if (previousUserId) mirrorLegacyKeysToSupabaseUser(previousUserId, authUserId)
-
-    USER_PROGRESS_MIGRATION_LEVELS.forEach((level) => {
-      const anonProgress = localStorage.getItem(`trinfinity_def_progress_${level}`)
-      if (anonProgress && !localStorage.getItem(`trinfinity_def_progress_${authUserId}_${level}`)) {
-        localStorage.setItem(`trinfinity_def_progress_${authUserId}_${level}`, anonProgress)
-      }
-      const anonCompletion = localStorage.getItem(`trinfinity_def_completion_${level}`)
-      if (anonCompletion && !localStorage.getItem(`trinfinity_def_completion_${authUserId}_${level}`)) {
-        localStorage.setItem(`trinfinity_def_completion_${authUserId}_${level}`, anonCompletion)
-      }
-    })
-
-    for (const storageKey of ASSIGNMENT_CUSTOM_QUESTION_STORAGE_KEYS) {
-      const questions = parseStoredJSON<PracticeQuestion[]>(localStorage.getItem(storageKey), [])
-      await persistCustomQuestionsToSupabase(authUserId, storageKey, questions)
-    }
-
-    for (const key of Object.keys(localStorage)) {
-      if (!key.includes(`_${authUserId}_`)) continue
-      if (!key.startsWith("trinfinity_def_progress_") &&
-          !key.startsWith("trinfinity_def_completion_") &&
-          !key.startsWith("trinfinity_exam_progress_") &&
-          !key.startsWith("trinfinity_calc_progress_") &&
-          !key.startsWith("trinfinity_outcome_ratings_")) {
-        continue
-      }
-      const value = parseStoredJSON<unknown>(localStorage.getItem(key), {})
-      await persistUserProgressKeyToSupabase(authUserId, key, value)
-      if (key.startsWith("trinfinity_exam_progress_")) {
-        const level = key.replace(`trinfinity_exam_progress_${authUserId}_`, "")
-        await persistQuizAttemptsToSupabase(authUserId, level, value as ExamProgress)
-      }
-    }
-
-    await persistClassGroupsToSupabase(authUserId, loadClassGroups())
-    localStorage.setItem(migrationMarker, "done")
-  }
-
-  const profileUpdate: Partial<UserAccount> = {}
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", authUserId).maybeSingle()
-  if (profile) {
-    const profileName = (profile.full_name ?? profile.name) as string | undefined
-    const profileAccountType = profile.account_type as AccountType | undefined
-    if (profileName) profileUpdate.name = profileName
-    if (profileAccountType === "teacher" || profileAccountType === "pupil") profileUpdate.accountType = profileAccountType
-  }
-
-  const { data: settings } = await supabase.from("user_settings").select("*").eq("user_id", authUserId).maybeSingle()
-  if (settings) {
-    const storedLevels = (settings.subject_levels ?? settings.subjectLevels ?? settings.settings?.subjectLevels) as
-      | Partial<Record<SubjectId, string>>
-      | undefined
-    const storedDisableLocking = settings.disable_mode_locking ?? settings.disableModeLocking ?? settings.settings?.disableModeLocking
-    if (storedLevels) profileUpdate.subjectLevels = storedLevels
-    if (typeof storedDisableLocking === "boolean") profileUpdate.disableModeLocking = storedDisableLocking
-  }
-
-  const { data: customQuestions } = await supabase
-    .from("custom_questions")
-    .select("storage_key, question_data")
-    .eq("user_id", authUserId)
-
-  if (Array.isArray(customQuestions)) {
-    const grouped = new Map<string, PracticeQuestion[]>()
-    customQuestions.forEach((row) => {
-      const key = String(row.storage_key ?? "")
-      if (!key) return
-      const existing = grouped.get(key) ?? []
-      existing.push(row.question_data as PracticeQuestion)
-      grouped.set(key, existing)
-    })
-    grouped.forEach((questions, key) => {
-      localStorage.setItem(key, JSON.stringify(questions))
-    })
-  }
-
-  const { data: progressRows } = await supabase
-    .from("user_progress")
-    .select("item_key, progress_data, key, data")
-    .eq("user_id", authUserId)
-
-  if (Array.isArray(progressRows)) {
-    progressRows.forEach((row) => {
-      const storageKey = (row.item_key ?? row.key) as string | undefined
-      const storageData = row.progress_data ?? row.data
-      if (!storageKey || storageData === undefined) return
-      localStorage.setItem(storageKey, JSON.stringify(storageData))
-    })
-  }
-
-  const { data: savedGroups } = await supabase
-    .from("saved_items")
-    .select("item_data, data")
-    .eq("user_id", authUserId)
-    .eq("item_type", "class_groups")
-    .eq("item_key", "default")
-    .maybeSingle()
-
-  if (savedGroups?.item_data || savedGroups?.data) {
-    const groups = (savedGroups.item_data ?? savedGroups.data) as ClassGroup[]
-    const merged = [...TEST_CLASS_GROUPS, ...groups.filter((g) => !TEST_CLASS_GROUPS.some((t) => t.id === g.id))]
-    saveClassGroups(merged)
-  }
-
-  return profileUpdate
-}
-
-function upsertLocalAccount(account: UserAccount): void {
-  if (account.isTestAccount) return
-  const accounts = loadAccounts()
-  const existingIndex = accounts.findIndex(
-    (candidate) => !candidate.isTestAccount && (candidate.id === account.id || candidate.email.toLowerCase() === account.email.toLowerCase()),
-  )
-  if (existingIndex >= 0) {
-    const updated = [...accounts]
-    updated[existingIndex] = { ...updated[existingIndex], ...account }
-    saveAccounts(updated)
-    return
-  }
-  saveAccounts([...accounts, account])
 }
 
 // --- Definitions Mode Types & Data ---
@@ -1644,6 +988,23 @@ function saveDefProgress(level: string, progress: Record<string, DefProgress>) {
   } catch {}
 }
 
+function loadDefCompletion(level: string): DefCompletion {
+  try {
+    if (typeof window === "undefined") return {}
+    if (!VALID_LEVELS.includes(level)) return {}
+    const saved = localStorage.getItem(`trinfinity_def_completion_${level}`)
+    return saved ? JSON.parse(saved) : {}
+  } catch { return {} }
+}
+
+function saveDefCompletion(level: string, completion: DefCompletion): void {
+  try {
+    if (typeof window === "undefined") return
+    if (!VALID_LEVELS.includes(level)) return
+    localStorage.setItem(`trinfinity_def_completion_${level}`, JSON.stringify(completion))
+  } catch {}
+}
+
 // --- Per-user progress helpers ---
 
 interface PaperAttempt {
@@ -1669,78 +1030,20 @@ interface CalcProgress {
   correctMe: { correct: number; total: number }
 }
 
-function loadUserDefProgress(userId: string, level: string): Record<string, DefProgress> {
-  try {
-    if (typeof window === "undefined") return {}
-    if (!VALID_LEVELS.includes(level)) return {}
-    const saved = localStorage.getItem(`trinfinity_def_progress_${userId}_${level}`)
-    return saved ? JSON.parse(saved) : {}
-  } catch { return {} }
-}
-
-function saveUserDefProgress(userId: string, level: string, progress: Record<string, DefProgress>): void {
-  try {
-    if (typeof window === "undefined") return
-    if (!VALID_LEVELS.includes(level)) return
-    const key = `trinfinity_def_progress_${userId}_${level}`
-    localStorage.setItem(key, JSON.stringify(progress))
-    void persistUserProgressKeyToSupabase(userId, key, progress)
-  } catch {}
-}
-
-function loadDefCompletion(level: string): DefCompletion {
-  try {
-    if (typeof window === "undefined") return {}
-    if (!VALID_LEVELS.includes(level)) return {}
-    const saved = localStorage.getItem(`trinfinity_def_completion_${level}`)
-    return saved ? JSON.parse(saved) : {}
-  } catch { return {} }
-}
-
-function saveDefCompletion(level: string, completion: DefCompletion): void {
-  try {
-    if (typeof window === "undefined") return
-    if (!VALID_LEVELS.includes(level)) return
-    localStorage.setItem(`trinfinity_def_completion_${level}`, JSON.stringify(completion))
-  } catch {}
-}
-
-function loadUserDefCompletion(userId: string, level: string): DefCompletion {
-  try {
-    if (typeof window === "undefined") return {}
-    if (!VALID_LEVELS.includes(level)) return {}
-    const saved = localStorage.getItem(`trinfinity_def_completion_${userId}_${level}`)
-    return saved ? JSON.parse(saved) : {}
-  } catch { return {} }
-}
-
-function saveUserDefCompletion(userId: string, level: string, completion: DefCompletion): void {
-  try {
-    if (typeof window === "undefined") return
-    if (!VALID_LEVELS.includes(level)) return
-    const key = `trinfinity_def_completion_${userId}_${level}`
-    localStorage.setItem(key, JSON.stringify(completion))
-    void persistUserProgressKeyToSupabase(userId, key, completion)
-  } catch {}
-}
-
-function loadUserExamProgress(userId: string, level: string): ExamProgress {
+function loadExamProgress(level: string): ExamProgress {
   try {
     if (typeof window === "undefined") return { mc: {}, paper: {}, pastPapers: {} }
-    const saved = localStorage.getItem(`trinfinity_exam_progress_${userId}_${level}`)
+    const saved = localStorage.getItem(`trinfinity_exam_progress_${level}`)
     if (!saved) return { mc: {}, paper: {}, pastPapers: {} }
     const data = JSON.parse(saved)
     return { mc: data.mc ?? {}, paper: data.paper ?? {}, pastPapers: data.pastPapers ?? {} }
   } catch { return { mc: {}, paper: {}, pastPapers: {} } }
 }
 
-function saveUserExamProgress(userId: string, level: string, progress: ExamProgress): void {
+function saveExamProgress(level: string, progress: ExamProgress): void {
   try {
     if (typeof window === "undefined") return
-    const key = `trinfinity_exam_progress_${userId}_${level}`
-    localStorage.setItem(key, JSON.stringify(progress))
-    void persistUserProgressKeyToSupabase(userId, key, progress)
-    void persistQuizAttemptsToSupabase(userId, level, progress)
+    localStorage.setItem(`trinfinity_exam_progress_${level}`, JSON.stringify(progress))
   } catch {}
 }
 
@@ -1753,10 +1056,10 @@ const defaultCalcProgress = (): CalcProgress => ({
   correctMe: { correct: 0, total: 0 },
 })
 
-function loadUserCalcProgress(userId: string, level: string): CalcProgress {
+function loadCalcProgress(level: string): CalcProgress {
   try {
     if (typeof window === "undefined") return defaultCalcProgress()
-    const saved = localStorage.getItem(`trinfinity_calc_progress_${userId}_${level}`)
+    const saved = localStorage.getItem(`trinfinity_calc_progress_${level}`)
     if (!saved) return defaultCalcProgress()
     const data = JSON.parse(saved)
     return {
@@ -1770,12 +1073,10 @@ function loadUserCalcProgress(userId: string, level: string): CalcProgress {
   } catch { return defaultCalcProgress() }
 }
 
-function saveUserCalcProgress(userId: string, level: string, progress: CalcProgress): void {
+function saveCalcProgress(level: string, progress: CalcProgress): void {
   try {
     if (typeof window === "undefined") return
-    const key = `trinfinity_calc_progress_${userId}_${level}`
-    localStorage.setItem(key, JSON.stringify(progress))
-    void persistUserProgressKeyToSupabase(userId, key, progress)
+    localStorage.setItem(`trinfinity_calc_progress_${level}`, JSON.stringify(progress))
   } catch {}
 }
 
@@ -1783,20 +1084,18 @@ function saveUserCalcProgress(userId: string, level: string, progress: CalcProgr
 type OutcomeRating = 0 | 1 | 2 | 3 | 4
 type OutcomeRatings = Record<string, OutcomeRating>
 
-function loadOutcomeRatings(userId: string, subject: string, level: string): OutcomeRatings {
+function loadOutcomeRatings(subject: string, level: string): OutcomeRatings {
   try {
     if (typeof window === "undefined") return {}
-    const raw = localStorage.getItem(`trinfinity_outcome_ratings_${userId}_${subject}_${level}`)
+    const raw = localStorage.getItem(`trinfinity_outcome_ratings_${subject}_${level}`)
     return raw ? JSON.parse(raw) : {}
   } catch { return {} }
 }
 
-function saveOutcomeRatings(userId: string, subject: string, level: string, ratings: OutcomeRatings): void {
+function saveOutcomeRatings(subject: string, level: string, ratings: OutcomeRatings): void {
   try {
     if (typeof window === "undefined") return
-    const key = `trinfinity_outcome_ratings_${userId}_${subject}_${level}`
-    localStorage.setItem(key, JSON.stringify(ratings))
-    void persistUserProgressKeyToSupabase(userId, key, ratings)
+    localStorage.setItem(`trinfinity_outcome_ratings_${subject}_${level}`, JSON.stringify(ratings))
   } catch {}
 }
 
@@ -2076,21 +1375,16 @@ function DefinitionsMode({
   selectedSubject,
   onBack,
   isDarkMode,
-  currentUser,
 }: {
   selectedLevel: string
   selectedSubject?: SubjectId
   onBack: () => void
   isDarkMode: boolean
-  currentUser?: UserAccount | null
 }) {
   type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
 
-  const currentUserId = currentUser?.id
-
-  // Locking applies only to pupils who haven't opted out
-  const lockingEnabled = currentUser?.accountType === "pupil" && !currentUser?.disableModeLocking
+  const lockingEnabled = false
 
   // Compute a subject-qualified level key so chemistry entries are kept separate from physics
   const levelKey = getDefLevelKey(selectedSubject, selectedLevel)
@@ -2112,12 +1406,8 @@ function DefinitionsMode({
   const [swappedSelections, setSwappedSelections] = useState<Set<number>>(new Set())
   const [kwBuilderPlaced, setKwBuilderPlaced] = useState<Record<number, string[]>>({})
   const [kwBuilderBank, setKwBuilderBank] = useState<Record<number, string[]>>({})
-  const [progress, setProgress] = useState<Record<string, DefProgress>>(() =>
-    currentUserId ? loadUserDefProgress(currentUserId, selectedLevel) : loadDefProgress(selectedLevel)
-  )
-  const [completion, setCompletion] = useState<DefCompletion>(() =>
-    currentUserId ? loadUserDefCompletion(currentUserId, selectedLevel) : loadDefCompletion(selectedLevel)
-  )
+  const [progress, setProgress] = useState<Record<string, DefProgress>>(() => loadDefProgress(selectedLevel))
+  const [completion, setCompletion] = useState<DefCompletion>(() => loadDefCompletion(selectedLevel))
 
   // Check if a specific quizType+difficulty combo is unlocked for a given topic
   const isUnlockedForTopic = (topic: string, qt: QuizType, diff: DifficultyLevel): boolean => {
@@ -2287,8 +1577,7 @@ function DefinitionsMode({
       })
     })
     setProgress(updated)
-    if (currentUserId) saveUserDefProgress(currentUserId, selectedLevel, updated)
-    else saveDefProgress(selectedLevel, updated)
+    saveDefProgress(selectedLevel, updated)
     setSubmitted(true)
     // For each selected topic, mark this quizType+difficulty as completed only if ALL
     // definitions for that topic covered in this quiz were answered correctly.
@@ -2339,8 +1628,7 @@ function DefinitionsMode({
       }
     })
     setCompletion(updatedCompletion)
-    if (currentUserId) saveUserDefCompletion(currentUserId, selectedLevel, updatedCompletion)
-    else saveDefCompletion(selectedLevel, updatedCompletion)
+    saveDefCompletion(selectedLevel, updatedCompletion)
     setPhase("results")
   }
 
@@ -3195,30 +2483,284 @@ function DefinitionsMode({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
 
-        <div className="flex gap-3">
-          <button onClick={() => { setDifficulty(suggestedDifficulty); setPhase("unit-select") }}
-            className={`flex-1 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-slate-600 hover:border-slate-400" : "border-slate-200 hover:border-slate-400"}`}>
-            New Quiz
-          </button>
-          <button onClick={() => setPhase("progress")}
-            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-black border-2 transition-colors ${isDarkMode ? "border-amber-600 hover:border-amber-400 text-amber-400" : "border-amber-400 hover:border-amber-600 text-amber-600"}`}>
-            <BarChart2 className="w-4 h-4" />
-            Progress
-          </button>
-          <button onClick={() => { startQuiz() }}
-            className="flex-1 py-3 rounded-xl font-black bg-[#800000] text-white hover:bg-[#600000] transition-colors">
-            Try Again
-          </button>
+function Navbar({
+  view,
+  appMode,
+  selectedLevel,
+  selectedSubject,
+  onHome,
+  isDarkMode,
+}: {
+  view: ViewType
+  appMode: AppMode
+  selectedLevel: string
+  selectedSubject: SubjectId
+  onHome: () => void
+  isDarkMode: boolean
+}) {
+  const [daysToExam, setDaysToExam] = useState<number | null>(null)
+
+  useEffect(() => {
+    const examDate = EXAM_DATES[selectedSubject]
+    if (!examDate) {
+      setDaysToExam(null)
+      return
+    }
+    const compute = () => {
+      const now = new Date()
+      const exam = new Date(examDate + "T00:00:00")
+      const diffMs = exam.getTime() - now.getTime()
+      setDaysToExam(diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : null)
+    }
+    compute()
+    const id = setInterval(compute, 60_000)
+    return () => clearInterval(id)
+  }, [selectedSubject])
+
+  return (
+    <nav
+      className={`fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md border-b transition-colors duration-300 ${
+        isDarkMode ? "bg-slate-900/80 border-slate-700 text-white" : "bg-white/80 border-slate-200 text-slate-900"
+      }`}
+    >
+      <div className="flex items-center gap-3 cursor-pointer" onClick={onHome}>
+        <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
+          <Atom className="w-6 h-6" />
+        </div>
+        <div className="flex flex-col leading-none">
+          <span className="text-xl font-black tracking-tight text-[#800000] dark:text-red-500">Trinity High</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+            {SUBJECTS.find((s) => s.id === selectedSubject)!.dept}
+          </span>
+        </div>
+      </div>
+
+      {view !== "landing" && view !== "subject-select" && (
+        <div className="hidden md:flex items-center gap-4 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-amber-600" />
+            <span className="text-sm font-medium">{selectedLevel}</span>
+          </div>
+          {appMode && (
+            <>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
+              <div className="flex items-center gap-2">
+                {appMode === "mc" ? (
+                  <MousePointer2 className="w-4 h-4 text-[#800000]" />
+                ) : appMode === "definitions" ? (
+                  <BookOpen className="w-4 h-4 text-[#800000]" />
+                ) : (
+                  <FileText className="w-4 h-4 text-[#800000]" />
+                )}
+                <span className="text-sm font-medium">
+                  {appMode === "mc"
+                    ? "Multiple Choice"
+                    : appMode === "definitions"
+                      ? "Definitions"
+                      : appMode === "retrieval"
+                        ? "Retrieval"
+                        : appMode === "calculations"
+                          ? "Calculations"
+                          : appMode === "assignment"
+                            ? "Assignment"
+                            : appMode === "practice"
+                              ? "Practice"
+                              : "Paper Questions"}
+                </span>
+              </div>
+            </>
+          )}
+          {daysToExam !== null && (
+            <>
+              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-[#800000]" />
+                <span className="text-sm font-bold text-[#800000]">
+                  {daysToExam}d to exam
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <button onClick={onHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+          <Home className="w-6 h-6" />
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+function SubjectSelection({
+  onSelectSubject,
+  isDarkMode,
+}: {
+  onSelectSubject: (subject: SubjectId) => void
+  isDarkMode: boolean
+}) {
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-4xl w-full">
+        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest mb-6 border border-amber-200 dark:border-amber-800">
+            Official Study Portal
+          </div>
+          <h1 className={`text-5xl md:text-7xl font-black mb-6 ${isDarkMode ? "text-white" : "text-[#800000]"}`}>
+            Trinity Boost.
+          </h1>
+          <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            Choose your subject to access custom assessments and mark schemes.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          {SUBJECTS.map((subject) => (
+            <button
+              key={subject.id}
+              onClick={() => onSelectSubject(subject.id)}
+              className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
+                isDarkMode
+                  ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
+                  : "bg-white border-slate-200 hover:border-[#800000]"
+              }`}
+            >
+              <div
+                className={`text-2xl font-black mb-2 transition-colors ${
+                  isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
+                }`}
+              >
+                {subject.label}
+              </div>
+              <p className="text-sm text-slate-500">{subject.desc}</p>
+              <div className="mt-6 flex justify-center">
+                <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Calculations Mode
-// ─────────────────────────────────────────────────────────────────────────────
+function Landing({
+  onSelectLevel,
+  onBack,
+  selectedSubject,
+  isDarkMode,
+}: {
+  onSelectLevel: (level: string) => void
+  onBack: () => void
+  selectedSubject: SubjectId
+  isDarkMode: boolean
+}) {
+  const [comingSoonLevel, setComingSoonLevel] = React.useState<string | null>(null)
+
+  const allLevels = [
+    { id: "National 5", desc: "SCQF Level 5 Fundamentals" },
+    {
+      id: "Higher",
+      displayId: selectedSubject === "Biology" ? "Human Higher" : undefined,
+      desc: "SCQF Level 6 Advanced Concepts",
+    },
+    { id: "Advanced Higher", desc: "SCQF Level 7 Calculus Based" },
+  ]
+  const levels = selectedSubject === "Practical Electronics" ? allLevels.slice(0, 1) : allLevels
+
+  const subjectInfo = SUBJECTS.find((s) => s.id === selectedSubject)!
+
+  function handleLevelClick(level: { id: string; displayId?: string; desc: string }) {
+    if (level.id !== "National 5") {
+      setComingSoonLevel(level.displayId ?? level.id)
+    } else {
+      onSelectLevel(level.id)
+    }
+  }
+
+  return (
+    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-4xl w-full">
+        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest mb-6 border border-amber-200 dark:border-amber-800">
+            {subjectInfo.label}
+          </div>
+          <h1 className={`text-5xl md:text-7xl font-black mb-6 ${isDarkMode ? "text-white" : "text-[#800000]"}`}>
+            Trinity Boost.
+          </h1>
+          <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
+            Select your academic level to access custom {subjectInfo.label.toLowerCase()} assessments and mark schemes.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {levels.map((level) => (
+            <button
+              key={level.id}
+              onClick={() => handleLevelClick(level)}
+              className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
+                isDarkMode
+                  ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
+                  : "bg-white border-slate-200 hover:border-[#800000]"
+              }`}
+            >
+              <div
+                className={`text-2xl font-black mb-2 transition-colors ${
+                  isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
+                }`}
+              >
+                {level.displayId ?? level.id}
+              </div>
+              <p className="text-sm text-slate-500">{level.desc}</p>
+              {level.id !== "National 5" && (
+                <div className="mt-3 inline-block px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-700">
+                  Coming Soon
+                </div>
+              )}
+              <div className="mt-4 flex justify-center">
+                <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onBack}
+          className={`text-sm font-semibold transition-colors ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-[#800000]"}`}
+        >
+          ← Back to Subjects
+        </button>
+      </div>
+
+      {/* Coming Soon popup for Higher / Advanced Higher */}
+      {comingSoonLevel && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
+            <div className="text-5xl mb-4">🚧</div>
+            <h2 className="text-2xl font-black mb-3">{comingSoonLevel} — Coming Soon!</h2>
+            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+              Content for <strong>{comingSoonLevel}</strong> is currently under development and will be available shortly. Stay tuned!
+            </p>
+            <button
+              onClick={() => setComingSoonLevel(null)}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-colors"
+            >
+              OK, got it!
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Calculations Data ──────────────────────────────────────────────────────────
 
 interface CalcQuestion {
   id: string
@@ -4436,21 +3978,21 @@ function CalculationsMode({
   selectedSubject,
   onBack,
   isDarkMode,
-  currentUser,
+
 }: {
   selectedLevel: string
   selectedSubject?: string
   onBack: () => void
   isDarkMode: boolean
-  currentUser?: UserAccount | null
+
 }) {
   type CalcDifficulty = "easy" | "medium" | "hard"
   type CalcSubMode = CalcDifficulty | "exam-level" | "correct-me" | "endless" | null
   type CalcPhase = "hub" | "equation-select" | "quiz" | "results" | "endless"
 
-  const currentUserId = currentUser?.id
-  // Locking applies only to pupils who haven't opted out
-  const lockingEnabled = currentUser?.accountType === "pupil" && !currentUser?.disableModeLocking
+
+
+  const lockingEnabled = false
 
   const [phase, setPhase] = useState<CalcPhase>("hub")
   const [subMode, setSubMode] = useState<CalcSubMode>(null)
@@ -4466,7 +4008,7 @@ function CalculationsMode({
   const [hotspotChoice, setHotspotChoice] = useState<Record<number, number>>({})
   const [currentStepIdx, setCurrentStepIdx] = useState(0)
   const [calcProgress, setCalcProgress] = useState<CalcProgress>(() =>
-    currentUserId ? loadUserCalcProgress(currentUserId, selectedLevel) : defaultCalcProgress()
+    loadCalcProgress(selectedLevel)
   )
 
   // ── Endless mode state ─────────────────────────────────────────────────────
@@ -5154,8 +4696,7 @@ function CalculationsMode({
       if (isExam && !isLastStep) {
         setCurrentStepIdx((s) => s + 1)
       } else if (isLastQ) {
-        if (currentUserId) {
-          const existing = loadUserCalcProgress(currentUserId, selectedLevel)
+        const existing = loadCalcProgress(selectedLevel)
           if (isDifficultyMode && selectedEquationId) {
             const modeKey = subMode === "easy" ? "easyMode" : subMode === "medium" ? "mediumMode" : "hardMode"
             let correct = 0
@@ -5172,9 +4713,8 @@ function CalculationsMode({
             const correct = questions.filter((q, i) => hotspotChoice[i] === q.mistakeOptionIndex).length
             existing.correctMe = { correct: existing.correctMe.correct + correct, total: existing.correctMe.total + questions.length }
           }
-          saveUserCalcProgress(currentUserId, selectedLevel, existing)
+          saveCalcProgress(selectedLevel, existing)
           setCalcProgress(existing)
-        }
         setPhase("results")
       } else {
         setCurrentIdx((i) => i + 1)
@@ -5503,18 +5043,18 @@ function CalculationsMode({
   return null
 }
 
+// ─── AssignmentMode ─────────────────────────────────────────────────────────────
+
 function AssignmentMode({
   selectedLevel,
   selectedSubject,
   onBack,
   isDarkMode,
-  currentUser,
 }: {
   selectedLevel: string
   selectedSubject?: string
   onBack: () => void
   isDarkMode: boolean
-  currentUser?: UserAccount | null
 }) {
   type AssignPhase = "hub" | "practice" | "mark" | "review" | "improve"
   type MarkPhase = "select-paper" | "marking" | "submitted"
@@ -5558,9 +5098,6 @@ function AssignmentMode({
   function saveCustomQuestions(updated: PracticeQuestion[]) {
     setCustomQuestions(updated)
     if (typeof window !== "undefined") localStorage.setItem(ASSIGNMENT_CUSTOM_QUESTIONS_KEY, JSON.stringify(updated))
-    if (currentUser?.id) {
-      void persistCustomQuestionsToSupabase(currentUser.id, ASSIGNMENT_CUSTOM_QUESTIONS_KEY, updated)
-    }
   }
 
   // ── Mark state ───────────────────────────────────────────────────────────
@@ -5736,9 +5273,8 @@ function AssignmentMode({
                 {pct >= 80 ? "Excellent understanding of the marking scheme!" : pct >= 60 ? "Good progress — review the sections you missed." : "Keep practising — focus on the marking criteria for each section."}
               </p>
 
-              {/* Teacher: add custom question */}
-              {currentUser?.accountType === "teacher" && (
-                <div className="mb-6 text-left">
+              {/* Add custom question */}
+              <div className="mb-6 text-left">
                   <button
                     onClick={() => setShowAddQuestion((v) => !v)}
                     className={`w-full py-2 rounded-xl font-bold text-sm border-2 transition-colors mb-3 ${
@@ -5837,7 +5373,6 @@ function AssignmentMode({
                     </div>
                   )}
                 </div>
-              )}
 
               <div className="flex gap-3">
                 <button
@@ -6736,1243 +6271,16 @@ function AssignmentMode({
 
 // --- Auth Modal ---
 
-function AuthModal({
-  isOpen,
-  onClose,
-  onSignIn,
-  isDarkMode,
-}: {
-  isOpen: boolean
-  onClose: () => void
-  onSignIn: (user: UserAccount, isNewAccount?: boolean) => void
-  isDarkMode: boolean
-}) {
-  const [tab, setTab] = useState<"signin" | "signup">("signin")
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [accountType, setAccountType] = useState<AccountType>("pupil")
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  // Level selection step (for pupils after signup)
-  const [signupStep, setSignupStep] = useState<"details" | "levels">("details")
-  const [pendingUser, setPendingUser] = useState<UserAccount | null>(null)
-  const [pendingPassword, setPendingPassword] = useState("")
-  const LEVEL_OPTIONS = ["not sitting", "National 5", "Higher", "Advanced Higher"] as const
-  const [subjectLevels, setSubjectLevels] = useState<Partial<Record<SubjectId, string>>>({})
-
-  // Reset form state each time the modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setTab("signin")
-      setName("")
-      setEmail("")
-      setPassword("")
-      setConfirmPassword("")
-      setShowPassword(false)
-      setShowConfirmPassword(false)
-      setAccountType("pupil")
-      setError("")
-      setSuccess("")
-      setSignupStep("details")
-      setPendingUser(null)
-      setPendingPassword("")
-      setSubjectLevels({})
-    }
-  }, [isOpen])
-
-  if (!isOpen) return null
-
-  async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-    try {
-      const normalizedEmail = email.trim().toLowerCase()
-      const accounts = loadAccounts()
-      const found = accounts.find((a) => a.email.toLowerCase() === normalizedEmail)
-      const supabase = getSupabaseBrowserClient()
-
-      if (found?.isTestAccount) {
-        if (!found.password) {
-          setError("This test account is missing a password.")
-          return
-        }
-        const valid = await verifyPassword(password, found.password)
-        if (!valid) {
-          setError("Incorrect password. Please try again.")
-          return
-        }
-        saveCurrentUser(found)
-        onSignIn(found)
-        onClose()
-        return
-      }
-
-      if (supabase && isSupabaseConfigured()) {
-        const { error: supabaseError } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        })
-        if (supabaseError) {
-          if (found?.password) {
-            const valid = await verifyPassword(password, found.password)
-            if (valid) {
-              saveCurrentUser(found)
-              onSignIn(found)
-              onClose()
-              return
-            }
-          }
-          setError("Incorrect email or password. Please try again.")
-          return
-        }
-
-        const { data: authUserData } = await supabase.auth.getUser()
-        const authUser = authUserData.user
-        if (!authUser) {
-          setError("Signed in, but failed to load your profile. Please try again.")
-          return
-        }
-
-        const metaName = typeof authUser.user_metadata?.name === "string" ? authUser.user_metadata.name : undefined
-        const metaAccountType = authUser.user_metadata?.accountType === "teacher" ? "teacher" : "pupil"
-        const metaSubjectLevels = authUser.user_metadata?.subjectLevels as Partial<Record<SubjectId, string>> | undefined
-
-        const persistedAccount: UserAccount = {
-          ...(found ?? {
-            id: authUser.id,
-            name: metaName ?? normalizedEmail.split("@")[0],
-            email: authUser.email ?? normalizedEmail,
-            accountType: metaAccountType,
-          }),
-          id: authUser.id,
-          name: found?.name ?? metaName ?? normalizedEmail.split("@")[0],
-          email: authUser.email ?? normalizedEmail,
-          accountType: found?.accountType ?? metaAccountType,
-          subjectLevels: found?.subjectLevels ?? metaSubjectLevels,
-          disableModeLocking: found?.disableModeLocking,
-          isTestAccount: false,
-        }
-
-        upsertLocalAccount(persistedAccount)
-        saveCurrentUser(persistedAccount)
-        void upsertSupabaseProfileAndSettings(persistedAccount)
-        onSignIn(persistedAccount)
-        onClose()
-        return
-      }
-
-      if (!found) {
-        setError("No account found with that email. Please create an account first.")
-        return
-      }
-      if (found.password) {
-        const valid = await verifyPassword(password, found.password)
-        if (!valid) {
-          setError("Incorrect password. Please try again.")
-          return
-        }
-      }
-      saveCurrentUser(found)
-      onSignIn(found)
-      onClose()
-    } catch {
-      setError("An error occurred during sign in. Please try again.")
-    }
-  }
-
-  async function completeSupabaseSignUp(draftUser: UserAccount, plainPassword: string, levels?: Partial<Record<SubjectId, string>>) {
-    const supabase = getSupabaseBrowserClient()
-    const finalUser: UserAccount = {
-      ...draftUser,
-      email: draftUser.email.trim().toLowerCase(),
-      ...(levels ? { subjectLevels: levels } : {}),
-    }
-
-    if (!supabase || !isSupabaseConfigured()) {
-      const hashedPassword = await hashPassword(plainPassword)
-      const localUser: UserAccount = { ...finalUser, password: hashedPassword }
-      const existingAccounts = loadAccounts()
-      if (!existingAccounts.some((a) => a.email.toLowerCase() === localUser.email.toLowerCase())) {
-        saveAccounts([...existingAccounts, localUser])
-      }
-      saveCurrentUser(localUser)
-      setSuccess("Account created!")
-      setTimeout(() => {
-        onSignIn(localUser, true)
-        onClose()
-      }, 800)
-      return
-    }
-
-    const { data: signUpData, error: supabaseError } = await supabase.auth.signUp({
-      email: finalUser.email,
-      password: plainPassword,
-      options: {
-        data: {
-          name: finalUser.name,
-          accountType: finalUser.accountType,
-          subjectLevels: finalUser.subjectLevels,
-        },
-      },
-    })
-
-    if (supabaseError) {
-      setError(supabaseError.message || "An error occurred during account creation. Please try again.")
-      return
-    }
-
-    const newUser: UserAccount = {
-      ...finalUser,
-      id: signUpData.user?.id ?? finalUser.id,
-      email: signUpData.user?.email ?? finalUser.email,
-    }
-    upsertLocalAccount(newUser)
-    saveCurrentUser(newUser)
-    void upsertSupabaseProfileAndSettings(newUser)
-    setSuccess("Account created!")
-    setTimeout(() => {
-      onSignIn(newUser, true)
-      onClose()
-    }, 800)
-  }
-
-  async function handleSignUp(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-    if (!name.trim() || !email.trim() || !password) {
-      setError("Please fill in all fields.")
-      return
-    }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.")
-      return
-    }
-    if (!/[A-Z]/.test(password)) {
-      setError("Password must contain at least one capital letter.")
-      return
-    }
-    if (!/[0-9]/.test(password)) {
-      setError("Password must contain at least one number.")
-      return
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.")
-      return
-    }
-    const accounts = loadAccounts()
-    if (accounts.find((a) => a.email.toLowerCase() === email.toLowerCase())) {
-      setError("An account with this email already exists. Please sign in.")
-      return
-    }
-    try {
-      const draftUser: UserAccount = {
-        id: generateId(),
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        accountType,
-      }
-      if (accountType === "pupil") {
-        // For pupils: go to level selection step before finalising
-        setPendingUser(draftUser)
-        setPendingPassword(password)
-        setSignupStep("levels")
-      } else {
-        // Teachers: create account immediately
-        await completeSupabaseSignUp(draftUser, password)
-      }
-    } catch {
-      setError("An error occurred during account creation. Please try again.")
-    }
-  }
-
-  async function handleLevelSelectionDone() {
-    if (!pendingUser || !pendingPassword) return
-    await completeSupabaseSignUp(pendingUser, pendingPassword, subjectLevels)
-  }
-
-  // ── Level Selection Step (pupils only) ──────────────────────────────────
-  if (signupStep === "levels") {
-    return (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-        <div
-          className={`relative w-full max-w-md rounded-2xl shadow-2xl p-8 ${
-            isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
-              <Atom className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[#800000]">Select Your Levels</h2>
-              <p className="text-xs text-slate-500">Tell us what you&apos;re sitting this year</p>
-            </div>
-          </div>
-          <p className={`text-sm mb-5 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-            For each subject, select the level you&apos;re sitting. Choose <strong>&quot;Not Sitting&quot;</strong> if you&apos;re not studying that subject.
-          </p>
-          <div className="space-y-4 mb-6">
-            {SUBJECTS.map((subject) => {
-              const availableLevels = subject.id === "Practical Electronics"
-                ? (["not sitting", "National 5"] as const)
-                : LEVEL_OPTIONS
-              const current = subjectLevels[subject.id] ?? "not sitting"
-              return (
-                <div key={subject.id}>
-                  <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
-                    {subject.label}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableLevels.map((lvl) => (
-                      <button
-                        key={lvl}
-                        type="button"
-                        onClick={() => setSubjectLevels((prev) => ({ ...prev, [subject.id]: lvl }))}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                          current === lvl
-                            ? lvl === "not sitting"
-                              ? "bg-slate-500 text-white border-slate-500"
-                              : "bg-[#800000] text-white border-[#800000]"
-                            : isDarkMode
-                              ? "border-slate-600 text-slate-300 hover:border-slate-400"
-                              : "border-slate-200 text-slate-600 hover:border-slate-400"
-                        }`}
-                      >
-                        {lvl === "not sitting" ? "Not Sitting" : lvl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          {success && <p className="text-green-500 text-sm font-semibold mb-3">{success}</p>}
-          <button
-            onClick={handleLevelSelectionDone}
-            className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            Create Account
-          </button>
-          <button
-            onClick={() => setSignupStep("details")}
-            className={`mt-3 w-full py-2 text-xs font-semibold transition-colors ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"}`}
-          >
-            ← Back to details
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className={`relative w-full max-w-md rounded-2xl shadow-2xl p-8 ${
-          isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
-        }`}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
-            <Atom className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-black text-[#800000]">Trinity Boost</h2>
-            <p className="text-xs text-slate-500">Physics Study Portal</p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-          <button
-            onClick={() => { setTab("signin"); setError(""); }}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
-              tab === "signin"
-                ? "bg-[#800000] text-white shadow-md"
-                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setTab("signup"); setError(""); }}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${
-              tab === "signup"
-                ? "bg-[#800000] text-white shadow-md"
-                : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {tab === "signin" ? (
-          <form onSubmit={handleSignIn} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password"
-                  required
-                  className={`w-full px-4 py-2.5 pr-10 rounded-xl border text-sm transition-colors ${
-                    isDarkMode
-                      ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                      : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                  } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button
-              type="submit"
-              className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </button>
-
-            {/* Demo / Test Accounts */}
-            <div className={`mt-2 rounded-xl border p-3 ${isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Demo accounts (password: <span className="font-mono">{TEST_ACCOUNT_PASSWORD}</span>)</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {TEST_ACCOUNTS.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => { setEmail(a.email); setPassword(TEST_ACCOUNT_PASSWORD); }}
-                    className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
-                      a.accountType === "teacher"
-                        ? isDarkMode ? "bg-amber-900/30 hover:bg-amber-900/50 text-amber-300" : "bg-amber-50 hover:bg-amber-100 text-amber-700"
-                        : isDarkMode ? "bg-[#800000]/20 hover:bg-[#800000]/40 text-red-300" : "bg-red-50 hover:bg-red-100 text-[#800000]"
-                    }`}
-                  >
-                    <span className="font-semibold block">{a.name}</span>
-                    <span className="opacity-70">{a.accountType}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleSignUp} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-1">Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                required
-                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                className={`w-full px-4 py-2.5 rounded-xl border text-sm transition-colors ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
-                  required
-                  className={`w-full px-4 py-2.5 pr-10 rounded-xl border text-sm transition-colors ${
-                    isDarkMode
-                      ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                      : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                  } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">Must be at least 8 characters and include a capital letter and a number.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Confirm Password</label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat your password"
-                  required
-                  className={`w-full px-4 py-2.5 pr-10 rounded-xl border text-sm transition-colors ${
-                    isDarkMode
-                      ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500 focus:border-[#800000]"
-                      : "bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-[#800000]"
-                  } outline-none focus:ring-2 focus:ring-[#800000]/20`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Account Type Selection */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">I am a…</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAccountType("pupil")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    accountType === "pupil"
-                      ? "border-[#800000] bg-[#800000]/10"
-                      : isDarkMode ? "border-slate-700 hover:border-slate-500" : "border-slate-200 hover:border-slate-400"
-                  }`}
-                >
-                  <UserCircle className={`w-7 h-7 ${accountType === "pupil" ? "text-[#800000]" : "text-slate-400"}`} />
-                  <span className={`text-sm font-bold ${accountType === "pupil" ? "text-[#800000]" : ""}`}>Pupil</span>
-                  <span className="text-[10px] text-slate-400 text-center leading-tight">Access quizzes &amp; progress</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccountType("teacher")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    accountType === "teacher"
-                      ? "border-amber-600 bg-amber-600/10"
-                      : isDarkMode ? "border-slate-700 hover:border-slate-500" : "border-slate-200 hover:border-slate-400"
-                  }`}
-                >
-                  <GraduationCap className={`w-7 h-7 ${accountType === "teacher" ? "text-amber-600" : "text-slate-400"}`} />
-                  <span className={`text-sm font-bold ${accountType === "teacher" ? "text-amber-600" : ""}`}>Teacher</span>
-                  <span className="text-[10px] text-slate-400 text-center leading-tight">Manage classes &amp; view progress</span>
-                </button>
-              </div>
-            </div>
-
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            {success && <p className="text-green-500 text-sm font-semibold">{success}</p>}
-            <p className={`text-[11px] rounded-xl p-3 border ${isDarkMode ? "text-slate-400 bg-slate-800 border-slate-700" : "text-slate-500 bg-slate-50 border-slate-200"}`}>
-              🔒 <strong>Data Protection:</strong> Your name and email are stored securely on this device and are only used within Trinity Boost. Your progress data is visible to your teacher within your class. We do not share your information with third parties.
-            </p>
-            <button
-              type="submit"
-              className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              Create Account
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// --- Class Management (Teacher) ---
-
-function ClassManagement({
-  currentUser,
-  isDarkMode,
-  onClose,
-}: {
-  currentUser: UserAccount
-  isDarkMode: boolean
-  onClose: () => void
-}) {
-  const [groups, setGroups] = useState<ClassGroup[]>(() => loadClassGroups())
-  const [newClassName, setNewClassName] = useState("")
-  const [joinCode, setJoinCode] = useState("")
-  const [joinError, setJoinError] = useState("")
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
-
-  const myGroups = currentUser.accountType === "teacher"
-    ? groups.filter((g) => g.teacherId === currentUser.id)
-    : groups.filter((g) => g.memberIds.includes(currentUser.id))
-
-  const allAccounts = loadAccounts()
-
-  function getMemberName(id: string): string {
-    return allAccounts.find((a) => a.id === id)?.name ?? "Unknown"
-  }
-
-  function handleCreateClass(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newClassName.trim()) return
-    const newGroup: ClassGroup = {
-      id: generateId(),
-      name: newClassName.trim(),
-      teacherId: currentUser.id,
-      memberIds: [],
-      code: generateClassCode(),
-    }
-    const updated = [...groups, newGroup]
-    saveClassGroups(updated)
-    void persistClassGroupsToSupabase(currentUser.id, updated)
-    setGroups(updated)
-    setNewClassName("")
-  }
-
-  function handleDeleteClass(groupId: string) {
-    const updated = groups.filter((g) => g.id !== groupId)
-    saveClassGroups(updated)
-    void persistClassGroupsToSupabase(currentUser.id, updated)
-    setGroups(updated)
-  }
-
-  function handleJoinClass(e: React.FormEvent) {
-    e.preventDefault()
-    setJoinError("")
-    const group = groups.find((g) => g.code === joinCode.trim().toUpperCase())
-    if (!group) {
-      setJoinError("Class code not found. Please check and try again.")
-      return
-    }
-    if (group.memberIds.includes(currentUser.id)) {
-      setJoinError("You are already in this class.")
-      return
-    }
-    const updated = groups.map((g) =>
-      g.id === group.id ? { ...g, memberIds: [...g.memberIds, currentUser.id] } : g
-    )
-    saveClassGroups(updated)
-    void persistClassGroupsToSupabase(currentUser.id, updated)
-    setGroups(updated)
-    setJoinCode("")
-  }
-
-  function handleLeaveClass(groupId: string) {
-    const updated = groups.map((g) =>
-      g.id === groupId ? { ...g, memberIds: g.memberIds.filter((id) => id !== currentUser.id) } : g
-    )
-    saveClassGroups(updated)
-    void persistClassGroupsToSupabase(currentUser.id, updated)
-    setGroups(updated)
-  }
-
-  function copyCode(code: string) {
-    navigator.clipboard.writeText(code).then(
-      () => {
-        setCopiedCode(code)
-        setTimeout(() => setCopiedCode(null), 2000)
-      },
-      () => {
-        setCopiedCode(code)
-        setTimeout(() => setCopiedCode(null), 2000)
-      }
-    )
-  }
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className={`relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl shadow-2xl p-8 ${
-          isDarkMode ? "bg-slate-900 text-white border border-slate-700" : "bg-white text-slate-900 border border-slate-200"
-        }`}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-black">Class Management</h2>
-            <p className="text-xs text-slate-500">
-              {currentUser.accountType === "teacher" ? "Manage your class groups" : "Your enrolled classes"}
-            </p>
-          </div>
-        </div>
-
-        {currentUser.accountType === "teacher" ? (
-          <>
-            {/* Create new class */}
-            <form onSubmit={handleCreateClass} className="flex gap-2 mb-6">
-              <input
-                type="text"
-                value={newClassName}
-                onChange={(e) => setNewClassName(e.target.value)}
-                placeholder="New class name…"
-                className={`flex-1 px-4 py-2.5 rounded-xl border text-sm ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500"
-                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
-                } outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500`}
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-1"
-              >
-                <Plus className="w-4 h-4" />
-                Create
-              </button>
-            </form>
-
-            {myGroups.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-8">No classes yet. Create one above.</p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {myGroups.map((group) => (
-                  <div
-                    key={group.id}
-                    className={`rounded-xl border p-4 ${
-                      isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-bold">{group.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyCode(group.code)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                            copiedCode === group.code
-                              ? "border-green-500 text-green-600 bg-green-50 dark:bg-green-900/20"
-                              : isDarkMode ? "border-slate-600 hover:border-amber-500 text-slate-300 hover:text-amber-400" : "border-slate-300 hover:border-amber-500 text-slate-600 hover:text-amber-600"
-                          }`}
-                          title="Copy join code"
-                        >
-                          {copiedCode === group.code ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                          {group.code}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClass(group.id)}
-                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete class"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-xs text-slate-400">{group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}</span>
-                    </div>
-                    {group.memberIds.length > 0 && (
-                      <ul className="flex flex-col gap-1 mt-2">
-                        {group.memberIds.map((id) => (
-                          <li key={id} className="flex items-center gap-2 text-sm">
-                            <UserCircle className="w-4 h-4 text-slate-400" />
-                            {getMemberName(id)}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Join a class */}
-            <form onSubmit={handleJoinClass} className="flex gap-2 mb-6">
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="Enter class code…"
-                maxLength={6}
-                className={`flex-1 px-4 py-2.5 rounded-xl border text-sm uppercase tracking-widest font-mono ${
-                  isDarkMode
-                    ? "bg-slate-800 border-slate-600 text-white placeholder-slate-500"
-                    : "bg-white border-slate-300 text-slate-900 placeholder-slate-400"
-                } outline-none focus:ring-2 focus:ring-[#800000]/20 focus:border-[#800000]`}
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-1"
-              >
-                <Plus className="w-4 h-4" />
-                Join
-              </button>
-            </form>
-            {joinError && <p className="text-red-500 text-sm mb-4">{joinError}</p>}
-
-            {myGroups.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-8">You haven't joined any classes yet.</p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {myGroups.map((group) => {
-                  const resolvedName = getMemberName(group.teacherId)
-                  const teacherName = resolvedName !== "Unknown"
-                    ? resolvedName
-                    : allAccounts.find((a) => a.id === group.teacherId)?.name ?? "Teacher"
-                  return (
-                    <div
-                      key={group.id}
-                      className={`rounded-xl border p-4 ${
-                        isDarkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold">{group.name}</h3>
-                        <button
-                          onClick={() => handleLeaveClass(group.id)}
-                          className="text-xs text-red-400 hover:text-red-600 font-semibold transition-colors"
-                        >
-                          Leave
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
-                        <span className="text-xs text-slate-400">{teacherName}</span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <Users className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-xs text-slate-400">{group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function Navbar({
-  view,
-  appMode,
-  selectedLevel,
-  selectedSubject,
-  onHome,
-  isDarkMode,
-  currentUser,
-  onSignInClick,
-  onSignOut,
-  onClassesClick,
-  onProfileClick,
-}: {
-  view: ViewType
-  appMode: AppMode
-  selectedLevel: string
-  selectedSubject: SubjectId
-  onHome: () => void
-  isDarkMode: boolean
-  currentUser: UserAccount | null
-  onSignInClick: () => void
-  onSignOut: () => void
-  onClassesClick: () => void
-  onProfileClick: () => void
-}) {
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [daysToExam, setDaysToExam] = useState<number | null>(null)
-
-  useEffect(() => {
-    const examDate = EXAM_DATES[selectedSubject]
-    if (!examDate) { setDaysToExam(null); return }
-    const compute = () => {
-      const now = new Date()
-      const exam = new Date(examDate + "T00:00:00")
-      const diffMs = exam.getTime() - now.getTime()
-      setDaysToExam(diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : null)
-    }
-    compute()
-    const id = setInterval(compute, 60_000)
-    return () => clearInterval(id)
-  }, [selectedSubject])
-
-  return (
-    <nav
-      className={`fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md border-b transition-colors duration-300 ${
-        isDarkMode ? "bg-slate-900/80 border-slate-700 text-white" : "bg-white/80 border-slate-200 text-slate-900"
-      }`}
-    >
-      <div className="flex items-center gap-3 cursor-pointer" onClick={onHome}>
-        <div className="p-2 bg-[#800000] rounded-xl text-white shadow-lg">
-          <Atom className="w-6 h-6" />
-        </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-xl font-black tracking-tight text-[#800000] dark:text-red-500">Trinity High</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-            {SUBJECTS.find((s) => s.id === selectedSubject)!.dept}
-          </span>
-        </div>
-      </div>
-
-      {view !== "landing" && view !== "subject-select" && (
-        <div className="hidden md:flex items-center gap-4 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-amber-600" />
-            <span className="text-sm font-medium">{selectedLevel}</span>
-          </div>
-          {appMode && (
-            <>
-              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
-              <div className="flex items-center gap-2">
-                {appMode === "mc" ? (
-                  <MousePointer2 className="w-4 h-4 text-[#800000]" />
-                ) : appMode === "definitions" ? (
-                  <BookOpen className="w-4 h-4 text-[#800000]" />
-                ) : (
-                  <FileText className="w-4 h-4 text-[#800000]" />
-                )}
-                <span className="text-sm font-medium">
-                  {appMode === "mc"
-                    ? "Multiple Choice"
-                    : appMode === "definitions"
-                      ? "Definitions"
-                      : appMode === "retrieval"
-                        ? "Retrieval"
-                        : appMode === "calculations"
-                          ? "Calculations"
-                          : appMode === "assignment"
-                            ? "Assignment"
-                            : appMode === "practice"
-                              ? "Practice"
-                              : "Paper Questions"}
-                </span>
-              </div>
-            </>
-          )}
-          {daysToExam !== null && (
-            <>
-              <div className="w-px h-4 bg-slate-300 dark:bg-slate-600" />
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-[#800000]" />
-                <span className="text-sm font-bold text-[#800000]">
-                  {daysToExam}d to exam
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="flex items-center gap-2">
-        <button onClick={onHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-          <Home className="w-6 h-6" />
-        </button>
-
-        {currentUser ? (
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-                isDarkMode
-                  ? "border-slate-700 bg-slate-800 hover:border-slate-500"
-                  : "border-slate-200 bg-white hover:border-slate-400"
-              }`}
-            >
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black ${
-                  currentUser.accountType === "teacher" ? "bg-amber-600" : "bg-[#800000]"
-                }`}
-              >
-                {currentUser.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="hidden sm:block text-sm font-semibold max-w-[100px] truncate">{currentUser.name}</span>
-              {currentUser.accountType === "teacher" && (
-                <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-700">
-                  Teacher
-                </span>
-              )}
-              <ChevronDown className="w-4 h-4 text-slate-400" />
-            </button>
-
-            {userMenuOpen && (
-              <div
-                className={`absolute right-0 top-full mt-2 w-52 rounded-xl shadow-xl border overflow-hidden ${
-                  isDarkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"
-                }`}
-              >
-                <div className={`px-4 py-3 border-b ${isDarkMode ? "border-slate-700" : "border-slate-100"}`}>
-                  <p className="text-sm font-bold truncate">{currentUser.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
-                </div>
-                <button
-                  onClick={() => { onProfileClick(); setUserMenuOpen(false) }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${
-                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <UserCircle className="w-4 h-4 text-[#800000]" />
-                  My Profile
-                </button>
-                <button
-                  onClick={() => { onClassesClick(); setUserMenuOpen(false) }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${
-                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <Users className="w-4 h-4 text-amber-600" />
-                  {currentUser.accountType === "teacher" ? "Manage Classes" : "My Classes"}
-                </button>
-                <button
-                  onClick={() => { onSignOut(); setUserMenuOpen(false) }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500 transition-colors ${
-                    isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-50"
-                  }`}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            )}
-
-            {/* Click-outside overlay */}
-            {userMenuOpen && (
-              <div className="fixed inset-0 z-[-1]" onClick={() => setUserMenuOpen(false)} />
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={onSignInClick}
-            className="flex items-center gap-2 px-4 py-2 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors shadow-md"
-          >
-            <LogIn className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign In</span>
-          </button>
-        )}
-      </div>
-    </nav>
-  )
-}
-
-function SubjectSelection({
-  onSelectSubject,
-  isDarkMode,
-}: {
-  onSelectSubject: (subject: SubjectId) => void
-  isDarkMode: boolean
-}) {
-  return (
-    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
-      <div className="max-w-4xl w-full">
-        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest mb-6 border border-amber-200 dark:border-amber-800">
-            Official Study Portal
-          </div>
-          <h1 className={`text-5xl md:text-7xl font-black mb-6 ${isDarkMode ? "text-white" : "text-[#800000]"}`}>
-            Trinity Boost.
-          </h1>
-          <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Choose your subject to access custom assessments and mark schemes.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-          {SUBJECTS.map((subject) => (
-            <button
-              key={subject.id}
-              onClick={() => onSelectSubject(subject.id)}
-              className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
-                isDarkMode
-                  ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
-                  : "bg-white border-slate-200 hover:border-[#800000]"
-              }`}
-            >
-              <div
-                className={`text-2xl font-black mb-2 transition-colors ${
-                  isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
-                }`}
-              >
-                {subject.label}
-              </div>
-              <p className="text-sm text-slate-500">{subject.desc}</p>
-              <div className="mt-6 flex justify-center">
-                <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Landing({
-  onSelectLevel,
-  onBack,
-  selectedSubject,
-  isDarkMode,
-}: {
-  onSelectLevel: (level: string) => void
-  onBack: () => void
-  selectedSubject: SubjectId
-  isDarkMode: boolean
-}) {
-  const [comingSoonLevel, setComingSoonLevel] = React.useState<string | null>(null)
-
-  const allLevels = [
-    { id: "National 5", desc: "SCQF Level 5 Fundamentals" },
-    {
-      id: "Higher",
-      displayId: selectedSubject === "Biology" ? "Human Higher" : undefined,
-      desc: "SCQF Level 6 Advanced Concepts",
-    },
-    { id: "Advanced Higher", desc: "SCQF Level 7 Calculus Based" },
-  ]
-  const levels = selectedSubject === "Practical Electronics" ? allLevels.slice(0, 1) : allLevels
-
-  const subjectInfo = SUBJECTS.find((s) => s.id === selectedSubject)!
-
-  function handleLevelClick(level: { id: string; displayId?: string; desc: string }) {
-    if (level.id !== "National 5") {
-      setComingSoonLevel(level.displayId ?? level.id)
-    } else {
-      onSelectLevel(level.id)
-    }
-  }
-
-  return (
-    <div className="pt-24 min-h-screen flex flex-col items-center justify-center p-6 text-center">
-      <div className="max-w-4xl w-full">
-        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs font-black uppercase tracking-widest mb-6 border border-amber-200 dark:border-amber-800">
-            {subjectInfo.label}
-          </div>
-          <h1 className={`text-5xl md:text-7xl font-black mb-6 ${isDarkMode ? "text-white" : "text-[#800000]"}`}>
-            Trinity Boost.
-          </h1>
-          <p className={`text-xl md:text-2xl mb-12 max-w-2xl mx-auto ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
-            Select your academic level to access custom {subjectInfo.label.toLowerCase()} assessments and mark schemes.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {levels.map((level) => (
-            <button
-              key={level.id}
-              onClick={() => handleLevelClick(level)}
-              className={`group relative p-10 rounded-3xl border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl ${
-                isDarkMode
-                  ? "bg-slate-800/50 border-slate-700 hover:border-amber-500"
-                  : "bg-white border-slate-200 hover:border-[#800000]"
-              }`}
-            >
-              <div
-                className={`text-2xl font-black mb-2 transition-colors ${
-                  isDarkMode ? "group-hover:text-amber-500" : "group-hover:text-[#800000]"
-                }`}
-              >
-                {level.displayId ?? level.id}
-              </div>
-              <p className="text-sm text-slate-500">{level.desc}</p>
-              {level.id !== "National 5" && (
-                <div className="mt-3 inline-block px-3 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-700">
-                  Coming Soon
-                </div>
-              )}
-              <div className="mt-4 flex justify-center">
-                <div className="w-10 h-1 bg-amber-500 transition-all duration-500 group-hover:w-full" />
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={onBack}
-          className={`text-sm font-semibold transition-colors ${isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-[#800000]"}`}
-        >
-          ← Back to Subjects
-        </button>
-      </div>
-
-      {/* Coming Soon popup for Higher / Advanced Higher */}
-      {comingSoonLevel && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
-            <div className="text-5xl mb-4">🚧</div>
-            <h2 className="text-2xl font-black mb-3">{comingSoonLevel} — Coming Soon!</h2>
-            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Content for <strong>{comingSoonLevel}</strong> is currently under development and will be available shortly. Stay tuned!
-            </p>
-            <button
-              onClick={() => setComingSoonLevel(null)}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm transition-colors"
-            >
-              OK, got it!
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── ExamPaperMode ────────────────────────────────────────────────────────────
 
 function ExamPaperMode({
   selectedLevel,
   onBack,
   isDarkMode,
-  currentUserId,
 }: {
   selectedLevel: string
   onBack: () => void
   isDarkMode: boolean
-  currentUserId: string | undefined
 }) {
   type ExamPhase = "hub" | "exam" | "review" | "results"
 
@@ -8082,13 +6390,12 @@ function ExamPaperMode({
   const grade = percentage >= 70 ? "A" : percentage >= 60 ? "B" : percentage >= 50 ? "C" : percentage >= 40 ? "D" : "NA"
 
   function getPaperAttempts(paperId: string): PaperAttempt[] {
-    if (!currentUserId) return []
-    const progress = loadUserExamProgress(currentUserId, selectedLevel)
+    const progress = loadExamProgress(selectedLevel)
     return progress.pastPapers?.[paperId] ?? []
   }
 
   function saveAttempt() {
-    if (!currentUserId || !selectedPaper || resultsSaved) return
+    if (!selectedPaper || resultsSaved) return
     const attempt: PaperAttempt = {
       date: Date.now(),
       timeTakenSeconds: timeTaken,
@@ -8096,7 +6403,7 @@ function ExamPaperMode({
       marksTotal: totalMarks,
       partMarks: { ...examMarks },
     }
-    const existing = loadUserExamProgress(currentUserId, selectedLevel)
+    const existing = loadExamProgress(selectedLevel)
     const paperId = selectedPaper.id
     existing.pastPapers = {
       ...existing.pastPapers,
@@ -8112,7 +6419,7 @@ function ExamPaperMode({
         })
       }
     })
-    saveUserExamProgress(currentUserId, selectedLevel, existing)
+    saveExamProgress(selectedLevel, existing)
     setResultsSaved(true)
   }
 
@@ -8759,19 +7066,6 @@ function ExamPaperMode({
               )}
             </div>
           </div>
-
-          {currentUserId && (
-            <div
-              className={`p-4 rounded-2xl border mb-8 text-center ${
-                isDarkMode
-                  ? "bg-emerald-900/20 border-emerald-800 text-emerald-400"
-                  : "bg-emerald-50 border-emerald-200 text-emerald-700"
-              }`}
-            >
-              <CheckCircle2 className="w-5 h-5 inline mr-2" />
-              <span className="text-sm font-bold">Results saved to your progress summary</span>
-            </div>
-          )}
 
           <div className="flex gap-4 justify-center">
             <button
@@ -11708,77 +10002,42 @@ function FloatingMenu({
   toggleDarkMode,
   openModal,
   view,
-  currentUser,
   selectedSubject,
 }: {
   isDarkMode: boolean
   toggleDarkMode: () => void
   openModal: (modal: string) => void
   view: ViewType
-  currentUser: UserAccount | null
   selectedSubject: SubjectId
 }) {
-const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(false)
-  const isTeacher = currentUser?.accountType === "teacher"
-  const isPupil = !isTeacher
-  const showMyLearning = isPupil && view !== "landing" && view !== "subject-select"
-  const showTeacherProgress = isTeacher && view !== "landing"
+  const showMyLearning = view !== "landing" && view !== "subject-select"
   const showCharKeyboard = view === "quiz" || view === "definitions" || view === "calculations" || view === "assignment" || view === "exam-paper" || view === "electronics-tool" || view === "experimental-techniques" || view === "bio-maths" || view === "open-ended"
   const showDataBooklet = selectedSubject === "Chemistry" && view !== "landing" && view !== "subject-select"
-  
+
   return (
-  <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
-  {showKeyboard && (
-    <CharacterKeyboard isDarkMode={isDarkMode} onClose={() => setShowKeyboard(false)} />
-  )}
-  {isOpen && (
-  <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
-  {/* Pupils: single "My Learning" button combining progress, coverage & outcomes */}
-  {showMyLearning && (
-  <button
-  onClick={() => {
-  openModal("my-learning")
-  setIsOpen(false)
-  }}
-  className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-  >
-  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-  <Award className="w-5 h-5 text-amber-600" />
-  </div>
-  <span className="text-sm font-black uppercase tracking-widest">My Learning</span>
-  </button>
-  )}
-  {/* Teachers: separate progress button (class management) */}
-  {showTeacherProgress && (
-  <button
-  onClick={() => {
-  openModal("progress")
-  setIsOpen(false)
-  }}
-  className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-  >
-  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-  <Award className="w-5 h-5 text-amber-600" />
-  </div>
-  <span className="text-sm font-black uppercase tracking-widest">Progress</span>
-  </button>
-  )}
-  {showDataBooklet && (
-    <button
-      onClick={() => {
-        openModal("data-booklet")
-        setIsOpen(false)
-      }}
-      className="bg-white dark:bg-slate-800 shadow-xl border-2 border-teal-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
-    >
-      <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
-        <FlaskConical className="w-5 h-5 text-teal-600" />
-      </div>
-      <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
-    </button>
-  )}
-          {isTeacher && (
+    <div className="fixed bottom-6 right-6 z-[150] flex flex-col items-end gap-3">
+      {showKeyboard && (
+        <CharacterKeyboard isDarkMode={isDarkMode} onClose={() => setShowKeyboard(false)} />
+      )}
+      {isOpen && (
+        <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
+          {showMyLearning && (
+            <button
+              onClick={() => {
+                openModal("my-learning")
+                setIsOpen(false)
+              }}
+              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-amber-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+            >
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                <Award className="w-5 h-5 text-amber-600" />
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">My Learning</span>
+            </button>
+          )}
+          {showMyLearning && (
             <button
               onClick={() => {
                 openModal("assessment-sheets")
@@ -11790,6 +10049,20 @@ const [isOpen, setIsOpen] = useState(false)
                 <Upload className="w-5 h-5 text-sky-600" />
               </div>
               <span className="text-sm font-black uppercase tracking-widest">Assessment Sheets</span>
+            </button>
+          )}
+          {showDataBooklet && (
+            <button
+              onClick={() => {
+                openModal("data-booklet")
+                setIsOpen(false)
+              }}
+              className="bg-white dark:bg-slate-800 shadow-xl border-2 border-teal-500 p-4 pr-6 rounded-3xl flex items-center gap-3 hover:scale-105 transition-all"
+            >
+              <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                <FlaskConical className="w-5 h-5 text-teal-600" />
+              </div>
+              <span className="text-sm font-black uppercase tracking-widest">Data Booklet</span>
             </button>
           )}
           {showCharKeyboard && (
@@ -12526,7 +10799,6 @@ function GenericModal({
   selectedSubject,
   isDarkMode,
   topicPerformance,
-  currentUser,
 }: {
   activeModal: string | null
   onClose: () => void
@@ -12536,26 +10808,20 @@ function GenericModal({
   selectedSubject: SubjectId
   isDarkMode: boolean
   topicPerformance: Record<string, { correct: number; total: number }>
-  currentUser: UserAccount | null
 }) {
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
-  const [selectedPupilId, setSelectedPupilId] = useState<string | null>(null)
   const [sheetSubject, setSheetSubject] = useState<string>(SUBJECTS[0].id)
   const [sheetLevel, setSheetLevel] = useState<string>("National 5")
   const [sheetUploadStatus, setSheetUploadStatus] = useState<Record<string, "uploading" | "done" | "error" | undefined>>({})
   const [sheetRefresh, setSheetRefresh] = useState(0)
-  const [outcomeRatings, setOutcomeRatings] = useState<OutcomeRatings>(() =>
-    currentUser ? loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel) : {}
-  )
+  const [outcomeRatings, setOutcomeRatings] = useState<OutcomeRatings>(() => loadOutcomeRatings(selectedSubject, selectedLevel))
   const [expandedOutcomeId, setExpandedOutcomeId] = useState<string | null>(null)
   const [myLearningTab, setMyLearningTab] = useState<"progress" | "coverage" | "outcomes">("progress")
 
   // Reload ratings when the modal opens or subject/level changes
   useEffect(() => {
-    if (!currentUser) return
-    setOutcomeRatings(loadOutcomeRatings(currentUser.id, selectedSubject, selectedLevel))
+    setOutcomeRatings(loadOutcomeRatings(selectedSubject, selectedLevel))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeModal, currentUser?.id, selectedSubject, selectedLevel])
+  }, [activeModal, selectedSubject, selectedLevel])
 
   // Reset to progress tab when my-learning modal opens
   useEffect(() => {
@@ -12564,7 +10830,7 @@ function GenericModal({
 
   if (!activeModal) return null
 
-  const isTeacher = currentUser?.accountType === "teacher"
+  const isTeacher = false
   const subtopics = getSubtopics(selectedSubject, selectedLevel)
 
   // ── Pupil progress view ──────────────────────────────────────────────────
@@ -12573,89 +10839,8 @@ function GenericModal({
   const overallPercentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0
   const topicsAttempted = Object.keys(topicPerformance).filter(t => topicPerformance[t].total > 0).length
 
-  // ── Teacher progress helpers ─────────────────────────────────────────────
-  const allGroups = loadClassGroups()
-  const allAccounts = loadAccounts()
-  const teacherClasses = isTeacher && currentUser
-    ? allGroups.filter((g) => g.teacherId === currentUser.id)
-    : []
-
-  function getPupilName(id: string): string {
-    return allAccounts.find((a) => a.id === id)?.name ?? "Unknown Pupil"
-  }
-
-  function getPupilDefSummary(pupilId: string): { correct: number; total: number } | null {
-    const prog = loadUserDefProgress(pupilId, selectedLevel)
-    const vals = Object.values(prog)
-    if (vals.length === 0) return null
-    const total = vals.reduce((s, p) => s + p.correct + p.incorrect, 0)
-    const correct = vals.reduce((s, p) => s + p.correct, 0)
-    return total > 0 ? { correct, total } : null
-  }
-
-  function getPupilExamSummary(pupilId: string): { mc: { correct: number; total: number } | null; paper: { correct: number; total: number } | null } {
-    const prog = loadUserExamProgress(pupilId, selectedLevel)
-    const mcVals = Object.values(prog.mc)
-    const paperVals = Object.values(prog.paper)
-    const mcTotal = mcVals.reduce((s, p) => s + p.total, 0)
-    const mcCorrect = mcVals.reduce((s, p) => s + p.correct, 0)
-    const paperTotal = paperVals.reduce((s, p) => s + p.total, 0)
-    const paperCorrect = paperVals.reduce((s, p) => s + p.correct, 0)
-    return {
-      mc: mcTotal > 0 ? { correct: mcCorrect, total: mcTotal } : null,
-      paper: paperTotal > 0 ? { correct: paperCorrect, total: paperTotal } : null,
-    }
-  }
-
-  function getPupilCalcSummary(pupilId: string): { correct: number; total: number } | null {
-    const prog = loadUserCalcProgress(pupilId, selectedLevel)
-    const singleEqVals = Object.values(prog.singleEq)
-    const total =
-      singleEqVals.reduce((s, p) => s + p.total, 0) +
-      prog.examLevel.total +
-      prog.correctMe.total
-    const correct =
-      singleEqVals.reduce((s, p) => s + p.correct, 0) +
-      prog.examLevel.correct +
-      prog.correctMe.correct
-    return total > 0 ? { correct, total } : null
-  }
-
-  function pct(s: { correct: number; total: number } | null): number | null {
-    if (!s || s.total === 0) return null
-    return Math.round((s.correct / s.total) * 100)
-  }
-
   function perfColor(p: number): string {
     return p >= 70 ? "text-emerald-600" : p >= 50 ? "text-amber-600" : "text-red-600"
-  }
-
-  function perfBarColor(p: number): string {
-    return p >= 70 ? "bg-emerald-500" : p >= 50 ? "bg-amber-500" : "bg-red-500"
-  }
-
-  const selectedClass = teacherClasses.find((g) => g.id === selectedClassId) ?? null
-  const selectedPupil = selectedPupilId && selectedClass?.memberIds.includes(selectedPupilId) ? selectedPupilId : null
-
-  // Class overview for selected class
-  function classOverview(group: ClassGroup) {
-    const pupils = group.memberIds
-    const defScores = pupils.map((id) => pct(getPupilDefSummary(id))).filter((p): p is number => p !== null)
-    const mcScores = pupils.map((id) => pct(getPupilExamSummary(id).mc)).filter((p): p is number => p !== null)
-    const paperScores = pupils.map((id) => pct(getPupilExamSummary(id).paper)).filter((p): p is number => p !== null)
-    const calcScores = pupils.map((id) => pct(getPupilCalcSummary(id))).filter((p): p is number => p !== null)
-    const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null
-    return {
-      def: avg(defScores),
-      mc: avg(mcScores),
-      paper: avg(paperScores),
-      calc: avg(calcScores),
-      defCount: defScores.length,
-      mcCount: mcScores.length,
-      paperCount: paperScores.length,
-      calcCount: calcScores.length,
-      total: pupils.length,
-    }
   }
 
   const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
@@ -12674,34 +10859,12 @@ function GenericModal({
         {/* Header */}
         <div className="flex justify-between items-center p-8 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            {isTeacher && activeModal === "progress" && selectedClassId && !selectedPupilId && (
-              <button
-                onClick={() => { setSelectedClassId(null); setSelectedPupilId(null) }}
-                className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-            )}
-            {isTeacher && activeModal === "progress" && selectedClassId && selectedPupilId && (
-              <button
-                onClick={() => setSelectedPupilId(null)}
-                className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-            )}
             <h3 className="text-2xl font-black italic tracking-tighter uppercase">
               {activeModal === "progress"
-                ? isTeacher
-                  ? selectedPupilId
-                    ? getPupilName(selectedPupilId)
-                    : selectedClassId
-                      ? (selectedClass?.name ?? "Class")
-                      : "Class Progress"
-                  : "My Progress"
+                ? "My Progress"
                 : activeModal === "my-learning"
                   ? "My Learning"
-                : activeModal === "assessment-sheets"
+                  : activeModal === "assessment-sheets"
                     ? "Assessment Sheets"
                     : activeModal === "outcomes"
                       ? "My Outcomes"
@@ -12719,368 +10882,8 @@ function GenericModal({
         <div className="overflow-y-auto flex-1 px-8 pb-8">
 
           {/* ── Teacher progress view ──────────────────────────────────────── */}
-          {activeModal === "progress" && isTeacher && !selectedClassId && (
-            <div className="space-y-4">
-              <p className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Your Classes
-              </p>
-              {teacherClasses.length === 0 ? (
-                <div className={`p-6 rounded-2xl text-center border ${cardBg}`}>
-                  <GraduationCap className="w-10 h-10 mx-auto mb-3 text-slate-400" />
-                  <p className={`font-bold ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    No classes yet — create a class to start tracking pupil progress.
-                  </p>
-                </div>
-              ) : (
-                teacherClasses.map((group) => {
-                  const ov = classOverview(group)
-                  return (
-                    <button
-                      key={group.id}
-                      onClick={() => { setSelectedClassId(group.id); setSelectedPupilId(null) }}
-                      className={`w-full text-left p-5 rounded-2xl border-2 transition-all hover:scale-[1.01] hover:shadow-md ${cardBg}`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
-                            <GraduationCap className="w-5 h-5 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="font-black text-base">{group.name}</p>
-                            <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                              {group.memberIds.length} pupil{group.memberIds.length !== 1 ? "s" : ""}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400" />
-                      </div>
-                      {/* Mini overview row */}
-                      <div className="grid grid-cols-4 gap-2 text-center">
-                        {[
-                          { label: "Defs", val: ov.def, count: ov.defCount },
-                          { label: "MCQ", val: ov.mc, count: ov.mcCount },
-                          { label: "Paper", val: ov.paper, count: ov.paperCount },
-                          { label: "Calc", val: ov.calc, count: ov.calcCount },
-                        ].map(({ label, val, count }) => (
-                          <div key={label} className={`p-2 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
-                            <p className={`text-sm font-black ${val !== null ? perfColor(val) : "text-slate-400"}`}>
-                              {val !== null ? `${val}%` : "—"}
-                            </p>
-                            <p className={`text-[10px] font-bold uppercase ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
-                            <p className={`text-[9px] ${isDarkMode ? "text-slate-600" : "text-slate-300"}`}>
-                              {count}/{ov.total}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          )}
-
-          {/* ── Teacher: class detail view ─────────────────────────────────── */}
-          {activeModal === "progress" && isTeacher && selectedClassId && !selectedPupilId && selectedClass && (
-            <div className="space-y-5">
-              {/* Class Overview */}
-              {(() => {
-                const ov = classOverview(selectedClass)
-                return (
-                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
-                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      Class Overview — {selectedLevel}
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { label: "Definitions", val: ov.def, count: ov.defCount, icon: "📖" },
-                        { label: "Exam MCQ", val: ov.mc, count: ov.mcCount, icon: "🎯" },
-                        { label: "Exam Paper", val: ov.paper, count: ov.paperCount, icon: "📝" },
-                        { label: "Calculations", val: ov.calc, count: ov.calcCount, icon: "🔢" },
-                      ].map(({ label, val, count, icon }) => (
-                        <div key={label} className={`p-4 rounded-xl ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-base">{icon}</span>
-                            <p className={`text-xs font-black uppercase ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{label}</p>
-                          </div>
-                          {val !== null ? (
-                            <>
-                              <p className={`text-2xl font-black ${perfColor(val)}`}>{val}%</p>
-                              <div className={`h-1.5 rounded-full mt-1 ${isDarkMode ? "bg-slate-600" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(val)}`} style={{ width: `${val}%` }} />
-                              </div>
-                              <p className={`text-[10px] mt-1 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                                {count} of {ov.total} attempted
-                              </p>
-                            </>
-                          ) : (
-                            <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No data yet</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {/* Analysis text */}
-                    {(ov.def !== null || ov.mc !== null || ov.paper !== null || ov.calc !== null) && (
-                      <div className={`mt-4 p-3 rounded-xl border ${isDarkMode ? "border-slate-600 bg-slate-700/30" : "border-amber-100 bg-amber-50"}`}>
-                        <p className={`text-xs font-black uppercase mb-1 text-amber-600`}>💡 Quick Analysis</p>
-                        <p className={`text-xs leading-relaxed ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-                          {[
-                            ov.def !== null && `Definitions avg: ${ov.def}% (${ov.defCount}/${ov.total} pupils).`,
-                            ov.mc !== null && `MCQ avg: ${ov.mc}% (${ov.mcCount}/${ov.total} pupils).`,
-                            ov.paper !== null && `Paper avg: ${ov.paper}% (${ov.paperCount}/${ov.total} pupils).`,
-                            ov.calc !== null && `Calculations avg: ${ov.calc}% (${ov.calcCount}/${ov.total} pupils).`,
-                            (() => {
-                              const scores = [ov.def, ov.mc, ov.paper, ov.calc].filter((v): v is number => v !== null)
-                              if (scores.length === 0) return null
-                              const min = Math.min(...scores)
-                              const labels = ["Definitions", "MCQ", "Paper", "Calculations"]
-                              const vals = [ov.def, ov.mc, ov.paper, ov.calc]
-                              const weakIdx = vals.indexOf(min)
-                              return min < 60 ? `Weakest area: ${labels[weakIdx]} — consider focusing practice here.` : "Good overall performance across all areas."
-                            })(),
-                          ].filter(Boolean).join(" ")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-
-              {/* Pupil List */}
-              <div>
-                <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                  Pupils ({selectedClass.memberIds.length})
-                </p>
-                {selectedClass.memberIds.length === 0 ? (
-                  <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>No pupils have joined this class yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {selectedClass.memberIds.map((pupilId) => {
-                      const defS = getPupilDefSummary(pupilId)
-                      const examS = getPupilExamSummary(pupilId)
-                      const calcS = getPupilCalcSummary(pupilId)
-                      const defPct = pct(defS)
-                      const mcPct = pct(examS.mc)
-                      const paperPct = pct(examS.paper)
-                      const calcPct = pct(calcS)
-                      return (
-                        <button
-                          key={pupilId}
-                          onClick={() => setSelectedPupilId(pupilId)}
-                          className={`w-full text-left p-4 rounded-2xl border-2 transition-all hover:scale-[1.01] hover:shadow-md ${cardBg}`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${isDarkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700"}`}>
-                                {getPupilName(pupilId).charAt(0).toUpperCase()}
-                              </div>
-                              <span className="font-bold text-sm">{getPupilName(pupilId)}</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-400" />
-                          </div>
-                          <div className="grid grid-cols-4 gap-1.5 text-center">
-                            {[
-                              { label: "Defs", val: defPct },
-                              { label: "MCQ", val: mcPct },
-                              { label: "Paper", val: paperPct },
-                              { label: "Calc", val: calcPct },
-                            ].map(({ label, val }) => (
-                              <div key={label} className={`px-1 py-1.5 rounded-lg ${isDarkMode ? "bg-slate-700/50" : "bg-slate-50"}`}>
-                                <p className={`text-xs font-black ${val !== null ? perfColor(val) : "text-slate-400"}`}>
-                                  {val !== null ? `${val}%` : "—"}
-                                </p>
-                                <p className={`text-[9px] font-bold uppercase ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Teacher: individual pupil detail ──────────────────────────── */}
-          {activeModal === "progress" && isTeacher && selectedClassId && selectedPupil && (
-            <div className="space-y-4">
-              {/* Definitions */}
-              {(() => {
-                const prog = loadUserDefProgress(selectedPupil, selectedLevel)
-                const defLevelKey = getDefLevelKey(selectedSubject, selectedLevel)
-                const unitTopics = DEF_UNIT_TOPICS[defLevelKey] ?? {}
-                const levelEntries = DEFINITIONS_BANK.filter((e) => e.level === defLevelKey)
-                const byTopic = Object.entries(unitTopics)
-                  .flatMap(([unit, topics]) => (topics as string[]).map((t) => ({ unit, t })))
-                  .filter(({ t }) => levelEntries.some((e) => e.topic === t))
-                  .map(({ unit, t }) => {
-                    const entries = levelEntries.filter((e) => e.topic === t)
-                    const vals = entries.map((e) => prog[e.term]).filter(Boolean)
-                    const total = vals.reduce((s, p) => s + p.correct + p.incorrect, 0)
-                    const correct = vals.reduce((s, p) => s + p.correct, 0)
-                    return { unit, topic: t, pct: total > 0 ? Math.round((correct / total) * 100) : null, total }
-                  })
-                  .filter((x) => x.total > 0)
-                return (
-                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
-                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      📖 Definitions
-                    </p>
-                    {byTopic.length === 0 ? (
-                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No definitions attempted yet.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {byTopic.map(({ topic, pct: p }) => (
-                          <div key={topic}>
-                            <div className="flex justify-between items-center mb-0.5">
-                              <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
-                              <span className={`text-xs font-black ${p !== null ? perfColor(p) : "text-slate-400"}`}>
-                                {p !== null ? `${p}%` : "—"}
-                              </span>
-                            </div>
-                            {p !== null && (
-                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-
-              {/* Exam MCQ */}
-              {(() => {
-                const prog = loadUserExamProgress(selectedPupil, selectedLevel)
-                const mcTopics = Object.entries(prog.mc).filter(([, v]) => v.total > 0)
-                return (
-                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
-                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      🎯 Exam — Multiple Choice
-                    </p>
-                    {mcTopics.length === 0 ? (
-                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No MCQ attempts yet.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {mcTopics.map(([topic, v]) => {
-                          const p = Math.round((v.correct / v.total) * 100)
-                          return (
-                            <div key={topic}>
-                              <div className="flex justify-between items-center mb-0.5">
-                                <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
-                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
-                              </div>
-                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-
-              {/* Exam Paper */}
-              {(() => {
-                const prog = loadUserExamProgress(selectedPupil, selectedLevel)
-                const paperTopics = Object.entries(prog.paper).filter(([, v]) => v.total > 0)
-                return (
-                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
-                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      📝 Exam — Paper Questions
-                    </p>
-                    {paperTopics.length === 0 ? (
-                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No paper attempts yet.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {paperTopics.map(([topic, v]) => {
-                          const p = Math.round((v.correct / v.total) * 100)
-                          return (
-                            <div key={topic}>
-                              <div className="flex justify-between items-center mb-0.5">
-                                <span className={`text-xs font-semibold truncate max-w-[70%] ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{topic}</span>
-                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
-                              </div>
-                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-
-              {/* Calculations */}
-              {(() => {
-                const prog = loadUserCalcProgress(selectedPupil, selectedLevel)
-                const singleEqEntries = Object.entries(prog.singleEq).filter(([, v]) => v.total > 0)
-                const hasCalc = singleEqEntries.length > 0 || prog.examLevel.total > 0 || prog.correctMe.total > 0
-                return (
-                  <div className={`p-5 rounded-2xl border ${cardBg}`}>
-                    <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      🔢 Calculations
-                    </p>
-                    {!hasCalc ? (
-                      <p className={`text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>No calculations attempted yet.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {singleEqEntries.map(([lvl, v]) => {
-                          const p = v.total > 0 ? Math.round((v.correct / v.total) * 100) : null
-                          const lvlInfo = CALC_SINGLE_EQ_LEVELS[Number(lvl) - 1]
-                          return p !== null ? (
-                            <div key={lvl}>
-                              <div className="flex justify-between items-center mb-0.5">
-                                <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
-                                  {lvlInfo?.emoji ?? ""} {lvlInfo?.label ?? `Level ${lvl}`}
-                                </span>
-                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
-                              </div>
-                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
-                              </div>
-                            </div>
-                          ) : null
-                        })}
-                        {prog.examLevel.total > 0 && (
-                          <div>
-                            <div className="flex justify-between items-center mb-0.5">
-                              <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>📋 Exam Level</span>
-                              <span className={`text-xs font-black text-emerald-600`}>{prog.examLevel.total} completed</span>
-                            </div>
-                          </div>
-                        )}
-                        {prog.correctMe.total > 0 && (() => {
-                          const p = Math.round((prog.correctMe.correct / prog.correctMe.total) * 100)
-                          return (
-                            <div>
-                              <div className="flex justify-between items-center mb-0.5">
-                                <span className={`text-xs font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>🔍 Correct Me!</span>
-                                <span className={`text-xs font-black ${perfColor(p)}`}>{p}%</span>
-                              </div>
-                              <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                                <div className={`h-full rounded-full ${perfBarColor(p)}`} style={{ width: `${p}%` }} />
-                              </div>
-                            </div>
-                          )
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
-
           {/* ── Pupil progress view ────────────────────────────────────────── */}
-          {activeModal === "progress" && !isTeacher && (
+          {activeModal === "progress" && (
             <div className="space-y-6">
               {/* Overall Stats */}
               <div className={`p-6 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-slate-50"}`}>
@@ -13142,10 +10945,10 @@ function GenericModal({
               </div>
 
               {/* Past Paper Year History */}
-              {currentUser && (() => {
+              {(() => {
                 const paperBanks = PAST_PAPER_BANKS[selectedLevel] || []
                 if (paperBanks.length === 0) return null
-                const examProg = loadUserExamProgress(currentUser.id, selectedLevel)
+                const examProg = loadExamProgress(selectedLevel)
                 const hasAnyAttempts = paperBanks.some((p) => (examProg.pastPapers?.[p.id] ?? []).length > 0)
                 return (
                   <div className="space-y-3">
@@ -13247,7 +11050,7 @@ function GenericModal({
           )}
 
           {/* ── Combined "My Learning" view (pupil — Progress + Coverage + Outcomes) ── */}
-          {activeModal === "my-learning" && !isTeacher && (
+          {activeModal === "my-learning" && (
             <div>
               {/* Tabs */}
               <div className={`flex rounded-xl p-1 mb-6 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
@@ -13341,7 +11144,7 @@ function GenericModal({
                 function setRating(outcomeId: string, rating: OutcomeRating) {
                   const updated = { ...outcomeRatings, [outcomeId]: rating }
                   setOutcomeRatings(updated)
-                  if (currentUser) saveOutcomeRatings(currentUser.id, selectedSubject, selectedLevel, updated)
+                  saveOutcomeRatings(selectedSubject, selectedLevel, updated)
                 }
 
                 function outcomeProgress(outcome: Outcome): { correct: number; total: number } | null {
@@ -13470,7 +11273,7 @@ function GenericModal({
           )}
 
           {/* ── Assessment Sheets view (teacher only) ──────────────────────── */}
-          {activeModal === "assessment-sheets" && isTeacher && (
+          {activeModal === "assessment-sheets" && (
             <div key={sheetRefresh} className="space-y-4">
               {/* Info banner */}
               <div className={`p-4 rounded-2xl border ${cardBg}`}>
@@ -13648,7 +11451,7 @@ function GenericModal({
           )}
 
           {/* ── Outcomes view (pupil only) ──────────────────────────────────── */}
-          {activeModal === "outcomes" && !isTeacher && (() => {
+          {activeModal === "outcomes" && (() => {
             const outcomes: Outcome[] = SUBJECT_LEVEL_OUTCOMES[selectedSubject]?.[selectedLevel] ?? []
             const ratingLabels: [string, string][] = [
               ["", "Not rated"],
@@ -13661,9 +11464,7 @@ function GenericModal({
             function setRating(outcomeId: string, rating: OutcomeRating) {
               const updated = { ...outcomeRatings, [outcomeId]: rating }
               setOutcomeRatings(updated)
-              if (currentUser) {
-                saveOutcomeRatings(currentUser.id, selectedSubject, selectedLevel, updated)
-              }
+              saveOutcomeRatings(selectedSubject, selectedLevel, updated)
             }
 
             // Calculate outcome progress from topicPerformance (linked topics)
@@ -13835,23 +11636,12 @@ function GenericModal({
                                 )
                               })}
                             </div>
-                            {!currentUser && (
-                              <p className={`mt-3 text-xs italic ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                                Sign in to save your outcome ratings across sessions.
-                              </p>
-                            )}
                           </div>
                         )}
                       </div>
                     )
                   })}
                 </div>
-
-                {!currentUser && (
-                  <p className={`text-xs text-center italic ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                    Sign in to save your ratings across sessions.
-                  </p>
-                )}
               </div>
             )
           })()}
@@ -13866,426 +11656,17 @@ function GenericModal({
   )
 }
 
-// ─── ProfileModal ─────────────────────────────────────────────────────────────
-
-function ProfileModal({
-  currentUser,
-  isDarkMode,
-  onClose,
-  onUpdateUser,
-}: {
-  currentUser: UserAccount
-  isDarkMode: boolean
-  onClose: () => void
-  onUpdateUser: (user: UserAccount) => void
-}) {
-  const [activeTab, setActiveTab] = useState<"subjects" | "achievements" | "stats">("subjects")
-  const [subjectLevels, setSubjectLevels] = useState<Partial<Record<SubjectId, string>>>(
-    currentUser.subjectLevels ?? {}
-  )
-  const [saved, setSaved] = useState(false)
-  const [disableModeLocking, setDisableModeLocking] = useState<boolean>(currentUser.disableModeLocking ?? false)
-  const [showLockingWarning, setShowLockingWarning] = useState(false)
-  const LEVEL_OPTIONS = ["not sitting", "National 5", "Higher", "Advanced Higher"] as const
-
-  const isPupil = currentUser.accountType === "pupil"
-
-  function handleToggleModeLocking() {
-    if (!disableModeLocking) {
-      // Trying to disable locking — show warning first
-      setShowLockingWarning(true)
-    } else {
-      // Re-enabling locking — just save immediately
-      const newValue = false
-      setDisableModeLocking(newValue)
-      const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking: newValue }
-      upsertLocalAccount(updated)
-      void upsertSupabaseProfileAndSettings(updated)
-      saveCurrentUser(updated)
-      onUpdateUser(updated)
-    }
-  }
-
-  function confirmDisableLocking() {
-    setDisableModeLocking(true)
-    setShowLockingWarning(false)
-    const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking: true }
-    upsertLocalAccount(updated)
-    void upsertSupabaseProfileAndSettings(updated)
-    saveCurrentUser(updated)
-    onUpdateUser(updated)
-  }
-
-  // Compute total stats from stored progress
-  const totalQuestionsAnswered = useMemo(() => {
-    let total = 0
-    for (const level of ["National 5", "Higher", "Advanced Higher"]) {
-      const exam = loadUserExamProgress(currentUser.id, level)
-      total += Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
-      total += Object.values(exam.paper).reduce((s, p) => s + p.total, 0)
-      const calc = loadUserCalcProgress(currentUser.id, level)
-      total += Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0)
-      total += calc.examLevel.total + calc.correctMe.total
-    }
-    return total
-  }, [currentUser.id])
-
-  const totalCorrect = useMemo(() => {
-    let correct = 0
-    for (const level of ["National 5", "Higher", "Advanced Higher"]) {
-      const exam = loadUserExamProgress(currentUser.id, level)
-      correct += Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
-      correct += Object.values(exam.paper).reduce((s, p) => s + p.correct, 0)
-      const calc = loadUserCalcProgress(currentUser.id, level)
-      correct += Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0)
-      correct += calc.examLevel.correct + calc.correctMe.correct
-    }
-    return correct
-  }, [currentUser.id])
-
-  // Cross-subject master progress for selected subjects
-  const studiedSubjects = SUBJECTS.filter((s) => {
-    const lvl = subjectLevels[s.id]
-    return lvl && lvl !== "not sitting"
-  })
-
-  // Achievements definitions
-  const achievements: { id: string; emoji: string; title: string; desc: string; unlocked: boolean }[] = [
-    { id: "first-steps", emoji: "🎯", title: "First Steps", desc: "Answer your first question", unlocked: totalQuestionsAnswered >= 1 },
-    { id: "ten-questions", emoji: "📚", title: "Getting Started", desc: "Answer 10 questions", unlocked: totalQuestionsAnswered >= 10 },
-    { id: "fifty-questions", emoji: "🔥", title: "On Fire", desc: "Answer 50 questions", unlocked: totalQuestionsAnswered >= 50 },
-    { id: "hundred-questions", emoji: "💯", title: "Century", desc: "Answer 100 questions", unlocked: totalQuestionsAnswered >= 100 },
-    { id: "five-hundred", emoji: "🏆", title: "Study Champion", desc: "Answer 500 questions", unlocked: totalQuestionsAnswered >= 500 },
-    { id: "good-accuracy", emoji: "⭐", title: "Sharp Mind", desc: "Achieve 70%+ overall accuracy", unlocked: totalQuestionsAnswered >= 10 && totalCorrect / Math.max(totalQuestionsAnswered, 1) >= 0.7 },
-    { id: "multi-subject", emoji: "🌟", title: "All-Rounder", desc: "Study 2 or more subjects", unlocked: studiedSubjects.length >= 2 },
-    { id: "full-house", emoji: "🎓", title: "Full House", desc: "Study all 4 subjects", unlocked: studiedSubjects.length >= 4 },
-    { id: "logged-in", emoji: "👋", title: "Welcome Back", desc: "Sign in to your account", unlocked: true },
-    { id: "profile-set", emoji: "📋", title: "Prepared", desc: "Set your subject levels", unlocked: Object.keys(subjectLevels).length > 0 },
-  ]
-
-  const unlockedCount = achievements.filter((a) => a.unlocked).length
-
-  function handleSaveLevels() {
-    const updated: UserAccount = { ...currentUser, subjectLevels, disableModeLocking }
-    upsertLocalAccount(updated)
-    void upsertSupabaseProfileAndSettings(updated)
-    saveCurrentUser(updated)
-    onUpdateUser(updated)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
-  const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className={`w-full max-w-lg rounded-[2.5rem] shadow-2xl border-4 border-[#800000] flex flex-col max-h-[90vh] ${isDarkMode ? "bg-slate-900" : "bg-white"}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black ${currentUser.accountType === "teacher" ? "bg-amber-600" : "bg-[#800000]"}`}>
-              {currentUser.name.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-black text-lg">{currentUser.name}</p>
-              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{currentUser.email}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><X /></button>
-        </div>
-
-        {/* Tabs */}
-        <div className={`flex gap-1 mx-6 mb-4 p-1 rounded-xl flex-shrink-0 ${isDarkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-          {(isPupil ? (["subjects", "achievements", "stats"] as const) : (["stats"] as const)).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t as typeof activeTab)}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-                activeTab === t ? "bg-[#800000] text-white shadow" : isDarkMode ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              {t === "subjects" ? "My Subjects" : t === "achievements" ? "Achievements" : "Stats"}
-            </button>
-          ))}
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 pb-6">
-
-          {/* ── Subjects Tab ── */}
-          {activeTab === "subjects" && isPupil && (
-            <div className="space-y-4">
-              <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                Set the level you&apos;re sitting for each subject. Choose <strong>Not Sitting</strong> if you&apos;re not studying it.
-              </p>
-              {SUBJECTS.map((subject) => {
-                const availableLevels = subject.id === "Practical Electronics"
-                  ? (["not sitting", "National 5"] as const)
-                  : (["not sitting", "National 5", "Higher", "Advanced Higher"] as const)
-                const current = subjectLevels[subject.id] ?? "not sitting"
-                return (
-                  <div key={subject.id} className={`p-4 rounded-2xl border ${cardBg}`}>
-                    <p className="font-black text-sm mb-3">{subject.label}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {availableLevels.map((lvl) => (
-                        <button
-                          key={lvl}
-                          onClick={() => setSubjectLevels((prev) => ({ ...prev, [subject.id]: lvl }))}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                            current === lvl
-                              ? lvl === "not sitting"
-                                ? "bg-slate-500 text-white border-slate-500"
-                                : "bg-[#800000] text-white border-[#800000]"
-                              : isDarkMode
-                                ? "border-slate-600 text-slate-300 hover:border-slate-400"
-                                : "border-slate-200 text-slate-600 hover:border-slate-400"
-                          }`}
-                        >
-                          {lvl === "not sitting" ? "Not Sitting" : lvl}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {/* Master Progress Tracker */}
-              {studiedSubjects.length > 0 && (
-                <div className={`p-4 rounded-2xl border ${cardBg}`}>
-                  <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    📊 Master Progress Tracker
-                  </p>
-                  <div className="space-y-3">
-                    {studiedSubjects.map((subject) => {
-                      const lvl = subjectLevels[subject.id] ?? ""
-                      if (!lvl) return null
-                      const exam = loadUserExamProgress(currentUser.id, lvl)
-                      const mcTotal = Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
-                      const mcCorrect = Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
-                      const calc = loadUserCalcProgress(currentUser.id, lvl)
-                      const calcTotal = Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0) + calc.examLevel.total
-                      const calcCorrect = Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0) + calc.examLevel.correct
-                      const total = mcTotal + calcTotal
-                      const correct = mcCorrect + calcCorrect
-                      const pct = total > 0 ? Math.round((correct / total) * 100) : null
-                      return (
-                        <div key={subject.id}>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className={`text-sm font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{subject.label}</span>
-                            <span className={`text-xs font-black ${pct !== null ? (pct >= 70 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-500") : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                              {pct !== null ? `${pct}% (${correct}/${total})` : "No data yet"} · {lvl}
-                            </span>
-                          </div>
-                          {pct !== null && (
-                            <div className={`h-2 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                              <div className={`h-full rounded-full transition-all ${pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Mode Locking Setting */}
-              <div className={`p-4 rounded-2xl border ${cardBg}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-black text-sm mb-1">📐 Progressive Mode Locking</p>
-                    <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                      {disableModeLocking
-                        ? "Locking is disabled — all quiz formats and difficulties are available freely."
-                        : "Locking is active — complete each format and difficulty in order to unlock the next."}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleToggleModeLocking}
-                    role="switch"
-                    aria-checked={!disableModeLocking}
-                    aria-label={disableModeLocking ? "Progressive locking disabled — click to re-enable" : "Progressive locking enabled — click to disable"}
-                    className={`shrink-0 w-12 h-6 rounded-full relative transition-colors ${disableModeLocking ? "bg-slate-400" : "bg-[#800000]"}`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${disableModeLocking ? "left-0.5" : "left-6"}`} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSaveLevels}
-                  className="flex-1 py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors"
-                >
-                  {saved ? "✓ Saved!" : "Save Changes"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Mode Locking Warning Popup */}
-          {showLockingWarning && (
-            <div
-              className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
-              onClick={() => setShowLockingWarning(false)}
-              onKeyDown={(e) => { if (e.key === "Escape") setShowLockingWarning(false) }}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="locking-warning-title"
-            >
-              <div
-                className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-amber-500 p-6 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-3xl mb-3 text-center">🔬</div>
-                <h3 id="locking-warning-title" className="text-lg font-black text-center mb-3">Why Progressive Locking Matters</h3>
-                <div className={`text-sm space-y-2 mb-5 ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
-                  <p>Research on learning science consistently shows that <strong>spaced, linear progression</strong> leads to significantly better long-term retention than random access:</p>
-                  <ul className="list-disc pl-5 space-y-1 text-xs">
-                    <li><strong>Mastery before advancement</strong> — completing easier formats first builds the mental scaffolding needed for harder ones.</li>
-                    <li><strong>Interleaving effect</strong> — moving through difficulty levels in order maximises the spacing between repetitions of the same material.</li>
-                    <li><strong>Reduced cognitive overload</strong> — tackling formats sequentially keeps working memory free for deeper processing.</li>
-                  </ul>
-                  <p className="text-xs mt-2">Students who follow the unlocking order consistently outperform those who skip ahead. We strongly recommend keeping locking enabled.</p>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => setShowLockingWarning(false)}
-                    className="w-full py-3 rounded-xl font-black text-sm bg-[#800000] text-white hover:bg-[#600000] transition-colors"
-                  >
-                    Keep Progressive Locking ✓
-                  </button>
-                  <button
-                    onClick={confirmDisableLocking}
-                    className={`w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${isDarkMode ? "border-slate-600 text-slate-400 hover:border-slate-400" : "border-slate-300 text-slate-500 hover:border-slate-400"}`}
-                  >
-                    I understand, disable locking
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Achievements Tab ── */}
-          {activeTab === "achievements" && isPupil && (
-            <div className="space-y-4">
-              <div className={`p-4 rounded-2xl ${isDarkMode ? "bg-slate-800" : "bg-amber-50"} text-center`}>
-                <p className="text-3xl font-black text-amber-500">{unlockedCount} / {achievements.length}</p>
-                <p className={`text-xs font-bold uppercase tracking-widest mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Achievements Unlocked</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {achievements.map((a) => (
-                  <div
-                    key={a.id}
-                    className={`p-4 rounded-2xl border-2 transition-all ${
-                      a.unlocked
-                        ? isDarkMode ? "border-amber-500 bg-amber-900/20" : "border-amber-400 bg-amber-50"
-                        : isDarkMode ? "border-slate-700 bg-slate-800 opacity-50" : "border-slate-200 bg-slate-50 opacity-50"
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{a.unlocked ? a.emoji : "🔒"}</div>
-                    <p className={`text-xs font-black ${a.unlocked ? isDarkMode ? "text-amber-300" : "text-amber-700" : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                      {a.title}
-                    </p>
-                    <p className={`text-[10px] mt-0.5 ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{a.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Stats Tab ── */}
-          {activeTab === "stats" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: "Questions Answered", value: totalQuestionsAnswered.toString(), icon: "❓" },
-                  { label: "Correct Answers", value: totalCorrect.toString(), icon: "✅" },
-                  {
-                    label: "Overall Accuracy",
-                    value: totalQuestionsAnswered > 0 ? `${Math.round((totalCorrect / totalQuestionsAnswered) * 100)}%` : "—",
-                    icon: "🎯",
-                  },
-                  {
-                    label: "Last Login",
-                    value: currentUser.lastLogin ? new Date(currentUser.lastLogin).toLocaleDateString() : "—",
-                    icon: "🕐",
-                  },
-                  { label: "Account Type", value: currentUser.accountType === "teacher" ? "Teacher" : "Pupil", icon: "👤" },
-                  {
-                    label: "Sessions",
-                    value: (currentUser.totalSessions ?? 1).toString(),
-                    icon: "📅",
-                  },
-                ].map(({ label, value, icon }) => (
-                  <div key={label} className={`p-4 rounded-2xl border ${cardBg}`}>
-                    <div className="text-xl mb-1">{icon}</div>
-                    <p className="text-lg font-black">{value}</p>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
-                  </div>
-                ))}
-              </div>
-              {isPupil && studiedSubjects.length > 0 && (
-                <div className={`p-4 rounded-2xl border ${cardBg}`}>
-                  <p className={`text-xs font-black uppercase tracking-widest mb-3 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                    📊 Master Progress Tracker
-                  </p>
-                  <div className="space-y-3">
-                    {studiedSubjects.map((subject) => {
-                      const lvl = subjectLevels[subject.id] ?? ""
-                      if (!lvl) return null
-                      const exam = loadUserExamProgress(currentUser.id, lvl)
-                      const mcTotal = Object.values(exam.mc).reduce((s, p) => s + p.total, 0)
-                      const mcCorrect = Object.values(exam.mc).reduce((s, p) => s + p.correct, 0)
-                      const calc = loadUserCalcProgress(currentUser.id, lvl)
-                      const calcTotal = Object.values(calc.singleEq).reduce((s, p) => s + p.total, 0) + calc.examLevel.total
-                      const calcCorrect = Object.values(calc.singleEq).reduce((s, p) => s + p.correct, 0) + calc.examLevel.correct
-                      const total = mcTotal + calcTotal
-                      const correct = mcCorrect + calcCorrect
-                      const pct = total > 0 ? Math.round((correct / total) * 100) : null
-                      return (
-                        <div key={subject.id}>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className={`text-xs font-bold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{subject.label} ({lvl})</span>
-                            <span className={`text-xs font-black ${pct !== null ? (pct >= 70 ? "text-emerald-600" : pct >= 50 ? "text-amber-600" : "text-red-500") : isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
-                              {pct !== null ? `${pct}%` : "—"}
-                            </span>
-                          </div>
-                          {pct !== null && (
-                            <div className={`h-1.5 rounded-full ${isDarkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                              <div className={`h-full rounded-full ${pct >= 70 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
 function OpenEndedMode({
   selectedLevel,
   selectedSubject,
   onBack,
   isDarkMode,
-  currentUser,
   userCoverage,
 }: {
   selectedLevel: string
   selectedSubject: SubjectId
   onBack: () => void
   isDarkMode: boolean
-  currentUser: UserAccount | null
   userCoverage: Record<string, boolean>
 }) {
   const subtopics = getSubtopics(selectedSubject, selectedLevel)
@@ -14555,119 +11936,6 @@ export default function App() {
   const [topicPerformance, setTopicPerformance] = useState<Record<string, { correct: number; total: number }>>({})
   const [timingMode, setTimingMode] = useState<TimingMode>("none")
   const [numberOfQuestions, setNumberOfQuestions] = useState(5)
-  // "Wrong place" popup for "not sitting" subjects
-  const [wrongPlaceSubject, setWrongPlaceSubject] = useState<SubjectId | null>(null)
-
-  // Auth state
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => loadCurrentUser())
-  const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [classesModalOpen, setClassesModalOpen] = useState(false)
-  const [profileModalOpen, setProfileModalOpen] = useState(false)
-  const [userDataVersion, setUserDataVersion] = useState(0)
-
-  function handleSignIn(user: UserAccount, isNewAccount = false) {
-    // Record last login; only increment session count for returning logins (not new account creation)
-    const updated: UserAccount = {
-      ...user,
-      lastLogin: Date.now(),
-      totalSessions: isNewAccount ? 1 : (user.totalSessions ?? 0) + 1,
-    }
-    if (!updated.isTestAccount) {
-      upsertLocalAccount(updated)
-      void upsertSupabaseProfileAndSettings(updated)
-    }
-    saveCurrentUser(updated)
-    setCurrentUser(updated)
-  }
-
-  function handleSignOut() {
-    const supabase = getSupabaseBrowserClient()
-    if (supabase) {
-      void supabase.auth.signOut()
-    }
-    saveCurrentUser(null)
-    setCurrentUser(null)
-  }
-
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient()
-    if (!supabase || !isSupabaseConfigured()) return
-    let cancelled = false
-    let syncPromise: Promise<void> | null = null
-
-    const syncAuthedUser = async () => {
-      const { data, error } = await supabase.auth.getUser()
-      if (cancelled || error || !data.user) return
-
-      const authUser = data.user
-      const previous = loadCurrentUser()
-      const baseName =
-        previous?.name ??
-        (typeof authUser.user_metadata?.name === "string" ? authUser.user_metadata.name : undefined) ??
-        authUser.email?.split("@")[0] ??
-        "User"
-      const baseType: AccountType =
-        previous?.accountType ??
-        (authUser.user_metadata?.accountType === "teacher" ? "teacher" : "pupil")
-      const baseLevels = (previous?.subjectLevels ??
-        authUser.user_metadata?.subjectLevels) as Partial<Record<SubjectId, string>> | undefined
-      const baseDisableModeLocking = previous?.disableModeLocking
-      const userForSync: UserAccount = {
-        id: authUser.id,
-        name: baseName,
-        email: authUser.email ?? previous?.email ?? "",
-        accountType: baseType,
-        subjectLevels: baseLevels,
-        disableModeLocking: baseDisableModeLocking,
-        lastLogin: previous?.lastLogin,
-        totalSessions: previous?.totalSessions,
-      }
-
-      await upsertSupabaseProfileAndSettings(userForSync)
-      const hydratedFields = await migrateAndHydrateSupabaseUserData(userForSync, previous?.id ?? null)
-      const mergedUser: UserAccount = {
-        ...userForSync,
-        ...hydratedFields,
-        id: authUser.id,
-        email: authUser.email ?? userForSync.email,
-      }
-      upsertLocalAccount(mergedUser)
-      saveCurrentUser(mergedUser)
-      if (!cancelled) {
-        setCurrentUser(mergedUser)
-        setUserDataVersion((version) => version + 1)
-      }
-    }
-
-    const runSyncAuthedUser = () => {
-      if (syncPromise) return syncPromise
-      syncPromise = syncAuthedUser()
-        .catch((err) => {
-          console.error("[Supabase Sync] Failed to sync authenticated user:", err)
-        })
-        .finally(() => {
-          syncPromise = null
-        })
-      return syncPromise
-    }
-
-    void runSyncAuthedUser()
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session?.user) {
-        saveCurrentUser(null)
-        setCurrentUser(null)
-        return
-      }
-      void runSyncAuthedUser()
-    })
-
-    return () => {
-      cancelled = true
-      authListener.subscription.unsubscribe()
-    }
-  }, [])
-
   // Calculate weak topics based on performance data
   const weakTopics = useMemo(() => {
     const subtopics = getSubtopics(selectedSubject, selectedLevel)
@@ -14694,21 +11962,6 @@ export default function App() {
 
   const handleSubjectSelect = (subject: SubjectId) => {
     setSelectedSubject(subject)
-    // If pupil has subject levels configured, use them
-    if (currentUser?.accountType === "pupil" && currentUser.subjectLevels) {
-      const level = currentUser.subjectLevels[subject]
-      if (level === "not sitting") {
-        // Show "wrong place" popup and return to subject selection
-        setWrongPlaceSubject(subject)
-        return
-      }
-      if (level) {
-        // Skip landing page - go directly to mode selection with pre-set level
-        setSelectedLevel(level)
-        setView("mode")
-        return
-      }
-    }
     setView("landing")
   }
 
@@ -14775,25 +12028,22 @@ export default function App() {
 
     setTopicPerformance(newPerformance)
 
-    // Persist exam progress per user
-    if (currentUser) {
-      const existing = loadUserExamProgress(currentUser.id, selectedLevel)
-      currentQuestions.forEach((q, idx) => {
-        const topic = q.subtopic || q.topic
-        if (q.type === "mc") {
-          if (!existing.mc[topic]) existing.mc[topic] = { correct: 0, total: 0 }
-          existing.mc[topic].total += 1
-          if (userSelections[idx] === q.answer) existing.mc[topic].correct += 1
-        } else if (q.type === "paper") {
-          if (!existing.paper[topic]) existing.paper[topic] = { correct: 0, total: 0 }
-          q.parts.forEach((part) => {
-            existing.paper[topic].total += part.marks
-            existing.paper[topic].correct += paperMarks[part.id] || 0
-          })
-        }
-      })
-      saveUserExamProgress(currentUser.id, selectedLevel, existing)
-    }
+    const existing = loadExamProgress(selectedLevel)
+    currentQuestions.forEach((q, idx) => {
+      const topic = q.subtopic || q.topic
+      if (q.type === "mc") {
+        if (!existing.mc[topic]) existing.mc[topic] = { correct: 0, total: 0 }
+        existing.mc[topic].total += 1
+        if (userSelections[idx] === q.answer) existing.mc[topic].correct += 1
+      } else if (q.type === "paper") {
+        if (!existing.paper[topic]) existing.paper[topic] = { correct: 0, total: 0 }
+        q.parts.forEach((part) => {
+          existing.paper[topic].total += part.marks
+          existing.paper[topic].correct += paperMarks[part.id] || 0
+        })
+      }
+    })
+    saveExamProgress(selectedLevel, existing)
   }
 
   const handleFinishQuiz = () => {
@@ -14917,11 +12167,6 @@ export default function App() {
         selectedSubject={selectedSubject}
         onHome={() => setView("subject-select")}
         isDarkMode={isDarkMode}
-        currentUser={currentUser}
-        onSignInClick={() => setAuthModalOpen(true)}
-        onSignOut={handleSignOut}
-        onClassesClick={() => setClassesModalOpen(true)}
-        onProfileClick={() => setProfileModalOpen(true)}
       />
       <main className="pb-20">
         {view === "subject-select" && <SubjectSelection onSelectSubject={handleSubjectSelect} isDarkMode={isDarkMode} />}
@@ -14938,14 +12183,7 @@ export default function App() {
             selectedLevel={selectedLevel}
             selectedSubject={selectedSubject}
             onSelectMode={handleModeSelect}
-            onBack={() => {
-              // If user has a pre-selected level for this subject, go back to subject select
-              if (currentUser?.accountType === "pupil" && currentUser.subjectLevels?.[selectedSubject] && currentUser.subjectLevels[selectedSubject] !== "not sitting") {
-                setView("subject-select")
-              } else {
-                setView("landing")
-              }
-            }}
+            onBack={() => setView("landing")}
             isDarkMode={isDarkMode}
           />
         )}
@@ -15010,41 +12248,37 @@ export default function App() {
         )}
         {view === "definitions" && (
           <DefinitionsMode
-            key={`definitions-${currentUser?.id ?? "anon"}-${selectedLevel}-${userDataVersion}`}
+            key={`definitions-${selectedLevel}`}
             selectedLevel={selectedLevel}
             selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUser={currentUser}
           />
         )}
         {view === "calculations" && (
           <CalculationsMode
-            key={`calculations-${currentUser?.id ?? "anon"}-${selectedLevel}-${userDataVersion}`}
+            key={`calculations-${selectedLevel}`}
             selectedLevel={selectedLevel}
             selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUser={currentUser}
           />
         )}
         {view === "assignment" && (
           <AssignmentMode
-            key={`assignment-${currentUser?.id ?? "anon"}-${selectedSubject}-${userDataVersion}`}
+            key={`assignment-${selectedSubject}`}
             selectedLevel={selectedLevel}
             selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUser={currentUser}
           />
         )}
         {view === "exam-paper" && (
           <ExamPaperMode
-            key={`exam-paper-${currentUser?.id ?? "anon"}-${selectedLevel}-${userDataVersion}`}
+            key={`exam-paper-${selectedLevel}`}
             selectedLevel={selectedLevel}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUserId={currentUser?.id}
           />
         )}
         {view === "electronics-tool" && (
@@ -15072,14 +12306,13 @@ export default function App() {
             selectedSubject={selectedSubject}
             onBack={() => setView("mode")}
             isDarkMode={isDarkMode}
-            currentUser={currentUser}
             userCoverage={userCoverage}
           />
         )}
       </main>
-      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} currentUser={currentUser} selectedSubject={selectedSubject} />
+      <FloatingMenu isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} openModal={setActiveModal} view={view} selectedSubject={selectedSubject} />
       <GenericModal
-        key={`generic-modal-${currentUser?.id ?? "anon"}-${selectedSubject}-${selectedLevel}-${userDataVersion}`}
+        key={`generic-modal-${selectedSubject}-${selectedLevel}`}
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
         userCoverage={userCoverage}
@@ -15088,60 +12321,7 @@ export default function App() {
         selectedSubject={selectedSubject}
         isDarkMode={isDarkMode}
         topicPerformance={topicPerformance}
-        currentUser={currentUser}
       />
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onSignIn={handleSignIn}
-        isDarkMode={isDarkMode}
-      />
-      {classesModalOpen && currentUser && (
-        <ClassManagement
-          key={`classes-${currentUser.id}-${userDataVersion}`}
-          currentUser={currentUser}
-          isDarkMode={isDarkMode}
-          onClose={() => setClassesModalOpen(false)}
-        />
-      )}
-      {profileModalOpen && currentUser && (
-        <ProfileModal
-          key={`profile-${currentUser.id}-${userDataVersion}`}
-          currentUser={currentUser}
-          isDarkMode={isDarkMode}
-          onClose={() => setProfileModalOpen(false)}
-          onUpdateUser={(updated) => {
-            setCurrentUser(updated)
-            setUserDataVersion((version) => version + 1)
-          }}
-        />
-      )}
-      {/* "Wrong place" popup for "not sitting" subjects */}
-      {wrongPlaceSubject && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-3xl shadow-2xl border-4 border-[#800000] p-8 text-center animate-in fade-in zoom-in-95 ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
-            <div className="text-5xl mb-4">🤔</div>
-            <h2 className="text-2xl font-black mb-3">I think you&apos;re in the wrong place!</h2>
-            <p className={`text-sm mb-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-              You&apos;ve set <strong>{wrongPlaceSubject}</strong> as <strong>&quot;Not Sitting&quot;</strong> in your profile. Head back and choose a subject you&apos;re studying, or update your profile to change your levels.
-            </p>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => { setWrongPlaceSubject(null); setView("subject-select") }}
-                className="w-full py-3 bg-[#800000] hover:bg-[#600000] text-white rounded-xl font-bold text-sm transition-colors"
-              >
-                ← Back to Subjects
-              </button>
-              <button
-                onClick={() => { setWrongPlaceSubject(null); setProfileModalOpen(true) }}
-                className={`w-full py-3 rounded-xl font-bold text-sm transition-colors border-2 ${isDarkMode ? "border-slate-600 text-slate-300 hover:border-slate-400" : "border-slate-200 text-slate-600 hover:border-slate-400"}`}
-              >
-                Update My Profile
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
