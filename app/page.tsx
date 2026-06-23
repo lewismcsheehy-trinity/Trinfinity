@@ -106,6 +106,12 @@ import {
 // Trinity High School Maroon: #800000
 // Trinity High School Gold: #D4AF37
 
+// ── Feature flags ────────────────────────────────────────────────────────────
+/** Progressive mode locking (requires completing easier modes before harder ones). Disabled — no accounts. */
+const PROGRESSIVE_MODE_LOCKING_ENABLED = false
+/** Teacher-specific features (class management, marking, etc.). Disabled — no accounts. */
+const TEACHER_FEATURES_ENABLED = false
+
 // ── Chemistry Elements Data Booklet ─────────────────────────────────────────
 interface ChemElement {
   atomic_number: number
@@ -1384,7 +1390,7 @@ function DefinitionsMode({
   type DefPhase = "unit-select" | "topic-select" | "quiz" | "results" | "progress"
   type QuizType = "mc" | "cloze" | "match" | "spot-mistake" | "swapped" | "keyword-builder"
 
-  const lockingEnabled = false
+  const lockingEnabled = PROGRESSIVE_MODE_LOCKING_ENABLED
 
   // Compute a subject-qualified level key so chemistry entries are kept separate from physics
   const levelKey = getDefLevelKey(selectedSubject, selectedLevel)
@@ -3992,7 +3998,7 @@ function CalculationsMode({
 
 
 
-  const lockingEnabled = false
+  const lockingEnabled = PROGRESSIVE_MODE_LOCKING_ENABLED
 
   const [phase, setPhase] = useState<CalcPhase>("hub")
   const [subMode, setSubMode] = useState<CalcSubMode>(null)
@@ -10830,7 +10836,7 @@ function GenericModal({
 
   if (!activeModal) return null
 
-  const isTeacher = false
+  const isTeacher = TEACHER_FEATURES_ENABLED
   const subtopics = getSubtopics(selectedSubject, selectedLevel)
 
   // ── Pupil progress view ──────────────────────────────────────────────────
